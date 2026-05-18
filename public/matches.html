@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Partidos — Prode Mundial 2026</title>
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo"><span>🏆</span> PRODE 2026</a>
+    <div class="nav-links">
+      <a href="/" class="nav-link">Dashboard</a>
+      <a href="/matches.html" class="nav-link active">Partidos</a>
+      <a href="/rankings.html" class="nav-link">Ranking</a>
+      <a href="/admin.html" class="nav-link" id="nav-admin" style="display:none">Admin</a>
+    </div>
+    <div class="nav-user">
+      <div class="nav-avatar" id="nav-avatar">⚽</div>
+      <button class="btn btn-secondary btn-sm" onclick="Auth.clear();location.href='/login.html'">Salir</button>
+    </div>
+  </div>
+</nav>
+
+<div class="page-wrapper">
+  <div class="container">
+    <h1 class="section-title mt-4">Partidos <span>& Pronósticos</span></h1>
+
+    <!-- FILTROS -->
+    <div class="tabs mb-3" id="phase-tabs">
+      <button class="tab-btn active" data-phase="" onclick="filterPhase(this, '')">Todos</button>
+      <button class="tab-btn" data-phase="arg" onclick="filterPhase(this, 'arg')">🇦🇷 Argentina</button>
+      <button class="tab-btn" data-phase="GRUPOS" onclick="filterPhase(this, 'GRUPOS')">Grupos</button>
+      <button class="tab-btn" data-phase="DIECISEISAVOS" onclick="filterPhase(this, 'DIECISEISAVOS')">1/32</button>
+      <button class="tab-btn" data-phase="OCTAVOS" onclick="filterPhase(this, 'OCTAVOS')">Octavos</button>
+      <button class="tab-btn" data-phase="CUARTOS" onclick="filterPhase(this, 'CUARTOS')">Cuartos</button>
+      <button class="tab-btn" data-phase="SEMIFINAL" onclick="filterPhase(this, 'SEMIFINAL')">Semis</button>
+      <button class="tab-btn" data-phase="FINAL" onclick="filterPhase(this, 'FINAL')">Final</button>
+    </div>
+
+    <div id="matches-list"><div class="spinner"></div></div>
+  </div>
+</div>
+
+<!-- MODAL PRONÓSTICO -->
+<div class="modal-overlay" id="modal-prediction">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-match-title">Pronóstico</span>
+      <button class="btn-close" onclick="closeModal('modal-prediction')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="match-teams" id="modal-teams" style="margin-bottom:1rem"></div>
+      <form id="form-prediction">
+        <input type="hidden" id="pred-match-id">
+        <input type="hidden" id="pred-id">
+        <div class="score-input-group">
+          <div>
+            <input class="score-input" id="pred-score-a" type="number" min="0" max="20" value="0" required>
+            <div class="score-team-name" id="pred-team-a-name">Local</div>
+          </div>
+          <div class="score-separator">—</div>
+          <div>
+            <input class="score-input" id="pred-score-b" type="number" min="0" max="20" value="0" required>
+            <div class="score-team-name" id="pred-team-b-name">Visitante</div>
+          </div>
+        </div>
+
+        <!-- BONUS ACCORDION -->
+        <div class="accordion-header" id="bonus-header" onclick="toggleAccordion()">
+          <span>🎯 Predicciones Bonus (opcional)</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="accordion-body" id="bonus-body">
+          <div class="accordion-content">
+            <div class="form-group">
+              <label class="form-label">Primer Goleador (+3 pts)</label>
+              <input class="form-input" id="pred-scorer" type="text" placeholder="Ej: Messi" maxlength="100">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+              <div class="form-group">
+                <label class="form-label">Tarjetas totales (+1 pt)</label>
+                <input class="form-input" id="pred-cards" type="number" min="0" max="20" placeholder="—">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Córners totales (+1 pt)</label>
+                <input class="form-input" id="pred-corners" type="number" min="0" max="30" placeholder="—">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Ambos anotan (BTTS) (+1 pt)</label>
+              <select class="form-input" id="pred-btts">
+                <option value="">No sé</option>
+                <option value="true">Sí, ambos anotan</option>
+                <option value="false">No, al menos uno no anota</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Jugador del partido (+2 pts)</label>
+              <input class="form-input" id="pred-mvp" type="text" placeholder="Ej: De Paul" maxlength="100">
+            </div>
+          </div>
+        </div>
+
+        <div id="pred-points-preview" class="mt-2" style="display:none">
+          <div class="badge badge-gold" style="padding:.4rem .75rem">Tu último pronóstico: <strong id="pred-pts-val"></strong> puntos</div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-prediction')">Cancelar</button>
+      <button class="btn btn-primary" onclick="savePrediction()" id="btn-save-pred">Guardar Pronóstico</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+Auth.require();
+const user = Auth.getUser();
+if (user) {
+  document.getElementById('nav-avatar').textContent = user.avatar || '⚽';
+  if (user.isAdmin) document.getElementById('nav-admin').style.display = '';
+}
+
+let allMatches = [];
+let myPredictions = {};
+let currentFilter = '';
+
+const STATUS_LABEL = { UPCOMING:'Próximo', LIVE:'EN VIVO', FINISHED:'Finalizado' };
+const STATUS_CLASS = { UPCOMING:'badge-upcoming', LIVE:'badge-live', FINISHED:'badge-finished' };
+
+async function loadAll() {
+  const [matches, preds] = await Promise.all([
+    api.matches.all(),
+    api.predictions.mine(),
+  ]);
+  allMatches = matches;
+  myPredictions = Object.fromEntries(preds.map(p => [p.matchId, p]));
+  renderMatches();
+}
+
+function filterPhase(btn, phase) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentFilter = phase;
+  renderMatches();
+}
+
+function renderMatches() {
+  let filtered = allMatches;
+  if (currentFilter === 'arg') filtered = allMatches.filter(m => m.argentina);
+  else if (currentFilter) filtered = allMatches.filter(m => m.phase === currentFilter);
+
+  const el = document.getElementById('matches-list');
+  if (!filtered.length) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>No hay partidos en esta categoría</p></div>';
+    return;
+  }
+
+  // Agrupar por fase
+  const groups = {};
+  for (const m of filtered) {
+    const key = m.groupName ? `Grupo ${m.groupName}` : m.phase.replace('_', ' ');
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(m);
+  }
+
+  el.innerHTML = Object.entries(groups).map(([groupKey, gMatches]) => `
+    <div class="mb-4">
+      <h3 style="font-size:.85rem;text-transform:uppercase;letter-spacing:.1em;color:var(--c-text-dim);margin-bottom:.75rem;padding-left:.25rem">${groupKey}</h3>
+      <div class="matches-grid">
+        ${gMatches.sort((a,b) => new Date(a.date)-new Date(b.date)).map(renderMatchCard).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function renderMatchCard(m) {
+  const pred = myPredictions[m.id];
+  const hasResult = m.resultA !== null && m.resultB !== null;
+  const canPredict = m.status === 'UPCOMING';
+
+  return `
+  <div class="match-card ${m.featured ? 'featured' : ''}">
+    <div class="match-header">
+      <div class="match-meta">
+        ${m.argentina ? '<span class="badge badge-arg">🇦🇷</span>' : ''}
+        ${m.featured  ? '<span class="badge badge-gold">⭐</span>' : ''}
+        <span class="badge ${STATUS_CLASS[m.status]}">${STATUS_LABEL[m.status]}</span>
+      </div>
+      <div class="text-xs text-dim">${Fmt.datetime(m.date)}</div>
+    </div>
+    <div class="match-teams">
+      <div class="team-info"><div class="team-flag">${m.teamAFlag}</div><div class="team-name">${m.teamAName}</div></div>
+      ${hasResult
+        ? `<div class="match-score">${m.resultA} <span class="separator">:</span> ${m.resultB}</div>`
+        : `<div class="match-score tbd">VS</div>`}
+      <div class="team-info"><div class="team-flag">${m.teamBFlag}</div><div class="team-name">${m.teamBName}</div></div>
+    </div>
+    ${pred ? `
+      <div style="background:var(--c-navy-3);border-radius:var(--radius);padding:.6rem .9rem;margin-top:.75rem;display:flex;align-items:center;justify-content:space-between">
+        <span class="text-xs text-dim">Tu pronóstico: <strong style="color:var(--c-gold)">${pred.scoreA} — ${pred.scoreB}</strong></span>
+        ${pred.pointsTotal !== null ? `<span class="badge badge-gold">${pred.pointsTotal} pts</span>` : ''}
+        ${canPredict ? `<button class="btn btn-secondary btn-sm" onclick="openPrediction('${m.id}')">Editar</button>` : ''}
+      </div>` : ''}
+    <div class="match-footer">
+      <span class="match-venue">📍 ${m.city}</span>
+      ${canPredict && !pred ? `<button class="btn btn-primary btn-sm" onclick="openPrediction('${m.id}')">Pronosticar</button>` : ''}
+      ${!canPredict && !pred && m.status !== 'UPCOMING' ? `<span class="text-xs text-dim">Sin pronóstico</span>` : ''}
+    </div>
+  </div>`;
+}
+
+function openPrediction(matchId) {
+  const m = allMatches.find(x => x.id === matchId);
+  if (!m) return;
+  const pred = myPredictions[matchId];
+
+  document.getElementById('modal-match-title').textContent = `${m.teamAName} vs ${m.teamBName}`;
+  document.getElementById('modal-teams').innerHTML = `
+    <div class="team-info"><div class="team-flag">${m.teamAFlag}</div><div class="team-name">${m.teamAName}</div></div>
+    <div class="match-score tbd" style="font-size:1rem">vs</div>
+    <div class="team-info"><div class="team-flag">${m.teamBFlag}</div><div class="team-name">${m.teamBName}</div></div>`;
+  document.getElementById('pred-match-id').value = matchId;
+  document.getElementById('pred-team-a-name').textContent = m.teamAName;
+  document.getElementById('pred-team-b-name').textContent = m.teamBName;
+  document.getElementById('pred-id').value = pred?.id || '';
+  document.getElementById('pred-score-a').value = pred?.scoreA ?? 0;
+  document.getElementById('pred-score-b').value = pred?.scoreB ?? 0;
+  document.getElementById('pred-scorer').value = pred?.firstScorer || '';
+  document.getElementById('pred-cards').value = pred?.cardsCount ?? '';
+  document.getElementById('pred-corners').value = pred?.cornersCount ?? '';
+  document.getElementById('pred-btts').value = pred?.btts === true ? 'true' : pred?.btts === false ? 'false' : '';
+  document.getElementById('pred-mvp').value = pred?.mvp || '';
+
+  const ppEl = document.getElementById('pred-points-preview');
+  if (pred?.pointsTotal !== null && pred?.pointsTotal !== undefined) {
+    document.getElementById('pred-pts-val').textContent = pred.pointsTotal;
+    ppEl.style.display = '';
+  } else { ppEl.style.display = 'none'; }
+
+  openModal('modal-prediction');
+}
+
+function toggleAccordion() {
+  const h = document.getElementById('bonus-header');
+  const b = document.getElementById('bonus-body');
+  h.classList.toggle('open');
+  b.classList.toggle('open');
+}
+
+async function savePrediction() {
+  const matchId = document.getElementById('pred-match-id').value;
+  const predId  = document.getElementById('pred-id').value;
+  const btn = document.getElementById('btn-save-pred');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+
+  const body = {
+    matchId,
+    scoreA: parseInt(document.getElementById('pred-score-a').value) || 0,
+    scoreB: parseInt(document.getElementById('pred-score-b').value) || 0,
+    firstScorer: document.getElementById('pred-scorer').value || null,
+    cardsCount: document.getElementById('pred-cards').value !== '' ? parseInt(document.getElementById('pred-cards').value) : null,
+    cornersCount: document.getElementById('pred-corners').value !== '' ? parseInt(document.getElementById('pred-corners').value) : null,
+    btts: document.getElementById('pred-btts').value === 'true' ? true : document.getElementById('pred-btts').value === 'false' ? false : null,
+    mvp: document.getElementById('pred-mvp').value || null,
+  };
+
+  try {
+    let saved;
+    if (predId) {
+      saved = await api.predictions.update(predId, body);
+    } else {
+      saved = await api.predictions.create(body);
+    }
+    myPredictions[matchId] = saved;
+    Toast.success('¡Pronóstico guardado!', `${body.scoreA} — ${body.scoreB}`);
+    closeModal('modal-prediction');
+    renderMatches();
+  } catch (err) {
+    Toast.error('Error', err.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Guardar Pronóstico';
+  }
+}
+
+loadAll().catch(() => {
+  document.getElementById('matches-list').innerHTML =
+    '<div class="empty-state"><div class="icon">❌</div><p>Error al cargar partidos</p></div>';
+});
+</script>
+</body>
+</html>

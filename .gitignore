@@ -1,0 +1,11 @@
+# Archivos sensibles — nunca commitear
+.env
+node_modules/
+prisma/migrations/*.sql.bak
+*.log
+logs/
+.DS_Store
+Thumbs.db
+dist/
+.nyc_output/
+coverage/

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ranking — Prode Mundial 2026</title>
+<link rel="stylesheet" href="/css/main.css">
+<style>
+.podium{display:flex;align-items:flex-end;justify-content:center;gap:.5rem;margin-bottom:2rem}
+.podium-item{display:flex;flex-direction:column;align-items:center;gap:.5rem;padding:1.25rem .75rem;border-radius:var(--radius-lg) var(--radius-lg) 0 0;min-width:100px;text-align:center}
+.podium-1{background:linear-gradient(180deg,rgba(255,215,0,.15),rgba(255,215,0,.05));border:1px solid rgba(255,215,0,.4);height:160px;justify-content:flex-start;padding-top:1.25rem}
+.podium-2{background:linear-gradient(180deg,rgba(192,192,192,.1),rgba(192,192,192,.03));border:1px solid rgba(192,192,192,.3);height:130px;justify-content:flex-start;padding-top:1.25rem}
+.podium-3{background:linear-gradient(180deg,rgba(205,127,50,.1),rgba(205,127,50,.03));border:1px solid rgba(205,127,50,.3);height:110px;justify-content:flex-start;padding-top:1.25rem}
+.podium-crown{font-size:1.5rem}
+.podium-avatar{font-size:2rem}
+.podium-name{font-size:.8rem;font-weight:700;color:var(--c-text)}
+.podium-pts{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--c-gold)}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo"><span>🏆</span> PRODE 2026</a>
+    <div class="nav-links">
+      <a href="/" class="nav-link">Dashboard</a>
+      <a href="/matches.html" class="nav-link">Partidos</a>
+      <a href="/rankings.html" class="nav-link active">Ranking</a>
+      <a href="/admin.html" class="nav-link" id="nav-admin" style="display:none">Admin</a>
+    </div>
+    <div class="nav-user">
+      <div class="nav-avatar" id="nav-avatar">⚽</div>
+      <button class="btn btn-secondary btn-sm" onclick="Auth.clear();location.href='/login.html'">Salir</button>
+    </div>
+  </div>
+</nav>
+
+<div class="page-wrapper">
+  <div class="container">
+    <h1 class="section-title mt-4">Tabla de <span>Posiciones</span></h1>
+
+    <div class="tabs mb-3">
+      <button class="tab-btn active" onclick="loadRanking(this,'')">General</button>
+      <button class="tab-btn" onclick="loadRanking(this,'GRUPOS')">Grupos</button>
+      <button class="tab-btn" onclick="loadRanking(this,'OCTAVOS')">Octavos</button>
+      <button class="tab-btn" onclick="loadRanking(this,'CUARTOS')">Cuartos</button>
+      <button class="tab-btn" onclick="loadRanking(this,'SEMIFINAL')">Semis</button>
+      <button class="tab-btn" onclick="loadRanking(this,'FINAL')">Final</button>
+    </div>
+
+    <div id="podium-section"></div>
+
+    <div class="card" style="padding:0;overflow:hidden">
+      <div id="ranking-table-container"><div class="spinner"></div></div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+Auth.require();
+const user = Auth.getUser();
+if (user) {
+  document.getElementById('nav-avatar').textContent = user.avatar || '⚽';
+  if (user.isAdmin) document.getElementById('nav-admin').style.display = '';
+}
+
+async function loadRanking(btn, phase) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+
+  const container = document.getElementById('ranking-table-container');
+  container.innerHTML = '<div class="spinner"></div>';
+
+  try {
+    const ranking = await api.rankings.all(phase);
+    renderRanking(ranking);
+  } catch {
+    container.innerHTML = '<div class="empty-state"><p>Error al cargar</p></div>';
+  }
+}
+
+function renderRanking(ranking) {
+  const myId = Auth.getUser()?.id;
+
+  // Podium top 3
+  const podiumEl = document.getElementById('podium-section');
+  if (ranking.length >= 3) {
+    const [first, second, third] = ranking;
+    podiumEl.innerHTML = `
+      <div class="podium mb-4">
+        <div class="podium-item podium-2">
+          <div class="podium-crown">🥈</div>
+          <div class="podium-avatar">${second.avatar}</div>
+          <div class="podium-name">${second.displayName}</div>
+          <div class="podium-pts">${second.totalPoints}</div>
+        </div>
+        <div class="podium-item podium-1">
+          <div class="podium-crown">🥇</div>
+          <div class="podium-avatar" style="font-size:2.5rem">${first.avatar}</div>
+          <div class="podium-name">${first.displayName}</div>
+          <div class="podium-pts" style="font-size:1.8rem">${first.totalPoints}</div>
+        </div>
+        <div class="podium-item podium-3">
+          <div class="podium-crown">🥉</div>
+          <div class="podium-avatar">${third.avatar}</div>
+          <div class="podium-name">${third.displayName}</div>
+          <div class="podium-pts">${third.totalPoints}</div>
+        </div>
+      </div>`;
+  } else {
+    podiumEl.innerHTML = '';
+  }
+
+  if (!ranking.length) {
+    document.getElementById('ranking-table-container').innerHTML =
+      '<div class="empty-state" style="padding:3rem"><div class="icon">🏆</div><p>El ranking se actualizará cuando se carguen los primeros resultados</p></div>';
+    return;
+  }
+
+  document.getElementById('ranking-table-container').innerHTML = `
+    <table class="ranking-table">
+      <thead>
+        <tr>
+          <th style="width:50px">#</th>
+          <th>Jugador</th>
+          <th>Puntos</th>
+          <th>Exactos</th>
+          <th>Ganador</th>
+          <th>Bonus</th>
+          <th>Partidos</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${ranking.map(r => `
+          <tr class="${r.userId === myId ? 'me' : ''} rank-${r.rank}">
+            <td class="rank-pos">${r.rank <= 3 ? ['🥇','🥈','🥉'][r.rank-1] : r.rank}</td>
+            <td><div class="rank-user">
+              <span class="rank-avatar">${r.avatar}</span>
+              <div>
+                <div style="font-weight:600">${r.displayName}${r.userId === myId ? ' <span style="font-size:.7rem;color:var(--c-gold)">(vos)</span>' : ''}</div>
+              </div>
+            </div></td>
+            <td class="rank-points">${r.totalPoints}</td>
+            <td><span class="badge badge-gold">${r.exactos}</span></td>
+            <td><span style="color:var(--c-green);font-weight:700">${r.ganadores}</span></td>
+            <td><span style="color:var(--c-sky)">${r.bonusTotal}</span></td>
+            <td class="text-dim">${r.partidos}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+loadRanking(null, '');
+</script>
+</body>
+</html>

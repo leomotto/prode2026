@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard — Prode Mundial 2026</title>
+<meta name="description" content="Tu centro de comando del Prode del Mundial FIFA 2026">
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo"><span>🏆</span> PRODE 2026</a>
+    <div class="nav-links">
+      <a href="/" class="nav-link active">Dashboard</a>
+      <a href="/matches.html" class="nav-link">Partidos</a>
+      <a href="/rankings.html" class="nav-link">Ranking</a>
+      <a href="/admin.html" class="nav-link" id="nav-admin" style="display:none">Admin</a>
+    </div>
+    <div class="nav-user">
+      <div class="nav-avatar" id="nav-avatar">⚽</div>
+      <button class="btn btn-secondary btn-sm" onclick="doLogout()">Salir</button>
+    </div>
+  </div>
+</nav>
+
+<div class="page-wrapper">
+  <div class="container">
+
+    <!-- HERO + COUNTDOWN -->
+    <div class="hero">
+      <div class="hero-eyebrow">🇦🇷 ¡Vamos Argentina! 🇦🇷</div>
+      <h1 class="hero-title">MUNDIAL<br>2026</h1>
+      <p class="hero-sub">11 de Junio al 19 de Julio · USA, México y Canadá</p>
+      <div class="countdown" id="countdown">
+        <div class="countdown-unit"><div class="countdown-num" id="cd-days">--</div><div class="countdown-label">Días</div></div>
+        <div class="countdown-unit"><div class="countdown-num" id="cd-hours">--</div><div class="countdown-label">Horas</div></div>
+        <div class="countdown-unit"><div class="countdown-num" id="cd-mins">--</div><div class="countdown-label">Min</div></div>
+        <div class="countdown-unit"><div class="countdown-num" id="cd-secs">--</div><div class="countdown-label">Seg</div></div>
+      </div>
+    </div>
+
+    <!-- ALERTA: partidos sin pronosticar -->
+    <div id="alert-pending" style="display:none" class="card card-featured mb-3">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+        <div style="display:flex;align-items:center;gap:.75rem">
+          <span style="font-size:1.5rem">⚠️</span>
+          <div>
+            <div style="font-weight:700;color:var(--c-gold)">¡Partidos sin pronosticar!</div>
+            <div id="alert-pending-msg" class="text-sm text-dim">Tenés partidos próximos sin pronóstico.</div>
+          </div>
+        </div>
+        <a href="/matches.html" class="btn btn-primary btn-sm">Pronosticar ahora →</a>
+      </div>
+    </div>
+
+    <!-- STATS PERSONALES -->
+    <div class="stats-grid mb-4" id="my-stats">
+      <div class="stat-card"><div class="stat-value" id="stat-pts">—</div><div class="stat-label">Mis puntos</div></div>
+      <div class="stat-card"><div class="stat-value" id="stat-exact">—</div><div class="stat-label">Exactos</div></div>
+      <div class="stat-card"><div class="stat-value" id="stat-bonus">—</div><div class="stat-label">Bonus pts</div></div>
+      <div class="stat-card"><div class="stat-value" id="stat-matches">—</div><div class="stat-label">Pronósticos</div></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 340px;gap:1.5rem;align-items:start" class="dashboard-grid">
+
+      <!-- PRÓXIMOS PARTIDOS -->
+      <div>
+        <h2 class="section-title">Próximos <span>Partidos</span></h2>
+        <div id="next-matches"><div class="spinner"></div></div>
+        <div class="mt-3">
+          <a href="/matches.html" class="btn btn-secondary">Ver todos los partidos →</a>
+        </div>
+      </div>
+
+      <!-- TOP 5 RANKING -->
+      <div>
+        <h2 class="section-title">Top <span>Ranking</span></h2>
+        <div class="card" style="padding:.5rem">
+          <div id="top-ranking"><div class="spinner"></div></div>
+        </div>
+        <div class="mt-3">
+          <a href="/rankings.html" class="btn btn-secondary w-full">Ver ranking completo →</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+Auth.require();
+
+// Setup nav
+const user = Auth.getUser();
+if (user) {
+  document.getElementById('nav-avatar').textContent = user.avatar || '⚽';
+  if (user.isAdmin) document.getElementById('nav-admin').style.display = '';
+}
+
+// Countdown
+const TARGET = new Date('2026-06-11T21:00:00-05:00');
+function tick() {
+  const diff = TARGET - Date.now();
+  if (diff <= 0) { document.getElementById('countdown').innerHTML = '<div class="badge badge-live" style="font-size:1rem;padding:.5rem 1.5rem">🔴 EL MUNDIAL ESTÁ EN CURSO</div>'; return; }
+  const d = Math.floor(diff / 86400000);
+  const h = Math.floor((diff % 86400000) / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
+  document.getElementById('cd-days').textContent  = String(d).padStart(2,'0');
+  document.getElementById('cd-hours').textContent = String(h).padStart(2,'0');
+  document.getElementById('cd-mins').textContent  = String(m).padStart(2,'0');
+  document.getElementById('cd-secs').textContent  = String(s).padStart(2,'0');
+}
+tick(); setInterval(tick, 1000);
+
+// My stats
+api.rankings.me().then(s => {
+  document.getElementById('stat-pts').textContent = s.totalPoints ?? 0;
+  document.getElementById('stat-exact').textContent = s.exactos ?? 0;
+  document.getElementById('stat-bonus').textContent = s.bonusTotal ?? 0;
+  document.getElementById('stat-matches').textContent = s.partidos ?? 0;
+}).catch(() => {});
+
+// Pending alerts
+api.predictions.pending().then(pending => {
+  if (pending.length > 0) {
+    document.getElementById('alert-pending').style.display = '';
+    const names = pending.slice(0,2).map(m => `${m.teamAFlag}${m.teamBFlag}`).join(', ');
+    document.getElementById('alert-pending-msg').textContent =
+      `${pending.length} partido(s) próximo(s) sin pronóstico: ${names}`;
+  }
+}).catch(() => {});
+
+// Next matches (status UPCOMING, featured first)
+api.matches.all('?status=UPCOMING').then(matches => {
+  const el = document.getElementById('next-matches');
+  const sorted = matches.sort((a,b) => new Date(a.date) - new Date(b.date)).slice(0, 6);
+  if (!sorted.length) { el.innerHTML = '<div class="empty-state"><div class="icon">📅</div><p>No hay partidos próximos</p></div>'; return; }
+  el.innerHTML = sorted.map(m => `
+    <div class="match-card ${m.featured ? 'featured' : ''} mb-2">
+      <div class="match-header">
+        <div class="match-meta">
+          ${m.argentina ? '<span class="badge badge-arg">🇦🇷 Argentina</span>' : ''}
+          ${m.featured  ? '<span class="badge badge-gold">⭐ Destacado</span>' : ''}
+          <span class="badge badge-upcoming">Próximo</span>
+        </div>
+        <div class="text-xs text-dim">${Fmt.datetime(m.date)}</div>
+      </div>
+      <div class="match-teams">
+        <div class="team-info"><div class="team-flag">${m.teamAFlag}</div><div class="team-name">${m.teamAName}</div></div>
+        <div class="match-score tbd">VS</div>
+        <div class="team-info"><div class="team-flag">${m.teamBFlag}</div><div class="team-name">${m.teamBName}</div></div>
+      </div>
+      <div class="match-footer">
+        <span class="match-venue">📍 ${m.city}</span>
+        <a href="/matches.html" class="btn btn-primary btn-sm">Pronosticar</a>
+      </div>
+    </div>`).join('');
+}).catch(() => {
+  document.getElementById('next-matches').innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>Error al cargar partidos</p></div>';
+});
+
+// Top 5 ranking
+api.rankings.all().then(ranking => {
+  const el = document.getElementById('top-ranking');
+  const top5 = ranking.slice(0, 5);
+  if (!top5.length) { el.innerHTML = '<div class="empty-state" style="padding:1.5rem"><p>Sin datos aún</p></div>'; return; }
+  const myId = Auth.getUser()?.id;
+  el.innerHTML = `<table class="ranking-table">
+    <tbody>
+    ${top5.map(r => `
+      <tr class="${r.userId === myId ? 'me' : ''} rank-${r.rank}">
+        <td class="rank-pos">${r.rank <= 3 ? ['🥇','🥈','🥉'][r.rank-1] : r.rank}</td>
+        <td><div class="rank-user"><span class="rank-avatar">${r.avatar}</span><span style="font-weight:600">${r.displayName}</span></div></td>
+        <td class="rank-points">${r.totalPoints}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+}).catch(() => {});
+
+function doLogout() {
+  Auth.clear();
+  window.location.href = '/login.html';
+}
+</script>
+</body>
+</html>

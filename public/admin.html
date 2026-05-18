@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin — Prode Mundial 2026</title>
+<link rel="stylesheet" href="/css/main.css">
+<style>
+.admin-grid{display:grid;grid-template-columns:1fr 320px;gap:1.5rem;align-items:start}
+.admin-section{background:var(--c-navy-2);border:1px solid var(--c-border);border-radius:var(--radius-lg);padding:1.25rem}
+.admin-section h3{font-size:1rem;font-weight:700;margin-bottom:1rem;color:var(--c-gold)}
+.match-admin-row{display:flex;align-items:center;gap:.75rem;padding:.875rem;border-radius:var(--radius);background:var(--c-navy-3);margin-bottom:.5rem;flex-wrap:wrap}
+.match-admin-teams{font-weight:600;font-size:.9rem;flex:1;min-width:140px}
+.match-admin-date{font-size:.75rem;color:var(--c-text-dim)}
+.result-inputs{display:flex;align-items:center;gap:.4rem}
+.result-input{width:48px;padding:.35rem;text-align:center;background:var(--c-navy-2);border:1px solid var(--c-border);border-radius:6px;color:var(--c-gold);font-family:'Bebas Neue',sans-serif;font-size:1.2rem}
+.result-input:focus{outline:none;border-color:var(--c-gold)}
+.status-select{background:var(--c-navy-2);border:1px solid var(--c-border);border-radius:6px;padding:.3rem .5rem;color:var(--c-text);font-size:.78rem}
+@media(max-width:900px){.admin-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo"><span>🏆</span> PRODE 2026</a>
+    <div class="nav-links">
+      <a href="/" class="nav-link">Dashboard</a>
+      <a href="/matches.html" class="nav-link">Partidos</a>
+      <a href="/rankings.html" class="nav-link">Ranking</a>
+      <a href="/admin.html" class="nav-link active">Admin</a>
+    </div>
+    <div class="nav-user">
+      <div class="nav-avatar" id="nav-avatar">⚽</div>
+      <button class="btn btn-secondary btn-sm" onclick="Auth.clear();location.href='/login.html'">Salir</button>
+    </div>
+  </div>
+</nav>
+
+<div class="page-wrapper">
+  <div class="container">
+    <h1 class="section-title mt-4">Panel de <span>Administración</span></h1>
+
+    <div class="admin-grid">
+      <!-- PARTIDOS -->
+      <div>
+        <div class="tabs mb-3">
+          <button class="tab-btn active" onclick="filterAdmin(this,'')">Todos</button>
+          <button class="tab-btn" onclick="filterAdmin(this,'UPCOMING')">Próximos</button>
+          <button class="tab-btn" onclick="filterAdmin(this,'LIVE')">En Vivo</button>
+          <button class="tab-btn" onclick="filterAdmin(this,'FINISHED')">Finalizados</button>
+        </div>
+        <div id="admin-matches"><div class="spinner"></div></div>
+      </div>
+
+      <!-- PANEL LATERAL: Resultado + Usuarios -->
+      <div>
+        <div class="admin-section mb-3">
+          <h3>📊 Estadísticas</h3>
+          <div id="admin-stats"><div class="spinner"></div></div>
+        </div>
+        <div class="admin-section">
+          <h3>👥 Usuarios</h3>
+          <div id="admin-users"><div class="spinner"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RESULTADO -->
+<div class="modal-overlay" id="modal-result">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="result-match-title">Cargar Resultado</span>
+      <button class="btn-close" onclick="closeModal('modal-result')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="result-match-id">
+      <div class="match-teams mb-3" id="result-teams"></div>
+
+      <div class="score-input-group">
+        <div>
+          <input class="score-input" id="res-a" type="number" min="0" max="20" value="0">
+          <div class="score-team-name" id="res-team-a">Local</div>
+        </div>
+        <div class="score-separator">—</div>
+        <div>
+          <input class="score-input" id="res-b" type="number" min="0" max="20" value="0">
+          <div class="score-team-name" id="res-team-b">Visitante</div>
+        </div>
+      </div>
+
+      <hr class="divider">
+      <h4 style="font-size:.85rem;font-weight:700;margin-bottom:.75rem;color:var(--c-text-dim)">Datos Bonus (para calcular bonus)</h4>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+        <div class="form-group">
+          <label class="form-label">Primer Goleador</label>
+          <input class="form-input" id="res-scorer" type="text" placeholder="Apellido">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Jugador del partido</label>
+          <input class="form-input" id="res-mvp" type="text" placeholder="Apellido">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tarjetas totales</label>
+          <input class="form-input" id="res-cards" type="number" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Córners totales</label>
+          <input class="form-input" id="res-corners" type="number" min="0">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-result')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveResult()">✅ Guardar y Calcular Puntos</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+Auth.require();
+const user = Auth.getUser();
+if (!user?.isAdmin) {
+  Toast.error('Acceso denegado', 'Solo administradores');
+  setTimeout(() => location.href = '/', 2000);
+}
+document.getElementById('nav-avatar').textContent = user?.avatar || '⚽';
+
+let allAdminMatches = [];
+let adminFilter = '';
+
+async function loadAdminData() {
+  const [matches, users] = await Promise.all([
+    api.admin.matches(),
+    api.admin.users(),
+  ]);
+  allAdminMatches = matches;
+  renderAdminMatches();
+  renderAdminUsers(users);
+  renderAdminStats(matches);
+}
+
+function filterAdmin(btn, status) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  adminFilter = status;
+  renderAdminMatches();
+}
+
+const STATUS_LABEL = { UPCOMING:'Próximo', LIVE:'EN VIVO', FINISHED:'Finalizado' };
+const STATUS_CLASS = { UPCOMING:'badge-upcoming', LIVE:'badge-live', FINISHED:'badge-finished' };
+
+function renderAdminMatches() {
+  const filtered = adminFilter
+    ? allAdminMatches.filter(m => m.status === adminFilter)
+    : allAdminMatches;
+  const el = document.getElementById('admin-matches');
+  if (!filtered.length) {
+    el.innerHTML = '<div class="empty-state"><p>Sin partidos</p></div>';
+    return;
+  }
+  el.innerHTML = filtered.sort((a,b) => new Date(a.date)-new Date(b.date)).map(m => `
+    <div class="match-admin-row">
+      <div style="flex:1;min-width:0">
+        <div class="match-admin-teams">${m.teamAFlag}${m.teamAName} vs ${m.teamBName}${m.teamBFlag}</div>
+        <div class="match-admin-date">${Fmt.datetime(m.date)} · ${m.city}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
+        ${m.resultA !== null ? `<span class="badge badge-gold">${m.resultA}–${m.resultB}</span>` : ''}
+        <span class="badge ${STATUS_CLASS[m.status]}">${STATUS_LABEL[m.status]}</span>
+        <select class="status-select" onchange="changeStatus('${m.id}', this.value)">
+          <option value="UPCOMING" ${m.status==='UPCOMING'?'selected':''}>Próximo</option>
+          <option value="LIVE"     ${m.status==='LIVE'?'selected':''}>En Vivo</option>
+          <option value="FINISHED" ${m.status==='FINISHED'?'selected':''}>Finalizado</option>
+        </select>
+        <button onclick="toggleFeatured('${m.id}', ${!m.featured})" class="btn btn-secondary btn-sm" title="${m.featured?'Quitar destacado':'Destacar'}">
+          ${m.featured ? '⭐' : '☆'}
+        </button>
+        <button onclick="openResult('${m.id}')" class="btn btn-primary btn-sm">Resultado</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderAdminUsers(users) {
+  const el = document.getElementById('admin-users');
+  el.innerHTML = users.map(u => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid var(--c-border);gap:.5rem">
+      <div style="display:flex;align-items:center;gap:.5rem;min-width:0">
+        <span style="font-size:1.25rem">${u.avatar}</span>
+        <div>
+          <div style="font-size:.85rem;font-weight:600">${u.displayName}</div>
+          <div style="font-size:.72rem;color:var(--c-text-dim)">${u.email}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:.4rem;flex-shrink:0">
+        ${u.isAdmin ? '<span class="badge badge-gold">Admin</span>' : ''}
+        <button onclick="toggleAdmin('${u.id}', ${!u.isAdmin})" class="btn btn-secondary btn-sm" style="padding:.25rem .5rem;font-size:.7rem">${u.isAdmin ? 'Quitar Admin' : 'Hacer Admin'}</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderAdminStats(matches) {
+  const total = matches.length;
+  const finished = matches.filter(m => m.status === 'FINISHED').length;
+  const live = matches.filter(m => m.status === 'LIVE').length;
+  const upcoming = matches.filter(m => m.status === 'UPCOMING').length;
+  document.getElementById('admin-stats').innerHTML = `
+    <div class="stats-grid" style="grid-template-columns:1fr 1fr">
+      <div class="stat-card"><div class="stat-value">${total}</div><div class="stat-label">Total</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:var(--c-green)">${finished}</div><div class="stat-label">Finalizados</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:var(--c-red)">${live}</div><div class="stat-label">En Vivo</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:var(--c-sky)">${upcoming}</div><div class="stat-label">Próximos</div></div>
+    </div>`;
+}
+
+async function changeStatus(id, status) {
+  try {
+    await api.admin.setStatus(id, status);
+    const m = allAdminMatches.find(x => x.id === id);
+    if (m) m.status = status;
+    renderAdminMatches();
+    Toast.success('Estado actualizado', status);
+  } catch (err) { Toast.error('Error', err.message); }
+}
+
+async function toggleFeatured(id, featured) {
+  try {
+    await api.admin.setFeatured(id, featured);
+    const m = allAdminMatches.find(x => x.id === id);
+    if (m) m.featured = featured;
+    renderAdminMatches();
+  } catch (err) { Toast.error('Error', err.message); }
+}
+
+async function toggleAdmin(id, isAdmin) {
+  try {
+    await api.admin.updateUser(id, { isAdmin });
+    Toast.success('Usuario actualizado');
+    loadAdminData();
+  } catch (err) { Toast.error('Error', err.message); }
+}
+
+function openResult(matchId) {
+  const m = allAdminMatches.find(x => x.id === matchId);
+  if (!m) return;
+  document.getElementById('result-match-id').value = matchId;
+  document.getElementById('result-match-title').textContent = `${m.teamAName} vs ${m.teamBName}`;
+  document.getElementById('result-teams').innerHTML = `
+    <div class="team-info"><div class="team-flag">${m.teamAFlag}</div><div class="team-name">${m.teamAName}</div></div>
+    <div class="match-score tbd" style="font-size:1rem">vs</div>
+    <div class="team-info"><div class="team-flag">${m.teamBFlag}</div><div class="team-name">${m.teamBName}</div></div>`;
+  document.getElementById('res-team-a').textContent = m.teamAName;
+  document.getElementById('res-team-b').textContent = m.teamBName;
+  document.getElementById('res-a').value = m.resultA ?? 0;
+  document.getElementById('res-b').value = m.resultB ?? 0;
+  document.getElementById('res-scorer').value = '';
+  document.getElementById('res-mvp').value = '';
+  document.getElementById('res-cards').value = '';
+  document.getElementById('res-corners').value = '';
+  openModal('modal-result');
+}
+
+async function saveResult() {
+  const id = document.getElementById('result-match-id').value;
+  const body = {
+    resultA: parseInt(document.getElementById('res-a').value) || 0,
+    resultB: parseInt(document.getElementById('res-b').value) || 0,
+    realFirstScorer: document.getElementById('res-scorer').value || null,
+    realMvp: document.getElementById('res-mvp').value || null,
+    realCardsCount: document.getElementById('res-cards').value !== '' ? parseInt(document.getElementById('res-cards').value) : null,
+    realCornersCount: document.getElementById('res-corners').value !== '' ? parseInt(document.getElementById('res-corners').value) : null,
+  };
+  try {
+    const { predictionsUpdated } = await api.admin.setResult(id, body);
+    Toast.success('¡Resultado guardado!', `${predictionsUpdated} pronósticos actualizados`);
+    closeModal('modal-result');
+    loadAdminData();
+  } catch (err) { Toast.error('Error', err.message); }
+}
+
+loadAdminData();
+</script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+name: Deploy to Alwaysdata
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    name: SSH Deploy + Restart
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host:     ${{ secrets.ALWAYSDATA_SSH_HOST }}
+          username: ${{ secrets.ALWAYSDATA_SSH_USER }}
+          key:      ${{ secrets.ALWAYSDATA_SSH_KEY }}
+          port:     22
+          script: |
+            set -e
+            cd $HOME/prode2026
+
+            echo "📥 Pulling latest code..."
+            git pull origin main
+
+            echo "📦 Installing dependencies..."
+            npm ci --omit=dev
+
+            echo "🗄️ Running DB migrations..."
+            npx prisma migrate deploy
+
+            echo "🔄 Restarting Alwaysdata site..."
+            curl -s -X POST \
+              "https://api.alwaysdata.com/v1/site/${{ secrets.ALWAYSDATA_SITE_ID }}/restart/" \
+              -u "${{ secrets.ALWAYSDATA_API_KEY }} account=${{ secrets.ALWAYSDATA_ACCOUNT }}:" \
+              -H "Content-Type: application/json"
+
+            echo "✅ Deploy completo!"

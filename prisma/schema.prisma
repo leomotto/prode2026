@@ -1,0 +1,126 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// USERS
+// ============================================================
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  displayName  String
+  avatar       String   @default("⚽")
+  googleId     String?  @unique
+  passwordHash String?  // null si usa solo Google OAuth
+  isAdmin      Boolean  @default(false)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  predictions  Prediction[]
+  sessions     UserSession[]
+
+  @@map("users")
+}
+
+// Sesiones JWT invalidadas (logout)
+model UserSession {
+  id        String   @id @default(uuid())
+  userId    String
+  jwtToken  String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_sessions")
+}
+
+// ============================================================
+// MATCHES
+// ============================================================
+enum MatchStatus {
+  UPCOMING
+  LIVE
+  FINISHED
+}
+
+enum MatchPhase {
+  GRUPOS
+  DIECISEISAVOS
+  OCTAVOS
+  CUARTOS
+  SEMIFINAL
+  TERCER_PUESTO
+  FINAL
+}
+
+model Match {
+  id          String      @id // e.g. "ARG-ALG-GJ1"
+  phase       MatchPhase
+  groupName   String?     // "A"..."L" o null para eliminatorias
+  teamAName   String
+  teamAFlag   String
+  teamACode   String
+  teamBName   String
+  teamBFlag   String
+  teamBCode   String
+  date        DateTime
+  venue       String
+  city        String
+  status      MatchStatus @default(UPCOMING)
+  resultA     Int?        // goles equipo A
+  resultB     Int?        // goles equipo B
+  featured    Boolean     @default(false) // destacado desde admin
+  argentina   Boolean     @default(false) // partido de Argentina
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  predictions Prediction[]
+
+  @@map("matches")
+}
+
+// ============================================================
+// PREDICTIONS
+// ============================================================
+model Prediction {
+  id           String    @id @default(uuid())
+  userId       String
+  matchId      String
+
+  // Pronóstico principal
+  scoreA       Int
+  scoreB       Int
+
+  // Bonus: predicciones especiales
+  firstScorer  String?   // Nombre del primer goleador
+  cardsCount   Int?      // Cantidad total de tarjetas
+  cornersCount Int?      // Cantidad total de córners
+  btts         Boolean?  // Both Teams To Score
+  mvp          String?   // Jugador del partido
+
+  // Puntuación calculada (null = no calculado aún)
+  pointsBase   Int?      // puntos por resultado
+  pointsBonus  Int?      // puntos bonus
+  pointsTotal  Int?      // total
+
+  locked       Boolean   @default(false) // bloqueado cuando match = LIVE
+  calculatedAt DateTime?
+  submittedAt  DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  match Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, matchId])
+  @@map("predictions")
+}

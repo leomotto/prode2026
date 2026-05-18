@@ -1,0 +1,83 @@
+'use strict';
+require('dotenv').config();
+const config = require('./config');
+const Fastify = require('fastify');
+const path = require('path');
+
+const fastify = Fastify({
+  logger: config.NODE_ENV === 'development'
+    ? { level: 'info', transport: { target: 'pino-pretty' } }
+    : { level: 'warn' },
+  trustProxy: true, // Alwaysdata usa proxy reverso
+});
+
+async function bootstrap() {
+  // ── Seguridad ──────────────────────────────────────────────
+  await fastify.register(require('@fastify/helmet'), {
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", 'challenges.cloudflare.com', 'accounts.google.com'],
+        styleSrc:  ["'self'", "'unsafe-inline'", 'fonts.googleapis.com'],
+        fontSrc:   ["'self'", 'fonts.gstatic.com'],
+        imgSrc:    ["'self'", 'data:', 'lh3.googleusercontent.com'],
+        connectSrc:["'self'"],
+        frameSrc:  ["'none'"],
+      },
+    },
+  });
+
+  await fastify.register(require('@fastify/cors'), {
+    origin: config.APP_URL,
+    credentials: true,
+  });
+
+  await fastify.register(require('@fastify/rate-limit'), {
+    global: false, // solo en rutas específicas
+    max: 20,
+    timeWindow: '1 minute',
+  });
+
+  // ── Plugins ────────────────────────────────────────────────
+  await fastify.register(require('./plugins/db'));
+  await fastify.register(require('./plugins/auth'));
+
+  // ── Archivos estáticos ─────────────────────────────────────
+  await fastify.register(require('@fastify/static'), {
+    root: path.join(__dirname, '..', 'public'),
+    prefix: '/',
+    decorateReply: false,
+  });
+
+  // ── API Routes ─────────────────────────────────────────────
+  fastify.register(require('./routes/auth'),        { prefix: '/api/auth' });
+  fastify.register(require('./routes/matches'),     { prefix: '/api/matches' });
+  fastify.register(require('./routes/predictions'), { prefix: '/api/predictions' });
+  fastify.register(require('./routes/rankings'),    { prefix: '/api/rankings' });
+  fastify.register(require('./routes/admin'),       { prefix: '/api/admin' });
+
+  // Rate limit estricto en auth
+  fastify.addHook('onRoute', (routeOptions) => {
+    if (routeOptions.url?.startsWith('/api/auth/login') ||
+        routeOptions.url?.startsWith('/api/auth/register')) {
+      routeOptions.config = { rateLimit: { max: 5, timeWindow: '1 minute' } };
+    }
+  });
+
+  // ── SPA fallback ───────────────────────────────────────────
+  fastify.setNotFoundHandler((request, reply) => {
+    if (request.url.startsWith('/api/')) {
+      return reply.status(404).send({ error: 'Endpoint no encontrado' });
+    }
+    reply.sendFile('index.html');
+  });
+
+  // ── Iniciar servidor ───────────────────────────────────────
+  await fastify.listen({ port: config.PORT, host: config.IP });
+  console.log(`🏆 Prode Mundial 2026 corriendo en ${config.IP}:${config.PORT}`);
+}
+
+bootstrap().catch(err => {
+  console.error('❌ Error al iniciar:', err);
+  process.exit(1);
+});
