@@ -6,6 +6,7 @@
 <title>Dashboard — Prode Mundial 2026</title>
 <meta name="description" content="Tu centro de comando del Prode del Mundial FIFA 2026">
 <link rel="stylesheet" href="/css/main.css">
+<script src="https://cdn.jsdelivr.net/npm/twemoji@14.0.2/dist/twemoji.min.js" crossorigin="anonymous"></script>
 </head>
 <body>
 <nav class="nav">
@@ -13,8 +14,8 @@
     <a href="/" class="nav-logo"><span>🏆</span> PRODE 2026</a>
     <div class="nav-links">
       <a href="/" class="nav-link active">Dashboard</a>
-      <a href="/matches.html" class="nav-link">Partidos</a>
-      <a href="/rankings.html" class="nav-link">Ranking</a>
+      <a href="/matches" class="nav-link">Partidos</a>
+      <a href="/rankings" class="nav-link">Ranking</a>
       <a href="/admin.html" class="nav-link" id="nav-admin" style="display:none">Admin</a>
     </div>
     <div class="nav-user">
@@ -155,9 +156,10 @@ api.matches.all('?status=UPCOMING').then(matches => {
       </div>
       <div class="match-footer">
         <span class="match-venue">📍 ${m.city}</span>
-        <a href="/matches.html" class="btn btn-primary btn-sm">Pronosticar</a>
+        <a href="/matches" class="btn btn-primary btn-sm">Pronosticar</a>
       </div>
     </div>`).join('');
+  renderEmojis(el);
 }).catch(() => {
   document.getElementById('next-matches').innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>Error al cargar partidos</p></div>';
 });

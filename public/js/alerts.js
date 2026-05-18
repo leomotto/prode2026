@@ -1,7 +1,7 @@
 /**
- * alerts.js — Sistema de alertas de partidos próximos sin pronóstico
- * Incluir en cualquier página autenticada junto con api.js
- * Usa la Notifications API del browser si tiene permiso
+ * alerts.js — Notificaciones de partidos próximos
+ * Solo notifica partidos que el usuario activó con el 🔔
+ * Si no activó ninguno, avisa de todos los próximos sin pronóstico
  */
 (function ProdeAlerts() {
   if (!Auth.isLogged()) return;
@@ -11,36 +11,44 @@
       const pending = await api.predictions.pending();
       if (!pending.length) return;
 
-      pending.forEach(match => {
+      const enabledIds = Notify.allEnabled();
+
+      // Filtrar: si tiene alertas personalizadas, solo esos; si no, todos
+      const toAlert = enabledIds.length > 0
+        ? pending.filter(m => enabledIds.includes(m.id))
+        : pending;
+
+      toAlert.forEach(match => {
         const msUntil = new Date(match.date) - Date.now();
         const minUntil = Math.floor(msUntil / 60000);
-        const label = `${match.teamAFlag}${match.teamAName} vs ${match.teamBName}${match.teamBFlag}`;
+        if (msUntil < 0) return; // ya empezó
 
-        // Toast siempre
+        const label = `${match.teamAFlag} ${match.teamAName} vs ${match.teamBName} ${match.teamBFlag}`;
+        const timeStr = minUntil < 60 ? `${minUntil} min` : `${Math.floor(minUntil/60)}h`;
+
         Toast.warn(
-          '⚠️ Partido sin pronóstico',
-          `${label} empieza en ${minUntil < 60 ? minUntil + ' min' : Math.floor(minUntil/60) + 'h'}. <a href="/matches.html" style="color:var(--c-gold)">Pronosticar →</a>`,
-          10000
+          '⚠️ Sin pronóstico',
+          `${label} empieza en ${timeStr}. <a href="/matches" style="color:var(--c-gold);font-weight:700">Pronosticar →</a>`,
+          0 // no auto-cerrar
         );
 
-        // Browser Notification si hay permiso
         if (Notification.permission === 'granted') {
           new Notification('⚠️ Prode Mundial 2026', {
-            body: `${label} empieza en ${minUntil} min y no hiciste tu pronóstico.`,
+            body: `${match.teamAName} vs ${match.teamBName} empieza en ${timeStr} — ¡sin pronóstico!`,
             icon: '/favicon.ico',
-            tag: match.id,
+            tag: `prode-${match.id}`,
           });
         }
       });
     } catch { /* silencioso */ }
   }
 
-  // Pedir permiso de notificaciones
+  // Pedir permiso de notificaciones del navegador
   if (Notification.permission === 'default') {
-    Notification.requestPermission().catch(() => {});
+    // No pedimos automáticamente — lo hacemos cuando activan el bell
   }
 
-  // Chequear al cargar y cada 5 minutos
+  // Chequear al cargar + cada 5 minutos
   checkPending();
   setInterval(checkPending, 5 * 60 * 1000);
 })();

@@ -5,6 +5,89 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Partidos — Prode Mundial 2026</title>
 <link rel="stylesheet" href="/css/main.css">
+<script src="https://cdn.jsdelivr.net/npm/twemoji@14.0.2/dist/twemoji.min.js" crossorigin="anonymous"></script>
+<style>
+/* ── FIXTURE REDESIGN ─────────────────────────────── */
+.fixture-group{margin-bottom:2.5rem}
+.group-header{
+  display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem;
+  padding:.5rem 1rem;border-radius:var(--radius);
+  background:linear-gradient(135deg,rgba(245,197,24,.12),rgba(245,197,24,.04));
+  border-left:3px solid var(--c-gold);
+}
+.group-badge{
+  font-family:'Bebas Neue',sans-serif;font-size:1.5rem;
+  color:var(--c-gold);letter-spacing:.05em;line-height:1
+}
+.group-subtitle{font-size:.78rem;color:var(--c-text-dim);text-transform:uppercase;letter-spacing:.08em}
+.group-count{margin-left:auto;font-size:.75rem;color:var(--c-text-dim)}
+
+/* ── MATCH CARD REDISEÑADO ─────────────────────────── */
+.fixture-card{
+  background:var(--c-navy-2);border:1px solid var(--c-border);
+  border-radius:var(--radius-lg);margin-bottom:.625rem;
+  overflow:hidden;transition:var(--transition);position:relative;
+}
+.fixture-card:hover{border-color:rgba(245,197,24,.35);transform:translateY(-1px);box-shadow:0 4px 20px rgba(0,0,0,.25)}
+.fixture-card.argentina{border-color:rgba(116,185,255,.4);background:linear-gradient(135deg,rgba(116,185,255,.06),var(--c-navy-2))}
+.fixture-card.featured{border-color:rgba(245,197,24,.5);background:linear-gradient(135deg,rgba(245,197,24,.08),var(--c-navy-2))}
+.fixture-card.live-match{border-color:rgba(255,71,71,.6);animation:pulse-border 2s ease-in-out infinite}
+@keyframes pulse-border{0%,100%{border-color:rgba(255,71,71,.6)}50%{border-color:rgba(255,71,71,1)}}
+
+/* Top bar */
+.fc-topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.4rem .875rem;background:rgba(0,0,0,.2);font-size:.72rem;gap:.5rem
+}
+.fc-meta{display:flex;align-items:center;gap:.4rem;flex-wrap:wrap}
+.fc-actions{display:flex;align-items:center;gap:.4rem}
+
+/* Main content */
+.fc-body{display:flex;align-items:center;padding:.75rem .875rem;gap:.5rem}
+
+/* Team columns */
+.fc-team{flex:1;display:flex;flex-direction:column;align-items:center;gap:.3rem;min-width:0}
+.fc-team.away{align-items:center}
+.fc-flag{font-size:2rem;line-height:1;display:block}
+.fc-flag img{width:2rem;height:2rem;border-radius:50%;object-fit:cover}
+.fc-name{font-size:.78rem;font-weight:700;color:var(--c-text);text-align:center;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100px}
+
+/* Score / VS center */
+.fc-center{display:flex;flex-direction:column;align-items:center;gap:.2rem;min-width:90px}
+.fc-score-main{font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--c-gold);letter-spacing:.05em;line-height:1}
+.fc-score-main.tbd{font-size:1rem;color:var(--c-text-dim);font-family:inherit;font-weight:700}
+.fc-time{font-size:.8rem;font-weight:700;color:var(--c-sky)}
+.fc-live-dot{display:inline-block;width:6px;height:6px;background:var(--c-red);border-radius:50%;margin-right:4px;animation:blink 1s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* Footer bar */
+.fc-footer{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.4rem .875rem;border-top:1px solid rgba(255,255,255,.05);gap:.5rem;flex-wrap:wrap
+}
+.fc-venue{font-size:.7rem;color:var(--c-text-dim);display:flex;align-items:center;gap:.3rem}
+
+/* Predicción inline */
+.fc-pred{
+  display:flex;align-items:center;gap:.5rem;background:rgba(0,0,0,.25);
+  border-radius:6px;padding:.3rem .6rem;font-size:.78rem
+}
+.fc-pred-score{font-weight:700;color:var(--c-gold)}
+.fc-pred-pts{font-size:.7rem;color:var(--c-green)}
+
+/* Bell button */
+.btn-bell{
+  background:none;border:1px solid var(--c-border);border-radius:6px;
+  padding:.25rem .45rem;cursor:pointer;font-size:.85rem;transition:var(--transition);
+  color:var(--c-text-dim);line-height:1
+}
+.btn-bell:hover,.btn-bell.active{border-color:var(--c-gold);color:var(--c-gold);background:var(--c-gold-dim)}
+.btn-bell.active{background:var(--c-gold-dim)}
+
+/* Tabs scrollable en mobile */
+.tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;white-space:nowrap;display:flex;gap:.375rem;padding-bottom:.25rem}
+.tabs::-webkit-scrollbar{display:none}
+</style>
 </head>
 <body>
 <nav class="nav">
@@ -12,9 +95,9 @@
     <a href="/" class="nav-logo"><span>🏆</span> PRODE 2026</a>
     <div class="nav-links">
       <a href="/" class="nav-link">Dashboard</a>
-      <a href="/matches.html" class="nav-link active">Partidos</a>
-      <a href="/rankings.html" class="nav-link">Ranking</a>
-      <a href="/admin.html" class="nav-link" id="nav-admin" style="display:none">Admin</a>
+      <a href="/matches" class="nav-link active">Partidos</a>
+      <a href="/rankings" class="nav-link">Ranking</a>
+      <a href="/admin" class="nav-link" id="nav-admin" style="display:none">Admin</a>
     </div>
     <div class="nav-user">
       <div class="nav-avatar" id="nav-avatar">⚽</div>
@@ -25,18 +108,27 @@
 
 <div class="page-wrapper">
   <div class="container">
-    <h1 class="section-title mt-4">Partidos <span>& Pronósticos</span></h1>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-top:1.5rem;margin-bottom:1rem">
+      <h1 class="section-title" style="margin:0">Partidos <span>& Pronósticos</span></h1>
+      <div style="display:flex;align-items:center;gap:.5rem;font-size:.78rem;color:var(--c-text-dim)">
+        <span>🕐</span> Horario Argentina (UTC-3)
+      </div>
+    </div>
 
     <!-- FILTROS -->
     <div class="tabs mb-3" id="phase-tabs">
-      <button class="tab-btn active" data-phase="" onclick="filterPhase(this, '')">Todos</button>
-      <button class="tab-btn" data-phase="arg" onclick="filterPhase(this, 'arg')">🇦🇷 Argentina</button>
-      <button class="tab-btn" data-phase="GRUPOS" onclick="filterPhase(this, 'GRUPOS')">Grupos</button>
-      <button class="tab-btn" data-phase="DIECISEISAVOS" onclick="filterPhase(this, 'DIECISEISAVOS')">1/32</button>
-      <button class="tab-btn" data-phase="OCTAVOS" onclick="filterPhase(this, 'OCTAVOS')">Octavos</button>
-      <button class="tab-btn" data-phase="CUARTOS" onclick="filterPhase(this, 'CUARTOS')">Cuartos</button>
-      <button class="tab-btn" data-phase="SEMIFINAL" onclick="filterPhase(this, 'SEMIFINAL')">Semis</button>
-      <button class="tab-btn" data-phase="FINAL" onclick="filterPhase(this, 'FINAL')">Final</button>
+      <button class="tab-btn active" data-filter="" onclick="setFilter(this,'')">🌐 Todos</button>
+      <button class="tab-btn" data-filter="arg" onclick="setFilter(this,'arg')">🇦🇷 Argentina</button>
+      <button class="tab-btn" data-filter="UPCOMING" onclick="setFilter(this,'UPCOMING')">⏱ Próximos</button>
+      <button class="tab-btn" data-filter="LIVE" onclick="setFilter(this,'LIVE')">🔴 En Vivo</button>
+      <button class="tab-btn" data-filter="FINISHED" onclick="setFilter(this,'FINISHED')">✅ Finalizados</button>
+      <button class="tab-btn" data-filter="GRUPOS" onclick="setFilter(this,'GRUPOS')">Grupos</button>
+      <button class="tab-btn" data-filter="DIECISEISAVOS" onclick="setFilter(this,'DIECISEISAVOS')">1/32</button>
+      <button class="tab-btn" data-filter="OCTAVOS" onclick="setFilter(this,'OCTAVOS')">Octavos</button>
+      <button class="tab-btn" data-filter="CUARTOS" onclick="setFilter(this,'CUARTOS')">Cuartos</button>
+      <button class="tab-btn" data-filter="SEMIFINAL" onclick="setFilter(this,'SEMIFINAL')">Semis</button>
+      <button class="tab-btn" data-filter="FINAL" onclick="setFilter(this,'FINAL')">🏆 Final</button>
+      <button class="tab-btn" data-filter="notify" onclick="setFilter(this,'notify')">🔔 Mis alertas</button>
     </div>
 
     <div id="matches-list"><div class="spinner"></div></div>
@@ -51,7 +143,7 @@
       <button class="btn-close" onclick="closeModal('modal-prediction')">✕</button>
     </div>
     <div class="modal-body">
-      <div class="match-teams" id="modal-teams" style="margin-bottom:1rem"></div>
+      <div id="modal-teams" style="display:flex;align-items:center;justify-content:center;gap:1.5rem;margin-bottom:1.25rem;font-size:1.5rem"></div>
       <form id="form-prediction">
         <input type="hidden" id="pred-match-id">
         <input type="hidden" id="pred-id">
@@ -66,30 +158,27 @@
             <div class="score-team-name" id="pred-team-b-name">Visitante</div>
           </div>
         </div>
-
-        <!-- BONUS ACCORDION -->
         <div class="accordion-header" id="bonus-header" onclick="toggleAccordion()">
-          <span>🎯 Predicciones Bonus (opcional)</span>
-          <span class="chevron">▼</span>
+          <span>🎯 Predicciones Bonus (opcional)</span><span class="chevron">▼</span>
         </div>
         <div class="accordion-body" id="bonus-body">
           <div class="accordion-content">
             <div class="form-group">
-              <label class="form-label">Primer Goleador (+3 pts)</label>
+              <label class="form-label">Primer Goleador <span style="color:var(--c-gold)">+3 pts</span></label>
               <input class="form-input" id="pred-scorer" type="text" placeholder="Ej: Messi" maxlength="100">
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
               <div class="form-group">
-                <label class="form-label">Tarjetas totales (+1 pt)</label>
+                <label class="form-label">Tarjetas <span style="color:var(--c-gold)">+1</span></label>
                 <input class="form-input" id="pred-cards" type="number" min="0" max="20" placeholder="—">
               </div>
               <div class="form-group">
-                <label class="form-label">Córners totales (+1 pt)</label>
+                <label class="form-label">Córners <span style="color:var(--c-gold)">+1</span></label>
                 <input class="form-input" id="pred-corners" type="number" min="0" max="30" placeholder="—">
               </div>
             </div>
             <div class="form-group">
-              <label class="form-label">Ambos anotan (BTTS) (+1 pt)</label>
+              <label class="form-label">Ambos anotan (BTTS) <span style="color:var(--c-gold)">+1</span></label>
               <select class="form-input" id="pred-btts">
                 <option value="">No sé</option>
                 <option value="true">Sí, ambos anotan</option>
@@ -97,14 +186,15 @@
               </select>
             </div>
             <div class="form-group">
-              <label class="form-label">Jugador del partido (+2 pts)</label>
+              <label class="form-label">Jugador del partido <span style="color:var(--c-gold)">+2</span></label>
               <input class="form-input" id="pred-mvp" type="text" placeholder="Ej: De Paul" maxlength="100">
             </div>
           </div>
         </div>
-
         <div id="pred-points-preview" class="mt-2" style="display:none">
-          <div class="badge badge-gold" style="padding:.4rem .75rem">Tu último pronóstico: <strong id="pred-pts-val"></strong> puntos</div>
+          <div class="badge badge-gold" style="padding:.4rem .75rem">
+            Puntos actuales: <strong id="pred-pts-val"></strong>
+          </div>
         </div>
       </form>
     </div>
@@ -128,104 +218,188 @@ let allMatches = [];
 let myPredictions = {};
 let currentFilter = '';
 
-const STATUS_LABEL = { UPCOMING:'Próximo', LIVE:'EN VIVO', FINISHED:'Finalizado' };
+const PHASE_LABEL = {
+  GRUPOS:'Grupos', DIECISEISAVOS:'1/32 de Final', OCTAVOS:'Octavos de Final',
+  CUARTOS:'Cuartos de Final', SEMIFINAL:'Semifinal', TERCER_PUESTO:'3er Puesto', FINAL:'🏆 Final'
+};
 const STATUS_CLASS = { UPCOMING:'badge-upcoming', LIVE:'badge-live', FINISHED:'badge-finished' };
+const STATUS_LABEL = { UPCOMING:'Próximo', LIVE:'🔴 EN VIVO', FINISHED:'Final' };
 
 async function loadAll() {
-  const [matches, preds] = await Promise.all([
-    api.matches.all(),
-    api.predictions.mine(),
-  ]);
+  const [matches, preds] = await Promise.all([api.matches.all(), api.predictions.mine()]);
   allMatches = matches;
   myPredictions = Object.fromEntries(preds.map(p => [p.matchId, p]));
   renderMatches();
 }
 
-function filterPhase(btn, phase) {
+function setFilter(btn, filter) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  currentFilter = phase;
+  currentFilter = filter;
   renderMatches();
 }
 
 function renderMatches() {
   let filtered = allMatches;
-  if (currentFilter === 'arg') filtered = allMatches.filter(m => m.argentina);
-  else if (currentFilter) filtered = allMatches.filter(m => m.phase === currentFilter);
+  if      (currentFilter === 'arg')    filtered = allMatches.filter(m => m.argentina);
+  else if (currentFilter === 'notify') filtered = allMatches.filter(m => Notify.isOn(m.id));
+  else if (currentFilter === 'UPCOMING' || currentFilter === 'LIVE' || currentFilter === 'FINISHED')
+    filtered = allMatches.filter(m => m.status === currentFilter);
+  else if (currentFilter)
+    filtered = allMatches.filter(m => m.phase === currentFilter);
 
   const el = document.getElementById('matches-list');
+
   if (!filtered.length) {
     el.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>No hay partidos en esta categoría</p></div>';
     return;
   }
 
-  // Agrupar por fase
+  // Agrupar: por fase knockout, por grupo en grupos
   const groups = {};
   for (const m of filtered) {
-    const key = m.groupName ? `Grupo ${m.groupName}` : m.phase.replace('_', ' ');
+    let key;
+    if (m.phase === 'GRUPOS') key = `Grupo ${m.groupName || '?'}`;
+    else key = PHASE_LABEL[m.phase] || m.phase;
     if (!groups[key]) groups[key] = [];
     groups[key].push(m);
   }
 
-  el.innerHTML = Object.entries(groups).map(([groupKey, gMatches]) => `
-    <div class="mb-4">
-      <h3 style="font-size:.85rem;text-transform:uppercase;letter-spacing:.1em;color:var(--c-text-dim);margin-bottom:.75rem;padding-left:.25rem">${groupKey}</h3>
-      <div class="matches-grid">
-        ${gMatches.sort((a,b) => new Date(a.date)-new Date(b.date)).map(renderMatchCard).join('')}
-      </div>
-    </div>`).join('');
+  const sortedGroups = Object.entries(groups).sort(([a],[b]) => a.localeCompare(b, 'es'));
+
+  el.innerHTML = sortedGroups.map(([groupKey, gMatches]) => {
+    const sorted = gMatches.sort((a,b) => new Date(a.date)-new Date(b.date));
+    return `
+      <div class="fixture-group">
+        <div class="group-header">
+          <div>
+            <div class="group-badge">${groupKey}</div>
+          </div>
+          <span class="group-count">${sorted.length} partido${sorted.length !== 1 ? 's':''}</span>
+        </div>
+        ${sorted.map(renderCard).join('')}
+      </div>`;
+  }).join('');
+
+  renderEmojis(el);
 }
 
-function renderMatchCard(m) {
+function renderCard(m) {
   const pred = myPredictions[m.id];
   const hasResult = m.resultA !== null && m.resultB !== null;
   const canPredict = m.status === 'UPCOMING';
+  const isLive = m.status === 'LIVE';
+  const notifyOn = Notify.isOn(m.id);
+
+  const classes = [
+    'fixture-card',
+    m.argentina ? 'argentina' : '',
+    m.featured   ? 'featured'   : '',
+    isLive       ? 'live-match' : '',
+  ].filter(Boolean).join(' ');
 
   return `
-  <div class="match-card ${m.featured ? 'featured' : ''}">
-    <div class="match-header">
-      <div class="match-meta">
-        ${m.argentina ? '<span class="badge badge-arg">🇦🇷</span>' : ''}
-        ${m.featured  ? '<span class="badge badge-gold">⭐</span>' : ''}
-        <span class="badge ${STATUS_CLASS[m.status]}">${STATUS_LABEL[m.status]}</span>
+  <div class="${classes}" id="fc-${m.id}">
+    <!-- TOP BAR -->
+    <div class="fc-topbar">
+      <div class="fc-meta">
+        ${m.argentina ? '<span class="badge badge-arg" style="font-size:.68rem">🇦🇷 ARG</span>' : ''}
+        ${m.featured  ? '<span class="badge badge-gold" style="font-size:.68rem">⭐</span>' : ''}
+        <span class="badge ${STATUS_CLASS[m.status]}" style="font-size:.68rem">${STATUS_LABEL[m.status]}</span>
       </div>
-      <div class="text-xs text-dim">${Fmt.datetime(m.date)}</div>
+      <div class="fc-actions">
+        ${pred ? `<div class="fc-pred">
+          <span class="fc-pred-score">${pred.scoreA}—${pred.scoreB}</span>
+          ${pred.pointsTotal !== null ? `<span class="fc-pred-pts">+${pred.pointsTotal}pts</span>` : ''}
+        </div>` : ''}
+        ${canPredict
+          ? `<button class="btn btn-primary btn-sm" onclick="openPrediction('${m.id}')">
+               ${pred ? '✏️' : '⚽ Pronosticar'}
+             </button>`
+          : ''}
+        ${canPredict
+          ? `<button class="btn-bell ${notifyOn ? 'active' : ''}" id="bell-${m.id}"
+               onclick="toggleNotify('${m.id}')" title="${notifyOn ? 'Quitar alerta':'Activar alerta'}">
+               ${notifyOn ? '🔔' : '🔕'}
+             </button>`
+          : ''}
+      </div>
     </div>
-    <div class="match-teams">
-      <div class="team-info"><div class="team-flag">${m.teamAFlag}</div><div class="team-name">${m.teamAName}</div></div>
-      ${hasResult
-        ? `<div class="match-score">${m.resultA} <span class="separator">:</span> ${m.resultB}</div>`
-        : `<div class="match-score tbd">VS</div>`}
-      <div class="team-info"><div class="team-flag">${m.teamBFlag}</div><div class="team-name">${m.teamBName}</div></div>
+
+    <!-- BODY: Teams + Score -->
+    <div class="fc-body">
+      <div class="fc-team">
+        <span class="fc-flag">${m.teamAFlag}</span>
+        <div class="fc-name">${m.teamAName}</div>
+      </div>
+
+      <div class="fc-center">
+        ${hasResult
+          ? `<div class="fc-score-main">${m.resultA} <span style="opacity:.4">:</span> ${m.resultB}</div>`
+          : isLive
+            ? `<div class="fc-score-main tbd"><span class="fc-live-dot"></span>EN VIVO</div>`
+            : `<div class="fc-time">${Fmt.time(m.date)}</div>
+               <div class="fc-score-main tbd">VS</div>`}
+        <div style="font-size:.68rem;color:var(--c-text-dim)">${Fmt.date(m.date)}</div>
+      </div>
+
+      <div class="fc-team away">
+        <span class="fc-flag">${m.teamBFlag}</span>
+        <div class="fc-name">${m.teamBName}</div>
+      </div>
     </div>
-    ${pred ? `
-      <div style="background:var(--c-navy-3);border-radius:var(--radius);padding:.6rem .9rem;margin-top:.75rem;display:flex;align-items:center;justify-content:space-between">
-        <span class="text-xs text-dim">Tu pronóstico: <strong style="color:var(--c-gold)">${pred.scoreA} — ${pred.scoreB}</strong></span>
-        ${pred.pointsTotal !== null ? `<span class="badge badge-gold">${pred.pointsTotal} pts</span>` : ''}
-        ${canPredict ? `<button class="btn btn-secondary btn-sm" onclick="openPrediction('${m.id}')">Editar</button>` : ''}
-      </div>` : ''}
-    <div class="match-footer">
-      <span class="match-venue">📍 ${m.city}</span>
-      ${canPredict && !pred ? `<button class="btn btn-primary btn-sm" onclick="openPrediction('${m.id}')">Pronosticar</button>` : ''}
-      ${!canPredict && !pred && m.status !== 'UPCOMING' ? `<span class="text-xs text-dim">Sin pronóstico</span>` : ''}
+
+    <!-- FOOTER -->
+    <div class="fc-footer">
+      <span class="fc-venue">📍 ${m.city}</span>
+      ${hasResult && pred
+        ? `<span style="font-size:.72rem;color:var(--c-text-dim)">
+             Resultado: <strong>${m.resultA}–${m.resultB}</strong>
+             ${pred.pointsTotal !== null
+               ? `→ <span class="badge badge-gold">${pred.pointsTotal} pts</span>`
+               : ''}
+           </span>`
+        : ''}
     </div>
   </div>`;
+}
+
+function toggleNotify(matchId) {
+  if (Notification.permission === 'default') {
+    Notification.requestPermission().then(p => {
+      if (p === 'granted') activateNotify(matchId);
+      else Toast.warn('Notificaciones bloqueadas', 'Permitilas en la configuración del navegador');
+    });
+  } else {
+    activateNotify(matchId);
+  }
+}
+
+function activateNotify(matchId) {
+  const on = Notify.toggle(matchId);
+  const btn = document.getElementById(`bell-${matchId}`);
+  if (btn) {
+    btn.textContent = on ? '🔔' : '🔕';
+    btn.classList.toggle('active', on);
+    btn.title = on ? 'Quitar alerta' : 'Activar alerta';
+  }
+  Toast.show(on ? 'Alerta activada' : 'Alerta desactivada', null, on ? 'success' : 'info', 2500);
 }
 
 function openPrediction(matchId) {
   const m = allMatches.find(x => x.id === matchId);
   if (!m) return;
   const pred = myPredictions[matchId];
-
   document.getElementById('modal-match-title').textContent = `${m.teamAName} vs ${m.teamBName}`;
   document.getElementById('modal-teams').innerHTML = `
-    <div class="team-info"><div class="team-flag">${m.teamAFlag}</div><div class="team-name">${m.teamAName}</div></div>
-    <div class="match-score tbd" style="font-size:1rem">vs</div>
-    <div class="team-info"><div class="team-flag">${m.teamBFlag}</div><div class="team-name">${m.teamBName}</div></div>`;
+    <span style="font-size:2rem">${m.teamAFlag}</span>
+    <span style="font-size:.9rem;color:var(--c-text-dim);font-weight:700">vs</span>
+    <span style="font-size:2rem">${m.teamBFlag}</span>`;
+  renderEmojis(document.getElementById('modal-teams'));
   document.getElementById('pred-match-id').value = matchId;
+  document.getElementById('pred-id').value = pred?.id || '';
   document.getElementById('pred-team-a-name').textContent = m.teamAName;
   document.getElementById('pred-team-b-name').textContent = m.teamBName;
-  document.getElementById('pred-id').value = pred?.id || '';
   document.getElementById('pred-score-a').value = pred?.scoreA ?? 0;
   document.getElementById('pred-score-b').value = pred?.scoreB ?? 0;
   document.getElementById('pred-scorer').value = pred?.firstScorer || '';
@@ -233,21 +407,17 @@ function openPrediction(matchId) {
   document.getElementById('pred-corners').value = pred?.cornersCount ?? '';
   document.getElementById('pred-btts').value = pred?.btts === true ? 'true' : pred?.btts === false ? 'false' : '';
   document.getElementById('pred-mvp').value = pred?.mvp || '';
-
   const ppEl = document.getElementById('pred-points-preview');
   if (pred?.pointsTotal !== null && pred?.pointsTotal !== undefined) {
     document.getElementById('pred-pts-val').textContent = pred.pointsTotal;
     ppEl.style.display = '';
-  } else { ppEl.style.display = 'none'; }
-
+  } else ppEl.style.display = 'none';
   openModal('modal-prediction');
 }
 
 function toggleAccordion() {
-  const h = document.getElementById('bonus-header');
-  const b = document.getElementById('bonus-body');
-  h.classList.toggle('open');
-  b.classList.toggle('open');
+  document.getElementById('bonus-header').classList.toggle('open');
+  document.getElementById('bonus-body').classList.toggle('open');
 }
 
 async function savePrediction() {
@@ -255,7 +425,6 @@ async function savePrediction() {
   const predId  = document.getElementById('pred-id').value;
   const btn = document.getElementById('btn-save-pred');
   btn.disabled = true; btn.textContent = 'Guardando...';
-
   const body = {
     matchId,
     scoreA: parseInt(document.getElementById('pred-score-a').value) || 0,
@@ -266,14 +435,8 @@ async function savePrediction() {
     btts: document.getElementById('pred-btts').value === 'true' ? true : document.getElementById('pred-btts').value === 'false' ? false : null,
     mvp: document.getElementById('pred-mvp').value || null,
   };
-
   try {
-    let saved;
-    if (predId) {
-      saved = await api.predictions.update(predId, body);
-    } else {
-      saved = await api.predictions.create(body);
-    }
+    const saved = predId ? await api.predictions.update(predId, body) : await api.predictions.create(body);
     myPredictions[matchId] = saved;
     Toast.success('¡Pronóstico guardado!', `${body.scoreA} — ${body.scoreB}`);
     closeModal('modal-prediction');
@@ -287,7 +450,7 @@ async function savePrediction() {
 
 loadAll().catch(() => {
   document.getElementById('matches-list').innerHTML =
-    '<div class="empty-state"><div class="icon">❌</div><p>Error al cargar partidos</p></div>';
+    '<div class="empty-state"><div class="icon">❌</div><p>Error al cargar partidos. Recargá la página.</p></div>';
 });
 </script>
 </body>

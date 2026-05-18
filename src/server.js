@@ -17,12 +17,12 @@ async function bootstrap() {
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", 'challenges.cloudflare.com', 'accounts.google.com'],
-        styleSrc:  ["'self'", "'unsafe-inline'", 'fonts.googleapis.com'],
-        fontSrc:   ["'self'", 'fonts.gstatic.com'],
-        imgSrc:    ["'self'", 'data:', 'lh3.googleusercontent.com'],
-        connectSrc:["'self'"],
-        frameSrc:  ["'none'"],
+        scriptSrc:  ["'self'", "'unsafe-inline'", 'challenges.cloudflare.com', 'accounts.google.com', 'cdn.jsdelivr.net'],
+        styleSrc:   ["'self'", "'unsafe-inline'", 'fonts.googleapis.com'],
+        fontSrc:    ["'self'", 'fonts.gstatic.com'],
+        imgSrc:     ["'self'", 'data:', 'lh3.googleusercontent.com', 'cdn.jsdelivr.net', 'twemoji.maxcdn.com'],
+        connectSrc: ["'self'"],
+        frameSrc:   ["'none'"],
       },
     },
   });

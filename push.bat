@@ -1,3 +1,3 @@
 git add -A
-git commit -m "fix: clean URLs, Turnstile key server-side, sanitize .env.example, fix DB name"
+git commit -m "feat: fixture redesign, flags emoji, Argentina timezone 24h, notification bells per match"
 git push origin main

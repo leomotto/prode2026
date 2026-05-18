@@ -103,26 +103,61 @@ const Toast = {
   warn:    (t, m) => Toast.show(t, m, 'warning'),
 };
 
-/* ── DATE UTILS ──────────────────────────────────────────── */
+/* ── DATE UTILS (Horario Argentina UTC-3) ───────────────── */
+const TZ = 'America/Argentina/Buenos_Aires';
 const Fmt = {
   date(iso) {
-    const d = new Date(iso);
-    return d.toLocaleDateString('es-AR', { weekday:'short', day:'numeric', month:'short' });
+    return new Date(iso).toLocaleDateString('es-AR', {
+      weekday:'short', day:'numeric', month:'short', timeZone: TZ
+    });
   },
   time(iso) {
-    return new Date(iso).toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' });
+    return new Date(iso).toLocaleTimeString('es-AR', {
+      hour:'2-digit', minute:'2-digit', hour12: false, timeZone: TZ
+    }) + 'hs';
   },
   datetime(iso) { return `${this.date(iso)} • ${this.time(iso)}`; },
   relativeTime(iso) {
     const diff = new Date(iso) - Date.now();
     const h = Math.floor(diff / 3600000);
     const m = Math.floor((diff % 3600000) / 60000);
-    if (diff < 0) return 'Hace un momento';
+    if (diff < 0) return 'Finalizado';
     if (h > 24) return `En ${Math.floor(h/24)} días`;
     if (h > 0)  return `En ${h}h ${m}m`;
-    return `En ${m} minutos`;
+    return `¡En ${m} min!`;
   },
 };
+
+/* ── NOTIFY (preferencias por partido, localStorage) ────── */
+const Notify = {
+  KEY: id => `prode_notify_${id}`,
+  isOn(matchId)  { return localStorage.getItem(this.KEY(matchId)) === '1'; },
+  enable(matchId)  { localStorage.setItem(this.KEY(matchId), '1'); },
+  disable(matchId) { localStorage.removeItem(this.KEY(matchId)); },
+  toggle(matchId) {
+    if (this.isOn(matchId)) { this.disable(matchId); return false; }
+    else                    { this.enable(matchId);  return true; }
+  },
+  allEnabled() {
+    const ids = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('prode_notify_')) ids.push(k.replace('prode_notify_', ''));
+    }
+    return ids;
+  },
+};
+
+/* ── TWEMOJI — renderiza emojis de banderas en todos los browsers ── */
+function renderEmojis(el) {
+  if (window.twemoji && el) {
+    twemoji.parse(el, {
+      base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/',
+      folder: 'svg', ext: '.svg',
+      attributes: () => ({ width: '1.2em', height: '1.2em', style: 'vertical-align:-.15em' })
+    });
+  }
+}
 
 /* ── MODAL HELPER ────────────────────────────────────────── */
 function openModal(id)  { document.getElementById(id)?.classList.add('open'); }
