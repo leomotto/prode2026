@@ -203,11 +203,8 @@ api.predictions.pending().then(pending => {
 }).catch(() => { document.getElementById('stat-pending').textContent = '0'; });
 
 // Próximos partidos
-function teamCode(flag) {
-  try { return [...flag].map(c => String.fromCharCode(c.codePointAt(0) - 0x1F1E6 + 65)).join(''); } catch { return '??'; }
-}
-
 api.matches.all('?status=UPCOMING').then(matches => {
+  dashMatches = matches; // compartir con el modal de pronóstico
   const el = document.getElementById('next-matches');
   const sorted = matches.sort((a,b) => new Date(a.date)-new Date(b.date)).slice(0, 6);
   if (!sorted.length) { el.innerHTML = '<div class="empty-state"><div class="icon">📅</div><p>No hay partidos próximos</p></div>'; return; }

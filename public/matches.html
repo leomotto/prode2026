@@ -105,12 +105,6 @@
         </div>
       </div>
 
-      <!-- Solo MVP bonus -->
-      <div class="form-group" style="margin-top:.5rem">
-        <label class="form-label">🎯 Bonus: ¿Quién será el MVP del partido? <span style="color:var(--gold);font-size:.7rem">+2 pts</span></label>
-        <input class="form-input" id="pred-mvp" type="text" placeholder="Tu respuesta...">
-      </div>
-
       <input type="hidden" id="pred-match-id">
       <input type="hidden" id="pred-id">
     </div>
@@ -277,7 +271,6 @@ function openPrediction(matchId) {
   document.getElementById('stepper-label-b').textContent = m.teamBName;
   document.getElementById('pred-match-id').value = matchId;
   document.getElementById('pred-id').value = pred?.id || '';
-  document.getElementById('pred-mvp').value = pred?.mvp || '';
 
   scoreA = pred?.scoreA ?? 0;
   scoreB = pred?.scoreB ?? 0;
@@ -311,7 +304,7 @@ async function savePrediction() {
   const btn = document.getElementById('btn-save-pred');
   btn.disabled = true; btn.textContent = 'Guardando...';
   try {
-    const body = { matchId, scoreA, scoreB, mvp: document.getElementById('pred-mvp').value || null };
+    const body = { matchId, scoreA, scoreB };
     const saved = predId ? await api.predictions.update(predId, body) : await api.predictions.create(body);
     myPredictions[matchId] = saved;
     Toast.success('¡Pronóstico guardado!', `${scoreA} — ${scoreB}`);
@@ -329,6 +322,19 @@ function Toast_show(title, msg, type, dur) { Toast.show(title, msg, type, dur); 
 loadAll().catch(() => {
   document.getElementById('matches-list').innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>Error al cargar. Recargá la página.</p></div>';
 });
+
+// Auto-refresh silencioso cada 60s para actualizar estados (UPCOMING/LIVE/FINISHED)
+let _refreshTimer = setInterval(async () => {
+  try {
+    const [matches, preds] = await Promise.all([api.matches.all(), api.predictions.mine()]);
+    allMatches = matches;
+    myPredictions = Object.fromEntries(preds.map(p => [p.matchId, p]));
+    renderMatches();
+  } catch { /* ignorar fallos de red silenciosos */ }
+}, 60_000);
+// Limpiar al salir de la página
+window.addEventListener('beforeunload', () => clearInterval(_refreshTimer));
+
 </script>
 </body>
 </html>
