@@ -16,13 +16,15 @@ async function bootstrap() {
   await fastify.register(require('@fastify/helmet'), {
     contentSecurityPolicy: {
       directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc:  ["'self'", "'unsafe-inline'", 'challenges.cloudflare.com', 'accounts.google.com', 'cdn.jsdelivr.net'],
-        styleSrc:   ["'self'", "'unsafe-inline'", 'fonts.googleapis.com'],
-        fontSrc:    ["'self'", 'fonts.gstatic.com'],
-        imgSrc:     ["'self'", 'data:', 'lh3.googleusercontent.com', 'cdn.jsdelivr.net', 'twemoji.maxcdn.com'],
-        connectSrc: ["'self'"],
-        frameSrc:   ["'none'"],
+        defaultSrc:       ["'self'"],
+        scriptSrc:        ["'self'", "'unsafe-inline'", 'challenges.cloudflare.com', 'accounts.google.com', 'cdn.jsdelivr.net'],
+        scriptSrcAttr:    ["'unsafe-inline'"],
+        styleSrc:         ["'self'", "'unsafe-inline'", 'fonts.googleapis.com'],
+        fontSrc:          ["'self'", 'fonts.gstatic.com'],
+        imgSrc:           ["'self'", 'data:', 'lh3.googleusercontent.com', 'cdn.jsdelivr.net', 'twemoji.maxcdn.com', 'raw.githubusercontent.com'],
+        connectSrc:       ["'self'"],
+        frameSrc:         ["'self'", 'challenges.cloudflare.com', 'accounts.google.com'],
+        frameAncestors:   ["'none'"],
       },
     },
   });

@@ -154,7 +154,7 @@ function renderEmojis(el) {
     twemoji.parse(el, {
       base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/',
       folder: 'svg', ext: '.svg',
-      attributes: () => ({ width: '1.2em', height: '1.2em', style: 'vertical-align:-.15em' })
+      attributes: () => ({ style: 'width:1.4em;height:1.4em;vertical-align:-.2em' })
     });
   }
 }
