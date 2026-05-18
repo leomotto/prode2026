@@ -46,7 +46,6 @@ async function bootstrap() {
   await fastify.register(require('@fastify/static'), {
     root: path.join(__dirname, '..', 'public'),
     prefix: '/',
-    decorateReply: false,
   });
 
   // ── API Routes ─────────────────────────────────────────────
