@@ -256,43 +256,83 @@ input,select,textarea{font-family:inherit}
 
 /* ── DARK MODE ── */
 [data-theme="dark"]{
-  --bg:       #0d1117;
-  --surface:  #161b22;
-  --surface-2:#1c2128;
-  --text:     #e6edf3;
-  --text-dim: #8b949e;
-  --text-muted:#6e7681;
-  --border:   rgba(48,54,61,1);
+  --bg:       #0f1117;
+  --surface:  #1a1d27;
+  --surface-2:#222636;
+  --text:     #f0f2f8;
+  --text-dim: #9aa3b8;
+  --text-muted:#6b7694;
+  --border:   rgba(255,255,255,.1);
+  --navy:     #5b8cff;
 }
-[data-theme="dark"] .card{box-shadow:none}
-[data-theme="dark"] .fixture-card{box-shadow:none}
-[data-theme="dark"] .fixture-card:hover{border-color:#388bfd}
-[data-theme="dark"] .badge-phase{background:#21262d;color:#8b949e;border-color:#30363d}
-[data-theme="dark"] .badge-group{background:#1f6feb;color:#fff}
-[data-theme="dark"] .badge-upcoming{background:#0d2149;color:#58a6ff}
-[data-theme="dark"] .badge-finished{background:#0d2b1a;color:#3fb950}
-[data-theme="dark"] .pending-alert{background:#1c1200;border-color:#3d2800}
-[data-theme="dark"] .pending-alert-head{color:#fbbf24}
-[data-theme="dark"] .pending-match-row{border-color:#3d2800}
-[data-theme="dark"] .search-bar{background:var(--surface);border-color:var(--border)}
-[data-theme="dark"] .fc-pred-row{background:#0d2b1a;border-color:#1a4731}
-[data-theme="dark"] .tabs{background:var(--surface);border-color:var(--border)}
-[data-theme="dark"] .tab-btn:hover{background:var(--surface-2)}
-[data-theme="dark"] .group-header{background:var(--surface);border-color:var(--border);border-left-color:var(--gold)}
-[data-theme="dark"] .form-input{background:var(--surface-2);border-color:var(--border);color:var(--text)}
-[data-theme="dark"] .stepper-btn{background:var(--surface-2);border-color:var(--border);color:var(--text)}
+[data-theme="dark"] body{background:var(--bg)}
+[data-theme="dark"] .card{box-shadow:none;border-color:rgba(255,255,255,.1)}
+[data-theme="dark"] .fixture-card{box-shadow:none;border-color:rgba(255,255,255,.1)}
+[data-theme="dark"] .fixture-card:hover{border-color:#5b8cff}
+[data-theme="dark"] .fc-code{color:var(--text)}
+[data-theme="dark"] .fc-name{color:var(--text-dim)}
+[data-theme="dark"] .group-badge{color:var(--text)}
+[data-theme="dark"] .fc-score-disp{color:var(--text)}
+[data-theme="dark"] .badge-phase{background:rgba(255,255,255,.08);color:var(--text-dim);border-color:rgba(255,255,255,.1)}
+[data-theme="dark"] .badge-group{background:#1e3a8a;color:#93c5fd}
+[data-theme="dark"] .badge-upcoming{background:#1e3a8a;color:#93c5fd;border-color:#2563eb}
+[data-theme="dark"] .badge-finished{background:#14532d;color:#86efac;border-color:#16a34a}
+[data-theme="dark"] .badge-live{background:#7f1d1d;color:#fca5a5;border-color:#dc2626}
+[data-theme="dark"] .badge-featured{background:#713f12;color:#fde68a;border-color:#d97706}
+[data-theme="dark"] .pending-alert{background:#1c1a00;border-color:#713f12}
+[data-theme="dark"] .pending-alert-head{color:#fde68a}
+[data-theme="dark"] .pending-match-row{border-color:#3d2f00;color:var(--text)}
+[data-theme="dark"] .pending-teams{color:var(--text)}
+[data-theme="dark"] .search-bar{background:var(--surface-2);border-color:rgba(255,255,255,.12)}
+[data-theme="dark"] .search-bar input{color:var(--text)}
+[data-theme="dark"] .fc-pred-row{background:#14532d;border-color:#16a34a}
+[data-theme="dark"] .fc-pred-label{color:#86efac}
+[data-theme="dark"] .fc-pred-score{color:#f0fdf4}
+[data-theme="dark"] .tabs{background:var(--surface-2);border-color:rgba(255,255,255,.08)}
+[data-theme="dark"] .tab-btn{color:var(--text-dim)}
+[data-theme="dark"] .tab-btn:hover{color:var(--text);background:rgba(255,255,255,.06)}
+[data-theme="dark"] .tab-btn.active{background:#2563eb;color:#fff}
+[data-theme="dark"] .group-header{background:var(--surface-2);border-color:rgba(255,255,255,.08);border-left-color:#5b8cff}
+[data-theme="dark"] .form-input{background:var(--surface-2);border-color:rgba(255,255,255,.12);color:var(--text)}
+[data-theme="dark"] .form-label{color:var(--text-dim)}
+[data-theme="dark"] .stepper-btn{background:var(--surface-2);border-color:rgba(255,255,255,.15);color:var(--text)}
+[data-theme="dark"] .stepper-btn:hover{background:#2563eb;border-color:#2563eb;color:#fff}
+[data-theme="dark"] .stepper-val{color:var(--text)}
+[data-theme="dark"] .score-sep{color:var(--text-muted)}
 [data-theme="dark"] .modal{background:var(--surface)}
-[data-theme="dark"] .modal-header{background:var(--surface);border-color:var(--border)}
-[data-theme="dark"] .modal-footer{border-color:var(--border)}
-[data-theme="dark"] .ranking-table th{border-color:var(--border)}
-[data-theme="dark"] .ranking-table td{border-color:rgba(48,54,61,.5)}
-[data-theme="dark"] .ranking-table tr:hover td{background:var(--surface-2)}
-[data-theme="dark"] .ranking-table tr.me td{background:#1c1200}
-[data-theme="dark"] .stat-card{border-color:var(--border)}
-[data-theme="dark"] .admin-row{background:var(--surface-2)}
-[data-theme="dark"] .btn-secondary{background:var(--surface-2);border-color:var(--border);color:var(--text)}
+[data-theme="dark"] .modal-header{background:var(--surface);border-color:rgba(255,255,255,.1)}
+[data-theme="dark"] .modal-footer{border-color:rgba(255,255,255,.1)}
+[data-theme="dark"] .modal-title{color:var(--text)}
+[data-theme="dark"] .modal-subtitle{color:var(--text-dim)}
+[data-theme="dark"] .ranking-table th{border-color:rgba(255,255,255,.1);color:var(--text-dim)}
+[data-theme="dark"] .ranking-table td{border-color:rgba(255,255,255,.06)}
+[data-theme="dark"] .ranking-table tr:hover td{background:rgba(255,255,255,.04)}
+[data-theme="dark"] .ranking-table tr.me td{background:#1c1a00}
+[data-theme="dark"] .rank-name{color:var(--text)}
+[data-theme="dark"] .rank-points{color:#93c5fd}
+[data-theme="dark"] .stat-card{border-color:rgba(255,255,255,.1);background:var(--surface)}
+[data-theme="dark"] .stat-val{color:var(--text)}
+[data-theme="dark"] .stat-label{color:var(--text-dim)}
+[data-theme="dark"] .admin-row{background:var(--surface-2);border-color:rgba(255,255,255,.08)}
+[data-theme="dark"] .admin-row-teams{color:var(--text)}
+[data-theme="dark"] .admin-row-date{color:var(--text-dim)}
+[data-theme="dark"] .status-select{background:var(--surface-2);border-color:rgba(255,255,255,.12);color:var(--text)}
+[data-theme="dark"] .result-input{background:var(--surface-2);border-color:rgba(255,255,255,.12);color:var(--text)}
+[data-theme="dark"] .btn-secondary{background:var(--surface-2);border-color:rgba(255,255,255,.15);color:var(--text)}
+[data-theme="dark"] .btn-secondary:hover{border-color:#5b8cff;color:#5b8cff}
 [data-theme="dark"] .btn-close{color:var(--text-dim)}
-[data-theme="dark"] .btn-close:hover{background:var(--surface-2)}
+[data-theme="dark"] .btn-close:hover{background:rgba(255,255,255,.08);color:var(--text)}
+[data-theme="dark"] .score-input{background:var(--surface-2);border-color:rgba(255,255,255,.15);color:var(--text)}
+[data-theme="dark"] .fc-venue{color:var(--text-muted)}
+[data-theme="dark"] .fc-time-disp{color:#93c5fd}
+[data-theme="dark"] .fc-vs{color:var(--text-muted)}
+[data-theme="dark"] .hero{background:linear-gradient(135deg,#1a2440,#252f52)}
+[data-theme="dark"] .podium-name{color:var(--text)}
+[data-theme="dark"] .admin-section{background:var(--surface);border-color:rgba(255,255,255,.08)}
+[data-theme="dark"] .admin-section h3{color:var(--text)}
+[data-theme="dark"] .countdown-unit{background:#1a1d27;border-color:rgba(255,255,255,.1)}
+[data-theme="dark"] section, [data-theme="dark"] .section-title a{color:#93c5fd}
+[data-theme="dark"] .text-dim{color:var(--text-dim)}
 
 /* Theme toggle button */
 .btn-theme{background:none;border:1px solid rgba(255,255,255,.2);border-radius:8px;color:rgba(255,255,255,.7);padding:.3rem .5rem;font-size:1rem;cursor:pointer;transition:var(--transition);line-height:1}

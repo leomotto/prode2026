@@ -27,7 +27,7 @@
       <a href="/admin" class="nav-link" id="nav-admin" style="display:none">🛡 Admin</a>
     </div>
     <div class="nav-user">
-      <div class="nav-avatar" id="nav-avatar">⚽</div>
+      <a href="/profile" class="nav-avatar" id="nav-avatar" title="Mi perfil">⚽</a>
       <span class="nav-username" id="nav-username"></span>
       <button class="btn-theme" onclick="Theme.toggle();this.textContent=Theme.isDark()?'☀️':'🌙'" id="btn-theme">🌙</button>
       <button class="btn btn-sm" style="background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2)" onclick="doLogout()">Salir</button>
@@ -105,6 +105,39 @@
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- MODAL PRONÓSTICO DESDE DASHBOARD -->
+<div class="modal-overlay" id="modal-dash-pred">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Tu Pronóstico</div>
+        <div class="modal-subtitle" id="dash-modal-date"></div>
+      </div>
+      <button class="btn-close" onclick="closeModal('modal-dash-pred')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:1rem;margin-bottom:1.5rem;text-align:center">
+        <div><div style="font-family:'Bebas Neue',sans-serif;font-size:2.5rem;color:var(--navy)" id="dash-code-a">LOC</div><div style="font-size:.8rem;color:var(--text-dim)" id="dash-name-a"></div></div>
+        <div style="font-size:.8rem;font-weight:700;color:var(--text-muted)">VS</div>
+        <div><div style="font-family:'Bebas Neue',sans-serif;font-size:2.5rem;color:var(--navy)" id="dash-code-b">VIS</div><div style="font-size:.8rem;color:var(--text-dim)" id="dash-name-b"></div></div>
+      </div>
+      <div class="score-stepper-row">
+        <div class="score-stepper"><div class="score-stepper-label" id="dash-label-a">Local</div>
+          <div class="stepper-controls"><button class="stepper-btn" onclick="dAdj('a',-1)">−</button><div class="stepper-val" id="dash-val-a">0</div><button class="stepper-btn" onclick="dAdj('a',1)">+</button></div></div>
+        <div class="score-sep">—</div>
+        <div class="score-stepper"><div class="score-stepper-label" id="dash-label-b">Visitante</div>
+          <div class="stepper-controls"><button class="stepper-btn" onclick="dAdj('b',-1)">−</button><div class="stepper-val" id="dash-val-b">0</div><button class="stepper-btn" onclick="dAdj('b',1)">+</button></div></div>
+      </div>
+      <input type="hidden" id="dash-match-id">
+      <input type="hidden" id="dash-pred-id">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-dash-pred')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveDashPred()" id="dash-save-btn">Confirmar</button>
+    </div>
   </div>
 </div>
 
@@ -206,7 +239,7 @@ api.matches.all('?status=UPCOMING').then(matches => {
       </div>
       <div class="fc-foot">
         <span class="fc-venue">🕐 ${Fmt.datetime(m.date)} &nbsp;📍 ${m.city}</span>
-        <a href="/matches" class="btn btn-primary btn-sm">Pronosticar</a>
+        <button class="btn btn-primary btn-sm" onclick="openDashPred('${m.id}')">Pronosticar</button>
       </div>
     </div>`).join('')}</div>`;
   renderEmojis(el);
@@ -232,6 +265,52 @@ api.rankings.all().then(ranking => {
 }).catch(() => {});
 
 function doLogout() { Auth.clear(); window.location.href = '/login'; }
+
+// Dashboard prediction modal
+let dashMatches = [], dashPreds = {}, dashScoreA = 0, dashScoreB = 0;
+Promise.all([api.matches.all('?status=UPCOMING'), api.predictions.mine()])
+  .then(([ms, ps]) => {
+    dashMatches = ms;
+    dashPreds = Object.fromEntries(ps.map(p => [p.matchId, p]));
+  }).catch(() => {});
+
+function openDashPred(matchId) {
+  const m = dashMatches.find(x => x.id === matchId);
+  if (!m) { Toast.warn('Cargando...', 'Intentá de nuevo'); return; }
+  const pred = dashPreds[matchId];
+  document.getElementById('dash-modal-date').textContent = Fmt.datetime(m.date);
+  document.getElementById('dash-code-a').textContent = teamCode(m.teamAFlag);
+  document.getElementById('dash-code-b').textContent = teamCode(m.teamBFlag);
+  document.getElementById('dash-name-a').textContent = m.teamAName;
+  document.getElementById('dash-name-b').textContent = m.teamBName;
+  document.getElementById('dash-label-a').textContent = m.teamAName;
+  document.getElementById('dash-label-b').textContent = m.teamBName;
+  document.getElementById('dash-match-id').value = matchId;
+  document.getElementById('dash-pred-id').value = pred?.id || '';
+  dashScoreA = pred?.scoreA ?? 0; dashScoreB = pred?.scoreB ?? 0;
+  document.getElementById('dash-val-a').textContent = dashScoreA;
+  document.getElementById('dash-val-b').textContent = dashScoreB;
+  openModal('modal-dash-pred');
+}
+function dAdj(side, d) {
+  if (side === 'a') { dashScoreA = Math.max(0, dashScoreA+d); document.getElementById('dash-val-a').textContent = dashScoreA; }
+  else              { dashScoreB = Math.max(0, dashScoreB+d); document.getElementById('dash-val-b').textContent = dashScoreB; }
+}
+async function saveDashPred() {
+  const matchId = document.getElementById('dash-match-id').value;
+  const predId  = document.getElementById('dash-pred-id').value;
+  const btn = document.getElementById('dash-save-btn');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+  try {
+    const body = { matchId, scoreA: dashScoreA, scoreB: dashScoreB };
+    const saved = predId ? await api.predictions.update(predId, body) : await api.predictions.create(body);
+    dashPreds[matchId] = saved;
+    Toast.success('¡Pronóstico guardado!', `${dashScoreA} — ${dashScoreB}`);
+    closeModal('modal-dash-pred');
+  } catch (err) { Toast.error('Error', err.message); }
+  finally { btn.disabled = false; btn.textContent = 'Confirmar'; }
+}
+
 </script>
 </body>
 </html>

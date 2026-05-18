@@ -26,6 +26,7 @@ const api = {
     register: (b) => api.post('/auth/register', b),
     login:    (b) => api.post('/auth/login', b),
     me:       ()  => api.get('/auth/me'),
+    updateMe: (b) => api.put('/auth/me', b),
     logout:   ()  => api.post('/auth/logout'),
   },
   // Matches
@@ -186,9 +187,28 @@ const FIFA_CODE = {
   'UY':'URU','UZ':'UZB','VE':'VEN','VN':'VIE','YE':'YEM','ZA':'RSA','ZM':'ZAM','ZW':'ZIM',
 };
 function teamCode(flag) {
+  if (!flag) return '???';
   try {
-    const iso2 = [...flag].map(c => String.fromCharCode(c.codePointAt(0) - 0x1F1E6 + 65)).join('');
-    return FIFA_CODE[iso2] || iso2;
+    const points = [...flag].map(c => c.codePointAt(0));
+    // Regional indicator pair: standard country flag (🇦🇷, 🇧🇷, etc.)
+    if (points[0] >= 0x1F1E6 && points[0] <= 0x1F1FF) {
+      const iso2 = points
+        .filter(p => p >= 0x1F1E6 && p <= 0x1F1FF)
+        .map(p => String.fromCharCode(p - 0x1F1E6 + 65))
+        .join('');
+      return FIFA_CODE[iso2] || iso2;
+    }
+    // Subdivision/tag flag: England 🏴󠁧󠁢󠁥󠁮󠁧󠁿, Scotland 🏴󠁧󠁢󠁳󠁣󠁴󠁿, Wales 🏴󠁧󠁢󠁷󠁬󠁳󠁿
+    const tagStr = points
+      .filter(p => p >= 0xE0020 && p < 0xE007F)
+      .map(p => String.fromCharCode(p - 0xE0000))
+      .join('')
+      .toLowerCase();
+    if (tagStr) {
+      const SUBDIV = { 'gbsct':'SCO','gbeng':'ENG','gbwls':'WAL','gbnir':'NIR','gbgsy':'GCI' };
+      return SUBDIV[tagStr] || tagStr.slice(2, 5).toUpperCase();
+    }
+    return '???';
   } catch { return '???'; }
 }
 

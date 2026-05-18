@@ -130,11 +130,6 @@ async function authRoutes(fastify) {
     return reply.redirect(`${config.APP_URL}/?token=${jwtToken}`);
   });
 
-  // POST /api/auth/logout
-  fastify.post('/logout', { preHandler: fastify.authenticate }, async (request, reply) => {
-    return reply.send({ ok: true });
-  });
-
   // POST /api/auth/setup-admin (solo con ADMIN_SETUP_KEY, una sola vez)
   fastify.post('/setup-admin', async (request, reply) => {
     const { email, key } = request.body || {};
@@ -148,6 +143,31 @@ async function authRoutes(fastify) {
     });
     return user;
   });
+
+  // PUT /api/auth/me — actualizar perfil
+  fastify.put('/me', { preHandler: fastify.authenticate }, async (request, reply) => {
+    const { displayName, avatar, password } = request.body || {};
+    const updates = {};
+    if (displayName && displayName.trim().length >= 2) updates.displayName = displayName.trim().substring(0, 50);
+    if (avatar) updates.avatar = avatar.substring(0, 10);
+    if (password) {
+      if (password.length < 8) return reply.status(400).send({ error: 'La contraseña debe tener al menos 8 caracteres' });
+      updates.passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+    }
+    if (!Object.keys(updates).length) return reply.status(400).send({ error: 'Nada que actualizar' });
+    const user = await fastify.db.user.update({
+      where: { id: request.user.id },
+      data: updates,
+      select: { id: true, email: true, displayName: true, avatar: true, isAdmin: true },
+    });
+    return user;
+  });
+
+  // POST /api/auth/logout
+  fastify.post('/logout', { preHandler: fastify.authenticate }, async (request, reply) => {
+    return reply.send({ ok: true });
+  });
 }
 
 module.exports = authRoutes;
+

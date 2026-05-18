@@ -73,7 +73,7 @@ async function bootstrap() {
 
   // ── Clean URLs (sin extensión .html) ──────────────────────
   // Cada ruta sirve su HTML correspondiente
-  const pages = ['login', 'matches', 'rankings', 'admin'];
+  const pages = ['login', 'matches', 'rankings', 'admin', 'profile'];
   for (const page of pages) {
     fastify.get(`/${page}`, (req, reply) => reply.sendFile(`${page}.html`));
   }
