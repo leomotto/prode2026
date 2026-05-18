@@ -1,3 +1,3 @@
 git add -A
-git commit -m "feat: fixture redesign, flags emoji, Argentina timezone 24h, notification bells per match"
+git commit -m "fix: sort phases chronologically (Grupos→Cuartos→Final), unify fixture-card design in CSS"
 git push origin main

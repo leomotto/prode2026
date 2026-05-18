@@ -257,25 +257,39 @@ function renderMatches() {
 
   // Agrupar: por fase knockout, por grupo en grupos
   const groups = {};
+  const groupPhase = {}; // key → phase para ordenar correctamente
+
   for (const m of filtered) {
     let key;
     if (m.phase === 'GRUPOS') key = `Grupo ${m.groupName || '?'}`;
     else key = PHASE_LABEL[m.phase] || m.phase;
-    if (!groups[key]) groups[key] = [];
+    if (!groups[key]) { groups[key] = []; groupPhase[key] = m.phase; }
     groups[key].push(m);
   }
 
-  const sortedGroups = Object.entries(groups).sort(([a],[b]) => a.localeCompare(b, 'es'));
+  // Orden cronológico del torneo (NO alfabético)
+  const PHASE_ORDER = {
+    GRUPOS: 1, DIECISEISAVOS: 2, OCTAVOS: 3,
+    CUARTOS: 4, SEMIFINAL: 5, TERCER_PUESTO: 6, FINAL: 7
+  };
+
+  const sortedGroups = Object.entries(groups).sort(([a], [b]) => {
+    const orderA = PHASE_ORDER[groupPhase[a]] ?? 99;
+    const orderB = PHASE_ORDER[groupPhase[b]] ?? 99;
+    if (orderA !== orderB) return orderA - orderB;
+    return a.localeCompare(b, 'es'); // dentro de la misma fase: Grupo A, B, C...
+  });
 
   el.innerHTML = sortedGroups.map(([groupKey, gMatches]) => {
-    const sorted = gMatches.sort((a,b) => new Date(a.date)-new Date(b.date));
+    // Dentro de cada grupo/fase: orden cronológico
+    const sorted = [...gMatches].sort((a, b) => new Date(a.date) - new Date(b.date));
     return `
       <div class="fixture-group">
         <div class="group-header">
           <div>
             <div class="group-badge">${groupKey}</div>
           </div>
-          <span class="group-count">${sorted.length} partido${sorted.length !== 1 ? 's':''}</span>
+          <span class="group-count">${sorted.length} partido${sorted.length !== 1 ? 's' : ''}</span>
         </div>
         ${sorted.map(renderCard).join('')}
       </div>`;
