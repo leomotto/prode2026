@@ -4,16 +4,14 @@ on:
   push:
     branches: [ main ]
 
-# ── Secrets necesarios en GitHub (Settings → Secrets → Actions) ──────────────
-# ALWAYSDATA_SSH_HOST   → ssh-muchacholoco.alwaysdata.net
-# ALWAYSDATA_SSH_USER   → muchacholoco
-# ALWAYSDATA_SSH_KEY    → contenido completo de la clave privada SSH (ed25519)
-# ALWAYSDATA_SITE_ID    → número del sitio (en la URL del panel al editar el sitio)
-# ALWAYSDATA_API_KEY    → API key generada en panel → Account → API Keys
-# ALWAYSDATA_ACCOUNT    → muchacholoco
-# ─────────────────────────────────────────────────────────────────────────────
-# Si ya tenés secrets con otros nombres, mapeá aquí:
-#   ${{ secrets.TU_SECRET_EXISTENTE }}
+# ── Secrets necesarios ────────────────────────────────────────────────────────
+# ALWAYSDATA_SSH_HOST  → ssh-muchacholoco.alwaysdata.net
+# ALWAYSDATA_SSH_USER  → muchacholoco
+# ALWAYSDATA_SSH_KEY   → clave privada SSH (ed25519, bloque completo)
+# ALWAYSDATA_SITE_ID   → número del sitio (URL del panel)
+# ALWAYSDATA_API_KEY   → API key de Alwaysdata
+# ALWAYSDATA_ACCOUNT   → muchacholoco
+# GITHUB_PAT           → Personal Access Token con scope "repo" (para git pull)
 # ─────────────────────────────────────────────────────────────────────────────
 
 jobs:
@@ -32,27 +30,39 @@ jobs:
           username: ${{ secrets.ALWAYSDATA_SSH_USER }}
           key:      ${{ secrets.ALWAYSDATA_SSH_KEY }}
           port:     22
+          envs:     GITHUB_PAT
           script: |
             set -e
             cd $HOME/prode2026
 
+            echo "🔗 Actualizando credenciales git..."
+            git remote set-url origin https://leomotto:${GITHUB_PAT}@github.com/leomotto/prode2026.git
+
             echo "📥 Pulling latest code..."
             git pull origin main
 
-            echo "📦 Installing dependencies..."
+            echo "📦 Instalando dependencias..."
             npm ci --omit=dev
 
-            echo "⚙️  Generating Prisma client..."
+            echo "⚙️  Generando Prisma client..."
             npx prisma generate
 
-            echo "🗄️  Running DB migrations..."
+            echo "🗄️  Aplicando migraciones DB..."
             npx prisma migrate deploy
 
-            echo "✅ Deploy listo — reiniciando sitio..."
+            echo "✅ Código actualizado."
+        env:
+          GITHUB_PAT: ${{ secrets.GITHUB_PAT }}
 
-      - name: 🔄 Restart site via Alwaysdata API
+      - name: 🔄 Reiniciar sitio en Alwaysdata
         run: |
-          curl -s -o /dev/null -w "%{http_code}" -X POST \
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
             "https://api.alwaysdata.com/v1/site/${{ secrets.ALWAYSDATA_SITE_ID }}/restart/" \
             -u "${{ secrets.ALWAYSDATA_API_KEY }} account=${{ secrets.ALWAYSDATA_ACCOUNT }}:" \
-            -H "Content-Type: application/json"
+            -H "Content-Type: application/json")
+          echo "Alwaysdata API response: $STATUS"
+          if [ "$STATUS" != "204" ] && [ "$STATUS" != "200" ]; then
+            echo "⚠️  Restart puede haber fallado (HTTP $STATUS) - verificar manualmente"
+          else
+            echo "✅ Sitio reiniciado correctamente"
+          fi
