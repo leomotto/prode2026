@@ -47,8 +47,8 @@ jobs:
             echo "⚙️  Generando Prisma client..."
             npx prisma generate
 
-            echo "🗄️  Aplicando migraciones DB..."
-            npx prisma migrate deploy
+            echo "🗄️  Sincronizando schema DB..."
+            npx prisma db push --accept-data-loss
 
             echo "✅ Código actualizado."
         env:
