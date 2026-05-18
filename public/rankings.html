@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -15,16 +15,33 @@
       <a href="/" class="nav-link">🏠 Inicio</a>
       <a href="/matches" class="nav-link">📅 Partidos</a>
       <a href="/rankings" class="nav-link active">🏅 Ranking</a>
+      <a href="/groups" class="nav-link">👥 Grupos</a>
       <a href="/admin" class="nav-link" id="nav-admin" style="display:none">🛡 Admin</a>
     </div>
     <div class="nav-user">
       <a href="/profile" class="nav-avatar" id="nav-avatar" title="Mi perfil">⚽</a>
       <span class="nav-username" id="nav-username"></span>
       <button class="btn-theme" onclick="Theme.toggle();this.textContent=Theme.isDark()?'☀️':'🌙'" id="btn-theme">🌙</button>
-      <button class="btn btn-sm" style="background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2)" onclick="doLogout()">Salir</button>
+      <button id="nav-hamburger" class="nav-hamburger" onclick="toggleMobileMenu()" aria-label="Menú"><span></span><span></span><span></span></button>
     </div>
   </div>
 </nav>
+
+<!-- Mobile Nav Overlay + Drawer -->
+<div class="mobile-nav-overlay" id="mobile-nav-overlay" onclick="closeMobileMenu()"></div>
+<div class="mobile-nav-drawer" id="mobile-nav-drawer">
+  <a href="/" class="mobile-nav-link" onclick="closeMobileMenu()">🏠 Inicio</a>
+  <a href="/matches" class="mobile-nav-link" onclick="closeMobileMenu()">📅 Partidos</a>
+  <a href="/rankings" class="mobile-nav-link" onclick="closeMobileMenu()">🏅 Ranking</a>
+  <a href="/groups" class="mobile-nav-link" onclick="closeMobileMenu()">👥 Grupos</a>
+  <a href="/rules" class="mobile-nav-link" onclick="closeMobileMenu()">📖 Reglamento</a>
+  <hr class="mobile-nav-divider">
+  <a href="/admin" class="mobile-nav-link" id="mobile-nav-admin" style="display:none" onclick="closeMobileMenu()">🛡 Admin</a>
+  <a href="/profile" class="mobile-nav-link" onclick="closeMobileMenu()">👤 Mi Perfil</a>
+  <button class="mobile-nav-link" onclick="doLogout()">🚪 Salir</button>
+  <hr class="mobile-nav-divider">
+  <button class="mobile-nav-link" id="mobile-theme-btn" onclick="Theme.toggle();document.getElementById('mobile-theme-btn').textContent=Theme.isDark()?'☀️ Modo claro':'🌙 Modo oscuro'">🌙 Modo oscuro</button>
+</div>
 
 <div class="page-wrapper">
   <div class="container" style="padding-top:1.5rem;padding-bottom:3rem">
@@ -54,7 +71,7 @@ const user = Auth.getUser();
 if (user) {
   document.getElementById('nav-avatar').textContent = user.avatar || '⚽';
   document.getElementById('nav-username').textContent = user.displayName?.split(' ')[0] || '';
-  if (user.isAdmin) document.getElementById('nav-admin').style.display = '';
+  if (user.isAdmin) { document.getElementById('nav-admin').style.display=''; const m=document.getElementById('mobile-nav-admin'); if(m) m.style.display=''; }
 }
 document.getElementById('btn-theme').textContent = Theme.isDark() ? '☀️' : '🌙';
 

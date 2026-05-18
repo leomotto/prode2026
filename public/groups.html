@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>👥 Grupos Privados — Prode Mundial 2026</title>
+<meta name="description" content="Creá o unite a un grupo privado para competir con tus amigos en el Prode Mundial 2026">
+<link rel="stylesheet" href="/css/main.css">
+<style>
+.groups-layout{display:grid;grid-template-columns:320px 1fr;gap:1.5rem;align-items:start}
+@media(max-width:900px){.groups-layout{grid-template-columns:1fr}}
+.group-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem;cursor:pointer;transition:var(--transition);display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem}
+.group-item:hover,.group-item.active{border-color:var(--navy);background:rgba(26,43,82,.05)}
+[data-theme="dark"] .group-item:hover,[data-theme="dark"] .group-item.active{background:rgba(147,197,253,.07);border-color:#60a5fa}
+.group-item.active{border-width:2px;border-color:var(--gold)}
+.group-icon{font-size:1.6rem;width:44px;height:44px;border-radius:10px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid var(--border)}
+.group-info{flex:1;min-width:0}
+.group-name{font-weight:700;font-size:.95rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.group-meta{font-size:.75rem;color:var(--text-dim)}
+.group-code{font-family:monospace;font-size:.9rem;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:.2rem .5rem;cursor:pointer;user-select:all;letter-spacing:.1em}
+.group-code:hover{border-color:var(--navy);background:#eff6ff}
+[data-theme="dark"] .group-code:hover{border-color:#60a5fa;background:rgba(96,165,250,.1)}
+.ranking-row{display:flex;align-items:center;gap:.75rem;padding:.75rem;border-bottom:1px solid var(--border);transition:var(--transition)}
+.ranking-row:last-child{border-bottom:none}
+.ranking-row.me{background:rgba(245,197,24,.07);border-radius:var(--radius)}
+.rank-pos{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;width:32px;text-align:center;flex-shrink:0}
+.rank-av{width:36px;height:36px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:1.1rem;border:1px solid var(--border);flex-shrink:0}
+.rank-dname{font-weight:700;font-size:.9rem;flex:1}
+.rank-pts{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--navy)}
+[data-theme="dark"] .rank-pts{color:#93c5fd}
+.empty-groups{text-align:center;padding:3rem 1rem;color:var(--text-dim)}
+.empty-groups .icon{font-size:3rem;margin-bottom:.75rem}
+.share-link{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:.5rem .75rem;font-size:.8rem;font-family:monospace;word-break:break-all;cursor:pointer}
+.share-link:hover{border-color:var(--navy)}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo"><span>🏆</span><div><div>PRODE MUNDIAL</div><small>2026</small></div></a>
+    <div class="nav-links">
+      <a href="/" class="nav-link">🏠 Inicio</a>
+      <a href="/matches" class="nav-link">📅 Partidos</a>
+      <a href="/rankings" class="nav-link">🏅 Ranking</a>
+      <a href="/groups" class="nav-link active">👥 Grupos</a>
+      <a href="/rules" class="nav-link">📖 Reglamento</a>
+      <a href="/admin" class="nav-link" id="nav-admin" style="display:none">🛡 Admin</a>
+    </div>
+    <div class="nav-user">
+      <a href="/profile" class="nav-avatar" id="nav-avatar" title="Mi perfil">⚽</a>
+      <span class="nav-username" id="nav-username"></span>
+      <button class="btn-theme" onclick="Theme.toggle();this.textContent=Theme.isDark()?'☀️':'🌙'" id="btn-theme">🌙</button>
+      <button id="nav-hamburger" class="nav-hamburger" onclick="toggleMobileMenu()" aria-label="Menú">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- Mobile Nav Overlay + Drawer -->
+<div class="mobile-nav-overlay" id="mobile-nav-overlay" onclick="closeMobileMenu()"></div>
+<div class="mobile-nav-drawer" id="mobile-nav-drawer">
+  <a href="/" class="mobile-nav-link" onclick="closeMobileMenu()">🏠 Inicio</a>
+  <a href="/matches" class="mobile-nav-link" onclick="closeMobileMenu()">📅 Partidos</a>
+  <a href="/rankings" class="mobile-nav-link" onclick="closeMobileMenu()">🏅 Ranking</a>
+  <a href="/groups" class="mobile-nav-link active" onclick="closeMobileMenu()">👥 Grupos</a>
+  <a href="/rules" class="mobile-nav-link" onclick="closeMobileMenu()">📖 Reglamento</a>
+  <hr class="mobile-nav-divider">
+  <a href="/admin" class="mobile-nav-link" id="mobile-nav-admin" style="display:none" onclick="closeMobileMenu()">🛡 Admin</a>
+  <a href="/profile" class="mobile-nav-link" onclick="closeMobileMenu()">👤 Mi Perfil</a>
+  <button class="mobile-nav-link" onclick="doLogout()">🚪 Salir</button>
+  <hr class="mobile-nav-divider">
+  <button class="mobile-nav-link" id="mobile-theme-btn" onclick="Theme.toggle();document.getElementById('mobile-theme-btn').textContent=Theme.isDark()?'☀️ Modo claro':'🌙 Modo oscuro'">🌙 Modo oscuro</button>
+</div>
+
+<!-- MODAL CREAR GRUPO -->
+<div class="modal-overlay" id="modal-create">
+  <div class="modal">
+    <div class="modal-header">
+      <div><div class="modal-title">👥 Crear Grupo</div><div class="modal-subtitle">Se genera un código único para invitar</div></div>
+      <button class="btn-close" onclick="closeModal('modal-create')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Nombre del grupo</label><input class="form-input" id="create-name" type="text" placeholder="Ej: Los Pibes del Trabajo" maxlength="60"></div>
+      <div class="form-group"><label class="form-label">Descripción (opcional)</label><input class="form-input" id="create-desc" type="text" placeholder="Una descripción corta..." maxlength="200"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-create')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-create" onclick="createGroup()">Crear Grupo</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL UNIRSE -->
+<div class="modal-overlay" id="modal-join">
+  <div class="modal">
+    <div class="modal-header">
+      <div><div class="modal-title">🔑 Unirse a un Grupo</div><div class="modal-subtitle">Ingresá el código de 6 caracteres</div></div>
+      <button class="btn-close" onclick="closeModal('modal-join')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Código del grupo</label>
+        <input class="form-input" id="join-code" type="text" placeholder="Ej: MESSI6" maxlength="6" style="text-transform:uppercase;font-family:monospace;font-size:1.2rem;letter-spacing:.15em;text-align:center">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-join')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-join" onclick="joinGroup()">Unirse</button>
+    </div>
+  </div>
+</div>
+
+<div class="page-wrapper">
+  <div class="container" style="padding-top:1.5rem;padding-bottom:3rem">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:1.25rem">
+      <div>
+        <h1 style="font-size:1.6rem;font-weight:800;color:var(--navy)">👥 Grupos Privados</h1>
+        <p style="color:var(--text-dim);font-size:.85rem;margin-top:.25rem">Competí con amigos. Solo ven el ranking los del grupo.</p>
+      </div>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+        <button class="btn btn-secondary" onclick="openModal('modal-join')">🔑 Unirse con código</button>
+        <button class="btn btn-primary" onclick="openModal('modal-create')">➕ Crear grupo</button>
+      </div>
+    </div>
+
+    <div class="groups-layout">
+      <!-- Panel izquierdo: mis grupos -->
+      <div>
+        <div style="font-size:.8rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.75rem">Mis grupos</div>
+        <div id="my-groups-list"><div class="spinner" style="margin:2rem auto"></div></div>
+      </div>
+
+      <!-- Panel derecho: ranking del grupo seleccionado -->
+      <div id="group-detail-panel" style="display:none">
+        <div class="card" style="padding:0;overflow:hidden">
+          <!-- Header del grupo -->
+          <div style="padding:1.25rem;border-bottom:1px solid var(--border)">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+              <div>
+                <div style="font-size:1.1rem;font-weight:800;color:var(--navy)" id="gd-name">—</div>
+                <div style="font-size:.8rem;color:var(--text-dim);margin-top:.2rem" id="gd-desc"></div>
+              </div>
+              <div style="text-align:right">
+                <div style="font-size:.7rem;color:var(--text-dim);margin-bottom:.25rem">Código de invitación</div>
+                <div class="group-code" id="gd-code" onclick="copyCode(this.textContent)" title="Click para copiar">——</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem">
+              <button class="btn btn-sm" style="background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim)" onclick="copyInviteLink()">📋 Copiar link de invitación</button>
+              <button class="btn btn-sm btn-danger" id="gd-leave-btn" onclick="leaveCurrentGroup()">Salir del grupo</button>
+              <button class="btn btn-sm" style="background:var(--red);color:#fff;display:none" id="gd-delete-btn" onclick="deleteCurrentGroup()">🗑 Eliminar</button>
+            </div>
+          </div>
+          <!-- Ranking -->
+          <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border)">
+            <div style="font-size:.8rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;margin-bottom:.5rem">Ranking del grupo — <span id="gd-member-count">0</span> participantes</div>
+          </div>
+          <div id="gd-ranking"><div class="spinner" style="margin:2rem auto"></div></div>
+        </div>
+      </div>
+
+      <!-- Estado vacío -->
+      <div id="group-empty-state" class="card" style="display:none">
+        <div class="empty-groups">
+          <div class="icon">👥</div>
+          <h3 style="font-weight:800;margin-bottom:.5rem;color:var(--navy)">No estás en ningún grupo todavía</h3>
+          <p style="margin-bottom:1.5rem">Creá uno para competir con amigos, o usá un código para unirte.</p>
+          <div style="display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap">
+            <button class="btn btn-secondary" onclick="openModal('modal-join')">🔑 Tengo un código</button>
+            <button class="btn btn-primary" onclick="openModal('modal-create')">➕ Crear mi grupo</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+Auth.require();
+const user = Auth.getUser();
+if (user) {
+  document.getElementById('nav-avatar').textContent = user.avatar || '⚽';
+  document.getElementById('nav-username').textContent = user.displayName?.split(' ')[0] || '';
+  if (user.isAdmin) { document.getElementById('nav-admin').style.display=''; const m=document.getElementById('mobile-nav-admin'); if(m) m.style.display=''; }
+}
+document.getElementById('btn-theme').textContent = Theme.isDark() ? '☀️' : '🌙';
+function doLogout() { Auth.clear(); window.location.href = '/login'; }
+
+let myGroups = [], currentGroup = null;
+
+async function loadGroups() {
+  try {
+    myGroups = await api.groups.mine();
+    renderGroupList();
+  } catch(e) {
+    document.getElementById('my-groups-list').innerHTML = '<div style="color:var(--red);font-size:.85rem">Error al cargar grupos</div>';
+  }
+}
+
+function renderGroupList() {
+  const el = document.getElementById('my-groups-list');
+  if (!myGroups.length) {
+    el.innerHTML = '';
+    document.getElementById('group-detail-panel').style.display = 'none';
+    document.getElementById('group-empty-state').style.display = '';
+    return;
+  }
+  document.getElementById('group-empty-state').style.display = 'none';
+  el.innerHTML = myGroups.map(g => `
+    <div class="group-item ${currentGroup?.id===g.id?'active':''}" onclick="selectGroup('${g.id}')">
+      <div class="group-icon">👥</div>
+      <div class="group-info">
+        <div class="group-name">${g.name}</div>
+        <div class="group-meta">${g.memberCount} miembro${g.memberCount!==1?'s':''} · ${g.isOwner?'Creador':'Miembro'}</div>
+      </div>
+    </div>`).join('');
+
+  if (!currentGroup && myGroups.length) selectGroup(myGroups[0].id);
+}
+
+async function selectGroup(id) {
+  currentGroup = myGroups.find(g => g.id === id);
+  renderGroupList();
+  document.getElementById('group-detail-panel').style.display = '';
+  document.getElementById('gd-ranking').innerHTML = '<div class="spinner" style="margin:2rem auto"></div>';
+
+  try {
+    const { group, ranking } = await api.groups.ranking(id);
+    document.getElementById('gd-name').textContent = group.name;
+    document.getElementById('gd-desc').textContent = group.description || '';
+    document.getElementById('gd-code').textContent = group.code;
+    document.getElementById('gd-member-count').textContent = ranking.length;
+
+    const isOwner = currentGroup?.isOwner;
+    document.getElementById('gd-delete-btn').style.display = isOwner ? '' : 'none';
+    document.getElementById('gd-leave-btn').style.display = isOwner ? 'none' : '';
+
+    const myId = user?.id;
+    document.getElementById('gd-ranking').innerHTML = ranking.map(r => `
+      <div class="ranking-row ${r.userId===myId?'me':''}">
+        <div class="rank-pos">${r.rank<=3?['🥇','🥈','🥉'][r.rank-1]:r.rank}</div>
+        <div class="rank-av">${r.avatar||'⚽'}</div>
+        <div class="rank-dname">${r.displayName}${r.isOwner?' <span style="font-size:.7rem;color:var(--gold)">👑</span>':''}${r.userId===myId?' <span style="font-size:.7rem;color:var(--text-dim)">(vos)</span>':''}</div>
+        <div class="rank-pts">${r.totalPoints}</div>
+      </div>`).join('') || '<div style="text-align:center;padding:2rem;color:var(--text-dim)">Sin pronósticos aún</div>';
+  } catch(e) {
+    document.getElementById('gd-ranking').innerHTML = `<div style="color:var(--red);padding:1rem;text-align:center">${e.message}</div>`;
+  }
+}
+
+async function createGroup() {
+  const name = document.getElementById('create-name').value.trim();
+  const desc = document.getElementById('create-desc').value.trim();
+  if (!name) { Toast.warn('Falta el nombre','Ingresá un nombre para el grupo'); return; }
+  const btn = document.getElementById('btn-create');
+  btn.disabled=true; btn.textContent='Creando...';
+  try {
+    const g = await api.groups.create({ name, description: desc });
+    closeModal('modal-create');
+    document.getElementById('create-name').value='';
+    document.getElementById('create-desc').value='';
+    Toast.success('¡Grupo creado!', `Código: ${g.code}`);
+    await loadGroups();
+    selectGroup(g.id);
+  } catch(e) { Toast.error('Error', e.message); }
+  finally { btn.disabled=false; btn.textContent='Crear Grupo'; }
+}
+
+async function joinGroup() {
+  const code = document.getElementById('join-code').value.trim().toUpperCase();
+  if (code.length < 4) { Toast.warn('Código inválido','Ingresá el código de 6 caracteres'); return; }
+  const btn = document.getElementById('btn-join');
+  btn.disabled=true; btn.textContent='Uniéndome...';
+  try {
+    const r = await api.groups.join(code);
+    closeModal('modal-join');
+    document.getElementById('join-code').value='';
+    Toast.success('¡Te uniste!', r.groupName);
+    await loadGroups();
+    selectGroup(r.groupId);
+  } catch(e) { Toast.error('Error', e.message); }
+  finally { btn.disabled=false; btn.textContent='Unirse'; }
+}
+
+function copyCode(code) {
+  navigator.clipboard?.writeText(code).then(() => Toast.success('Copiado', `Código ${code}`)).catch(() => {});
+}
+
+function copyInviteLink() {
+  const code = document.getElementById('gd-code').textContent;
+  const link = `${window.location.origin}/groups?join=${code}`;
+  navigator.clipboard?.writeText(link).then(() => Toast.success('¡Link copiado!', 'Compartilo con tus amigos')).catch(() => {});
+}
+
+async function leaveCurrentGroup() {
+  if (!currentGroup || !confirm(`¿Salir del grupo "${currentGroup.name}"?`)) return;
+  try {
+    await api.groups.leave(currentGroup.id);
+    Toast.success('Saliste del grupo');
+    currentGroup = null;
+    await loadGroups();
+  } catch(e) { Toast.error('Error', e.message); }
+}
+
+async function deleteCurrentGroup() {
+  if (!currentGroup || !confirm(`¿Eliminar el grupo "${currentGroup.name}"? Esta acción es irreversible.`)) return;
+  try {
+    await api.groups.delete(currentGroup.id);
+    Toast.success('Grupo eliminado');
+    currentGroup = null;
+    await loadGroups();
+  } catch(e) { Toast.error('Error', e.message); }
+}
+
+// Manejar ?join=CODIGO desde link de invitación
+const urlParams = new URLSearchParams(window.location.search);
+const joinCode = urlParams.get('join');
+if (joinCode) {
+  window.history.replaceState({}, '', '/groups');
+  document.getElementById('join-code').value = joinCode.toUpperCase();
+  loadGroups().then(() => openModal('modal-join'));
+} else {
+  loadGroups();
+}
+</script>
+</body>
+</html>

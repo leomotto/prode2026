@@ -57,7 +57,17 @@ const api = {
     users:        ()        => api.get('/admin/users'),
     updateUser:   (id, b)   => api.patch(`/admin/users/${id}`, b),
   },
+  // Grupos privados
+  groups: {
+    mine:    ()       => api.get('/groups/mine'),
+    create:  (b)      => api.post('/groups', b),
+    join:    (code)   => api.post('/groups/join', { code }),
+    ranking: (id)     => api.get(`/groups/${id}/ranking`),
+    leave:   (id)     => api._req('DELETE', `/groups/${id}/leave`),
+    delete:  (id)     => api._req('DELETE', `/groups/${id}`),
+  },
 };
+
 
 /* ── AUTH HELPERS ────────────────────────────────────────── */
 const Auth = {
@@ -259,3 +269,27 @@ function setActiveNav() {
     }).catch(() => {});
   }
 })();
+
+/* ── MOBILE NAV ──────────────────────────────────────────── */
+function toggleMobileMenu() {
+  const btn     = document.getElementById('nav-hamburger');
+  const drawer  = document.getElementById('mobile-nav-drawer');
+  const overlay = document.getElementById('mobile-nav-overlay');
+  if (!btn || !drawer) return;
+  const open = drawer.classList.toggle('open');
+  btn.classList.toggle('open', open);
+  if (overlay) overlay.classList.toggle('open', open);
+  document.body.style.overflow = open ? 'hidden' : '';
+}
+function closeMobileMenu() {
+  const btn     = document.getElementById('nav-hamburger');
+  const drawer  = document.getElementById('mobile-nav-drawer');
+  const overlay = document.getElementById('mobile-nav-overlay');
+  if (drawer) drawer.classList.remove('open');
+  if (btn)    btn.classList.remove('open');
+  if (overlay) overlay.classList.remove('open');
+  document.body.style.overflow = '';
+}
+// Cerrar con ESC
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMobileMenu(); });
+

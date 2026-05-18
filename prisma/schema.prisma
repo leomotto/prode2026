@@ -25,8 +25,10 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  predictions  Prediction[]
-  sessions     UserSession[]
+  predictions    Prediction[]
+  sessions       UserSession[]
+  ownedGroups    Group[]       @relation("GroupOwner")
+  groupMemberships GroupMember[]
 
   @@map("users")
 }
@@ -123,4 +125,35 @@ model Prediction {
 
   @@unique([userId, matchId])
   @@map("predictions")
+}
+
+// ============================================================
+// PRIVATE GROUPS (Ligas entre amigos)
+// ============================================================
+model Group {
+  id          String   @id @default(cuid())
+  name        String   @db.VarChar(60)
+  code        String   @unique // código 6 chars: "MESSI6"
+  description String?  @db.VarChar(200)
+  ownerId     String
+  maxMembers  Int      @default(50)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner   User          @relation("GroupOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members GroupMember[]
+
+  @@map("groups")
+}
+
+model GroupMember {
+  groupId  String
+  userId   String
+  joinedAt DateTime @default(now())
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, userId])
+  @@map("group_members")
 }

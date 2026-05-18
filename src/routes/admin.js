@@ -1,5 +1,7 @@
 'use strict';
 const { calcularPuntos, calcularBonus } = require('../lib/scoring');
+const { sendResultBulk } = require('../lib/email');
+
 
 async function adminRoutes(fastify) {
 
@@ -93,7 +95,22 @@ async function adminRoutes(fastify) {
       updated++;
     }
 
+    // Enviar emails de resultado (async, sin bloquear la respuesta)
+    const updatedPreds = await fastify.db.prediction.findMany({
+      where: { matchId: id },
+      select: { userId: true, scoreA: true, scoreB: true, pointsTotal: true },
+    });
+    const userIds = [...new Set(updatedPreds.map(p => p.userId))];
+    const users = await fastify.db.user.findMany({
+      where: { id: { in: userIds } },
+      select: { id: true, email: true, displayName: true },
+    });
+    sendResultBulk({ match, predictions: updatedPreds, users }).catch(e =>
+      fastify.log.warn('Email bulk error: ' + e.message)
+    );
+
     return { match, predictionsUpdated: updated };
+
   });
 
   // GET /api/admin/users — lista de usuarios

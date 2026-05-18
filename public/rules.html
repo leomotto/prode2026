@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>📖 Cómo se puntúa — Prode Mundial 2026</title>
+<meta name="description" content="Sistema de puntuación del Prode Mundial 2026. Entendé cómo ganar puntos con tus pronósticos.">
+<link rel="stylesheet" href="/css/main.css">
+<style>
+.rules-hero{background:linear-gradient(135deg,var(--navy) 0%,#1a3a6e 100%);color:#fff;padding:3rem 0;text-align:center}
+.rules-hero h1{font-family:'Bebas Neue',sans-serif;font-size:2.8rem;margin-bottom:.5rem;letter-spacing:.04em}
+.rules-hero p{color:rgba(255,255,255,.7);font-size:1rem}
+.points-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin:2rem 0}
+.points-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;text-align:center;box-shadow:var(--shadow);transition:var(--transition)}
+.points-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+.pts-badge{display:inline-block;font-family:'Bebas Neue',sans-serif;font-size:3rem;line-height:1;color:var(--navy);margin-bottom:.5rem}
+.pts-badge.gold{color:var(--gold)}
+.pts-badge.green{color:var(--green)}
+.pts-badge.blue{color:var(--blue)}
+.pts-title{font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:.4rem}
+.pts-desc{font-size:.82rem;color:var(--text-dim);line-height:1.5}
+[data-theme="dark"] .pts-badge{color:#93c5fd}
+[data-theme="dark"] .pts-badge.gold{color:#fbbf24}
+[data-theme="dark"] .pts-badge.green{color:#34d399}
+[data-theme="dark"] .pts-badge.blue{color:#60a5fa}
+.example-table{width:100%;border-collapse:collapse;margin:1rem 0}
+.example-table th,.example-table td{padding:.65rem 1rem;border:1px solid var(--border);text-align:left;font-size:.85rem}
+.example-table th{background:var(--surface-2);font-weight:700;color:var(--text-dim);text-transform:uppercase;font-size:.75rem}
+[data-theme="dark"] .example-table th{background:#222636}
+.badge-pts-0{background:#f1f5f9;color:#64748b}
+.badge-pts-1{background:#dbeafe;color:#1d4ed8}
+.badge-pts-2{background:#d1fae5;color:#065f46}
+.badge-pts-3{background:#fef9c3;color:#854d0e}
+.ranking-phases{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.75rem}
+.phase-item{background:var(--surface-2);border-radius:var(--radius);padding:1rem;border:1px solid var(--border)}
+.phase-item h4{font-size:.9rem;font-weight:700;margin-bottom:.25rem;color:var(--navy)}
+[data-theme="dark"] .phase-item h4{color:#93c5fd}
+.phase-item p{font-size:.8rem;color:var(--text-dim)}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo"><span>🏆</span><div><div>PRODE MUNDIAL</div><small>2026</small></div></a>
+    <div class="nav-links">
+      <a href="/" class="nav-link">🏠 Inicio</a>
+      <a href="/matches" class="nav-link">📅 Partidos</a>
+      <a href="/rankings" class="nav-link">🏅 Ranking</a>
+      <a href="/groups" class="nav-link">👥 Grupos</a>
+      <a href="/rules" class="nav-link active">📖 Reglamento</a>
+      <a href="/admin" class="nav-link" id="nav-admin" style="display:none">🛡 Admin</a>
+    </div>
+    <div class="nav-user">
+      <a href="/profile" class="nav-avatar" id="nav-avatar" title="Mi perfil">⚽</a>
+      <span class="nav-username" id="nav-username"></span>
+      <button class="btn-theme" onclick="Theme.toggle();this.textContent=Theme.isDark()?'☀️':'🌙'" id="btn-theme">🌙</button>
+      <button id="nav-hamburger" class="nav-hamburger" onclick="toggleMobileMenu()" aria-label="Menú">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- Mobile Nav Overlay + Drawer -->
+<div class="mobile-nav-overlay" id="mobile-nav-overlay" onclick="closeMobileMenu()"></div>
+<div class="mobile-nav-drawer" id="mobile-nav-drawer">
+  <a href="/" class="mobile-nav-link" onclick="closeMobileMenu()">🏠 Inicio</a>
+  <a href="/matches" class="mobile-nav-link" onclick="closeMobileMenu()">📅 Partidos</a>
+  <a href="/rankings" class="mobile-nav-link" onclick="closeMobileMenu()">🏅 Ranking</a>
+  <a href="/groups" class="mobile-nav-link" onclick="closeMobileMenu()">👥 Grupos</a>
+  <a href="/rules" class="mobile-nav-link active" onclick="closeMobileMenu()">📖 Reglamento</a>
+  <hr class="mobile-nav-divider">
+  <a href="/admin" class="mobile-nav-link" id="mobile-nav-admin" style="display:none" onclick="closeMobileMenu()">🛡 Admin</a>
+  <a href="/profile" class="mobile-nav-link" onclick="closeMobileMenu()">👤 Mi Perfil</a>
+  <button class="mobile-nav-link" onclick="doLogout()">🚪 Salir</button>
+  <hr class="mobile-nav-divider">
+  <button class="mobile-nav-link" id="mobile-theme-btn" onclick="Theme.toggle();document.getElementById('mobile-theme-btn').textContent=Theme.isDark()?'☀️ Modo claro':'🌙 Modo oscuro'">🌙 Modo oscuro</button>
+</div>
+
+<div class="page-wrapper">
+  <div class="rules-hero">
+    <div class="container">
+      <h1>📖 Sistema de Puntuación</h1>
+      <p>Entendé cómo ganar puntos y escalar en el ranking</p>
+    </div>
+  </div>
+
+  <div class="container" style="padding:2rem 1.5rem 4rem">
+
+    <!-- Puntos principales -->
+    <h2 style="font-size:1.3rem;font-weight:800;color:var(--navy);margin-bottom:1rem">⚽ Puntos por partido</h2>
+    <div class="points-grid">
+      <div class="points-card">
+        <div class="pts-badge gold">3</div>
+        <div class="pts-title">🎯 Resultado Exacto</div>
+        <div class="pts-desc">Adivinás el marcador exacto del partido.<br><strong>Ej: pronosticás 2-1, gana 2-1</strong></div>
+      </div>
+      <div class="points-card">
+        <div class="pts-badge green">1</div>
+        <div class="pts-title">✅ Resultado Correcto</div>
+        <div class="pts-desc">Adivinás el ganador o el empate, pero no el marcador exacto.<br><strong>Ej: pronosticás 3-1, gana 2-0</strong></div>
+      </div>
+      <div class="points-card">
+        <div class="pts-badge blue" style="font-size:2rem">0</div>
+        <div class="pts-title">❌ Resultado Incorrecto</div>
+        <div class="pts-desc">Tu pronóstico no coincide con el resultado. Sin puntos.<br><strong>Ej: pronosticás victoria local, gana visitante</strong></div>
+      </div>
+    </div>
+
+    <!-- Tabla de ejemplos -->
+    <div class="card" style="margin:2rem 0;overflow-x:auto">
+      <h3 style="font-size:1rem;font-weight:700;margin-bottom:1rem;color:var(--navy)">📊 Ejemplos</h3>
+      <table class="example-table">
+        <thead><tr><th>Resultado real</th><th>Tu pronóstico</th><th>Puntos</th><th>Motivo</th></tr></thead>
+        <tbody>
+          <tr><td>🇦🇷 2 - 1 🇲🇽</td><td>2 - 1</td><td><span class="badge badge-featured">🎯 3 pts</span></td><td>Marcador exacto</td></tr>
+          <tr><td>🇦🇷 2 - 0 🇲🇽</td><td>3 - 1</td><td><span class="badge badge-group" style="background:#d1fae5;color:#065f46">✅ 1 pt</span></td><td>Ganó Argentina (correcto)</td></tr>
+          <tr><td>🇦🇷 1 - 1 🇲🇽</td><td>0 - 0</td><td><span class="badge badge-group" style="background:#d1fae5;color:#065f46">✅ 1 pt</span></td><td>Empate (correcto)</td></tr>
+          <tr><td>🇦🇷 0 - 1 🇲🇽</td><td>2 - 0</td><td><span class="badge badge-phase">❌ 0 pts</span></td><td>Ganó México (incorrecto)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Reglas de cierre -->
+    <div class="card" style="margin:2rem 0;background:linear-gradient(135deg,rgba(245,197,24,.05) 0%,transparent 100%)">
+      <h3 style="font-size:1rem;font-weight:700;margin-bottom:1rem;color:var(--navy)">⏰ Reglas de pronósticos</h3>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:.75rem">
+        <li style="display:flex;align-items:flex-start;gap:.75rem"><span style="font-size:1.2rem">🔒</span><div><strong>Cierre automático</strong> — Los pronósticos se bloquean 2 minutos antes del inicio del partido. No se pueden modificar.</div></li>
+        <li style="display:flex;align-items:flex-start;gap:.75rem"><span style="font-size:1.2rem">📅</span><div><strong>Solo partidos futuros</strong> — Solo podés pronosticar partidos con estado "Próximo". Los que están EN VIVO o FINALIZADOS no admiten pronósticos.</div></li>
+        <li style="display:flex;align-items:flex-start;gap:.75rem"><span style="font-size:1.2rem">🔄</span><div><strong>Podés editar</strong> — Mientras el partido no esté bloqueado, podés cambiar tu pronóstico todas las veces que quieras.</div></li>
+        <li style="display:flex;align-items:flex-start;gap:.75rem"><span style="font-size:1.2rem">📧</span><div><strong>Notificación por mail</strong> — Cuando el admin carga el resultado, recibís un email con tus puntos.</div></li>
+      </ul>
+    </div>
+
+    <!-- Ranking por fases -->
+    <h2 style="font-size:1.3rem;font-weight:800;color:var(--navy);margin:2rem 0 1rem">🏆 Ranking</h2>
+    <div class="card">
+      <p style="margin-bottom:1rem;color:var(--text-dim);font-size:.9rem">El ranking es global y acumula todos los puntos de todos los partidos. Los puntos se calculan automáticamente al finalizar cada partido.</p>
+      <div class="ranking-phases">
+        <div class="phase-item"><h4>📅 Fase de Grupos</h4><p>48 partidos · hasta 144 pts max teórico</p></div>
+        <div class="phase-item"><h4>⚡ Eliminatorias</h4><p>32 partidos · mismas reglas, más presión</p></div>
+        <div class="phase-item"><h4>🏆 Final</h4><p>1 partido · el más importante</p></div>
+      </div>
+      <div style="margin-top:1rem;padding:1rem;background:rgba(37,99,235,.07);border-radius:var(--radius);border-left:3px solid var(--blue)">
+        <strong>💡 Tip:</strong> Aprovechá los partidos de grupos donde sabés más. En la fase de grupos hay muchas más oportunidades de acumular puntos.
+      </div>
+    </div>
+
+    <!-- Grupos privados -->
+    <h2 style="font-size:1.3rem;font-weight:800;color:var(--navy);margin:2rem 0 1rem">👥 Grupos privados</h2>
+    <div class="card">
+      <p style="color:var(--text-dim);font-size:.9rem;margin-bottom:1rem">Creá tu grupo privado y competí con amigos o compañeros de trabajo. El ranking del grupo usa los mismos puntos del ranking global pero filtrado solo entre los miembros.</p>
+      <a href="/groups" class="btn btn-primary">👥 Ir a Grupos →</a>
+    </div>
+
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+Auth.require();
+const user = Auth.getUser();
+if (user) {
+  document.getElementById('nav-avatar').textContent = user.avatar || '⚽';
+  document.getElementById('nav-username').textContent = user.displayName?.split(' ')[0] || '';
+  if (user.isAdmin) { document.getElementById('nav-admin').style.display=''; if(document.getElementById('mobile-nav-admin')) document.getElementById('mobile-nav-admin').style.display=''; }
+}
+document.getElementById('btn-theme').textContent = Theme.isDark() ? '☀️' : '🌙';
+function doLogout() { Auth.clear(); window.location.href = '/login'; }
+</script>
+</body>
+</html>
