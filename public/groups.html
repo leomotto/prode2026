@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -50,6 +50,7 @@
       <a href="/profile" class="nav-avatar" id="nav-avatar" title="Mi perfil">⚽</a>
       <span class="nav-username" id="nav-username"></span>
       <button class="btn-theme" onclick="Theme.toggle();this.textContent=Theme.isDark()?'☀️':'🌙'" id="btn-theme">🌙</button>
+      <button class="btn-exit btn btn-sm" style="background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2)" onclick="doLogout()">Salir</button>
       <button id="nav-hamburger" class="nav-hamburger" onclick="toggleMobileMenu()" aria-label="Menú">
         <span></span><span></span><span></span>
       </button>

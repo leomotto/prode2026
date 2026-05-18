@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -36,12 +36,14 @@
       <a href="/matches" class="nav-link">📅 Partidos</a>
       <a href="/rankings" class="nav-link">🏅 Ranking</a>
       <a href="/groups" class="nav-link">👥 Grupos</a>
+      <a href="/rules" class="nav-link">📖 Reglamento</a>
       <a href="/admin" class="nav-link" id="nav-admin" style="display:none">🛡 Admin</a>
     </div>
     <div class="nav-user">
       <div class="nav-avatar" id="nav-avatar">⚽</div>
       <span class="nav-username" id="nav-username"></span>
       <button class="btn-theme" onclick="Theme.toggle();this.textContent=Theme.isDark()?'☀️':'🌙'" id="btn-theme">🌙</button>
+      <button class="btn-exit btn btn-sm" style="background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2)" onclick="doLogout()">Salir</button>
       <button id="nav-hamburger" class="nav-hamburger" onclick="toggleMobileMenu()" aria-label="Menú"><span></span><span></span><span></span></button>
     </div>
   </div>
@@ -93,10 +95,11 @@
 
           <div class="form-group">
             <label class="form-label">Avatar (elegí un emoji)</label>
-            <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem">
-              <div style="font-size:2.5rem;min-width:2.5rem;text-align:center" id="avatar-preview">⚽</div>
-              <input class="form-input" id="edit-avatar-input" type="text" maxlength="4" placeholder="Pegá cualquier emoji" style="width:100px" oninput="document.getElementById('avatar-preview').textContent=this.value||'⚽'">
+            <div style="text-align:center;margin-bottom:.5rem">
+              <div style="font-size:3.5rem;line-height:1;margin-bottom:.25rem" id="avatar-preview">⚽</div>
+              <div style="font-size:.75rem;color:var(--text-dim)">Tocá uno para elegir</div>
             </div>
+            <input type="hidden" id="edit-avatar-input" value="">
             <div class="avatar-picker" id="avatar-picker"></div>
           </div>
 

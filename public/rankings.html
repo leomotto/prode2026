@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -16,12 +16,14 @@
       <a href="/matches" class="nav-link">📅 Partidos</a>
       <a href="/rankings" class="nav-link active">🏅 Ranking</a>
       <a href="/groups" class="nav-link">👥 Grupos</a>
+      <a href="/rules" class="nav-link">📖 Reglamento</a>
       <a href="/admin" class="nav-link" id="nav-admin" style="display:none">🛡 Admin</a>
     </div>
     <div class="nav-user">
       <a href="/profile" class="nav-avatar" id="nav-avatar" title="Mi perfil">⚽</a>
       <span class="nav-username" id="nav-username"></span>
       <button class="btn-theme" onclick="Theme.toggle();this.textContent=Theme.isDark()?'☀️':'🌙'" id="btn-theme">🌙</button>
+      <button class="btn-exit btn btn-sm" style="background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2)" onclick="doLogout()">Salir</button>
       <button id="nav-hamburger" class="nav-hamburger" onclick="toggleMobileMenu()" aria-label="Menú"><span></span><span></span><span></span></button>
     </div>
   </div>
@@ -47,13 +49,15 @@
   <div class="container" style="padding-top:1.5rem;padding-bottom:3rem">
     <h1 style="font-size:1.6rem;font-weight:800;color:var(--navy);margin-bottom:1.25rem">Tabla de Posiciones</h1>
 
-    <div class="tabs mb-3">
+    <!-- Tabs: Global por fase + Mis grupos -->
+    <div class="tabs mb-3" id="ranking-tabs">
       <button class="tab-btn active" onclick="loadRanking(this,'')">🌐 General</button>
       <button class="tab-btn" onclick="loadRanking(this,'GRUPOS')">Grupos</button>
       <button class="tab-btn" onclick="loadRanking(this,'OCTAVOS')">Octavos</button>
       <button class="tab-btn" onclick="loadRanking(this,'CUARTOS')">Cuartos</button>
       <button class="tab-btn" onclick="loadRanking(this,'SEMIFINAL')">Semis</button>
       <button class="tab-btn" onclick="loadRanking(this,'FINAL')">🏆 Final</button>
+      <!-- Group tabs injected by JS -->
     </div>
 
     <div id="podium-section"></div>
@@ -81,17 +85,36 @@ async function loadRanking(btn, phase) {
   document.getElementById('ranking-table-container').innerHTML = '<div class="spinner"></div>';
   try {
     const ranking = await api.rankings.all(phase);
-    renderRanking(ranking);
+    renderRanking(ranking, '🌐 Ranking General' + (phase ? ` — ${phase}` : ''));
   } catch {
     document.getElementById('ranking-table-container').innerHTML = '<div class="empty-state"><p>Error al cargar</p></div>';
   }
 }
 
-function renderRanking(ranking) {
+async function loadGroupRanking(btn, groupId, groupName) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  document.getElementById('ranking-table-container').innerHTML = '<div class="spinner"></div>';
+  document.getElementById('podium-section').innerHTML = '';
+  try {
+    const { ranking } = await api.groups.ranking(groupId);
+    // Convert group ranking format to global ranking format
+    const normalized = ranking.map(r => ({
+      ...r,
+      totalPoints: r.totalPoints,
+      exactos: '—', ganadores: '—', bonusTotal: '—',
+    }));
+    renderRanking(normalized, `👥 ${groupName}`, true);
+  } catch(e) {
+    document.getElementById('ranking-table-container').innerHTML = `<div class="empty-state"><p>${e.message}</p></div>`;
+  }
+}
+
+function renderRanking(ranking, title = '', isGroup = false) {
   const myId = Auth.getUser()?.id;
   const podiumEl = document.getElementById('podium-section');
 
-  if (ranking.length >= 3) {
+  if (!isGroup && ranking.length >= 3) {
     const [first, second, third] = ranking;
     podiumEl.innerHTML = `<div class="podium mb-3">
       <div class="podium-item podium-2"><div class="podium-crown">🥈</div><div class="podium-avatar">${second.avatar}</div><div class="podium-name">${second.displayName}</div><div class="podium-pts">${second.totalPoints}</div></div>
@@ -113,9 +136,7 @@ function renderRanking(ranking) {
           <th style="width:50px">#</th>
           <th>Jugador</th>
           <th>Pts</th>
-          <th>Exactos</th>
-          <th>Ganador</th>
-          <th>Bonus</th>
+          ${!isGroup ? '<th>Exactos</th><th>Ganador</th><th>Bonus</th>' : ''}
           <th>Partidos</th>
         </tr>
       </thead>
@@ -124,22 +145,35 @@ function renderRanking(ranking) {
           <tr class="${r.userId===myId?'me':''} rank-${r.rank}">
             <td class="rank-pos">${r.rank<=3?['🥇','🥈','🥉'][r.rank-1]:r.rank}</td>
             <td><div class="rank-user">
-              <div class="rank-avatar">${r.avatar}</div>
+              <div class="rank-avatar">${r.avatar||'⚽'}</div>
               <div>
                 <div class="rank-name">${r.displayName}${r.userId===myId?' <span style="font-size:.7rem;color:var(--gold)">(vos)</span>':''}</div>
               </div>
             </div></td>
             <td class="rank-points">${r.totalPoints}</td>
-            <td><span class="badge badge-featured">${r.exactos}</span></td>
-            <td style="color:var(--green);font-weight:700">${r.ganadores}</td>
-            <td style="color:var(--blue)">${r.bonusTotal}</td>
+            ${!isGroup ? `<td><span class="badge badge-featured">${r.exactos}</span></td><td style="color:var(--green);font-weight:700">${r.ganadores}</td><td style="color:var(--blue)">${r.bonusTotal}</td>` : ''}
             <td style="color:var(--text-dim)">${r.partidos}</td>
           </tr>`).join('')}
       </tbody>
     </table>`;
 }
 
+// Cargar ranking global y grupos del usuario
 loadRanking(null, '');
+api.groups.mine().then(groups => {
+  if (!groups.length) return;
+  const tabsEl = document.getElementById('ranking-tabs');
+  const sep = document.createElement('span');
+  sep.style.cssText = 'width:1px;background:var(--border);display:inline-block;height:1.5rem;margin:0 .25rem;align-self:center';
+  tabsEl.appendChild(sep);
+  groups.forEach(g => {
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn';
+    btn.textContent = `👥 ${g.name}`;
+    btn.onclick = () => loadGroupRanking(btn, g.id, g.name);
+    tabsEl.appendChild(btn);
+  });
+}).catch(() => {});
 </script>
 </body>
 </html>
