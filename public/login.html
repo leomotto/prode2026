@@ -6,7 +6,7 @@
 <title>Iniciar Sesión — Prode Mundial 2026</title>
 <meta name="description" content="Iniciá sesión o registrate para participar en el Prode del Mundial 2026">
 <link rel="stylesheet" href="/css/main.css">
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback" async defer></script>
 <style>
   body{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1rem}
   body::after{content:'';position:fixed;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f5c518' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");pointer-events:none;z-index:0}
@@ -66,7 +66,7 @@
             <label class="form-label" for="login-pass">Contraseña</label>
             <input class="form-input" id="login-pass" type="password" placeholder="••••••••" required autocomplete="current-password">
           </div>
-          <div class="cf-turnstile" data-sitekey="__TURNSTILE_SITE_KEY__" data-theme="dark" id="ts-login"></div>
+          <div id="ts-login" style="margin:.75rem 0"></div>
           <button class="btn btn-primary w-full btn-lg mt-2" type="submit" id="btn-login">
             <span id="btn-login-text">Iniciar Sesión</span>
           </button>
@@ -107,7 +107,7 @@
               <span class="avatar-option" data-emoji="🎯" onclick="selectAvatar(this)">🎯</span>
             </div>
           </div>
-          <div class="cf-turnstile" data-sitekey="__TURNSTILE_SITE_KEY__" data-theme="dark" id="ts-register"></div>
+          <div id="ts-register" style="margin:.75rem 0"></div>
           <button class="btn btn-primary w-full btn-lg mt-2" type="submit" id="btn-register">
             <span id="btn-register-text">Crear Cuenta</span>
           </button>
@@ -125,10 +125,28 @@
 
 <script src="/js/api.js"></script>
 <script>
-// Redirigir si ya está logueado
 if (Auth.isLogged()) window.location.href = '/';
 
 let selectedAvatar = '⚽';
+let tsLoginId, tsRegisterId;
+
+// Carga la site key desde el servidor (nunca está hardcodeada en el HTML)
+async function initTurnstile() {
+  try {
+    const cfg = await fetch('/api/config').then(r => r.json());
+    const sitekey = cfg.turnstileSiteKey;
+    if (!sitekey || !window.turnstile) return;
+    tsLoginId    = window.turnstile.render('#ts-login',    { sitekey, theme: 'dark' });
+    tsRegisterId = window.turnstile.render('#ts-register', { sitekey, theme: 'dark' });
+  } catch { /* Turnstile opcional en dev */ }
+}
+
+// Esperar a que el script de Turnstile cargue
+if (window.turnstile) {
+  initTurnstile();
+} else {
+  window.onloadTurnstileCallback = initTurnstile;
+}
 
 function switchTab(tab) {
   document.getElementById('tab-login').classList.toggle('active', tab === 'login');
@@ -143,10 +161,9 @@ function selectAvatar(el) {
   selectedAvatar = el.dataset.emoji;
 }
 
-function getTurnstileToken(containerId) {
-  const container = document.getElementById(containerId);
-  const input = container?.querySelector('[name="cf-turnstile-response"]');
-  return input?.value || '';
+function getTurnstileToken(widgetId) {
+  if (widgetId === undefined) return '';
+  return window.turnstile?.getResponse(widgetId) || '';
 }
 
 async function doLogin(e) {
@@ -156,19 +173,18 @@ async function doLogin(e) {
   const btn = document.getElementById('btn-login');
   btn.disabled = true;
   document.getElementById('btn-login-text').textContent = 'Ingresando...';
-
   try {
     const { token, user } = await api.auth.login({
-      email: document.getElementById('login-email').value,
-      password: document.getElementById('login-pass').value,
-      turnstileToken: getTurnstileToken('ts-login') || 'dev-bypass',
+      email:          document.getElementById('login-email').value,
+      password:       document.getElementById('login-pass').value,
+      turnstileToken: getTurnstileToken(tsLoginId) || 'dev-bypass',
     });
     Auth.save(token, user);
     window.location.href = '/';
   } catch (err) {
     errEl.textContent = err.message || 'Error al iniciar sesión';
     errEl.classList.add('show');
-    if (window.turnstile) window.turnstile.reset('#ts-login');
+    if (tsLoginId !== undefined) window.turnstile?.reset(tsLoginId);
   } finally {
     btn.disabled = false;
     document.getElementById('btn-login-text').textContent = 'Iniciar Sesión';
@@ -182,21 +198,20 @@ async function doRegister(e) {
   const btn = document.getElementById('btn-register');
   btn.disabled = true;
   document.getElementById('btn-register-text').textContent = 'Creando cuenta...';
-
   try {
     const { token, user } = await api.auth.register({
-      email: document.getElementById('reg-email').value,
-      displayName: document.getElementById('reg-name').value,
-      password: document.getElementById('reg-pass').value,
-      avatar: selectedAvatar,
-      turnstileToken: getTurnstileToken('ts-register') || 'dev-bypass',
+      email:          document.getElementById('reg-email').value,
+      displayName:    document.getElementById('reg-name').value,
+      password:       document.getElementById('reg-pass').value,
+      avatar:         selectedAvatar,
+      turnstileToken: getTurnstileToken(tsRegisterId) || 'dev-bypass',
     });
     Auth.save(token, user);
     window.location.href = '/';
   } catch (err) {
     errEl.textContent = err.message || 'Error al registrarse';
     errEl.classList.add('show');
-    if (window.turnstile) window.turnstile.reset('#ts-register');
+    if (tsRegisterId !== undefined) window.turnstile?.reset(tsRegisterId);
   } finally {
     btn.disabled = false;
     document.getElementById('btn-register-text').textContent = 'Crear Cuenta';

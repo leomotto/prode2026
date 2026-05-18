@@ -56,6 +56,12 @@ async function bootstrap() {
   fastify.register(require('./routes/rankings'),    { prefix: '/api/rankings' });
   fastify.register(require('./routes/admin'),       { prefix: '/api/admin' });
 
+  // ── Config pública (solo datos NO sensibles) ───────────────
+  // Expone solo lo que el frontend necesita y es seguro publicar
+  fastify.get('/api/config', async () => ({
+    turnstileSiteKey: config.TURNSTILE_SITE_KEY,
+  }));
+
   // Rate limit estricto en auth
   fastify.addHook('onRoute', (routeOptions) => {
     if (routeOptions.url?.startsWith('/api/auth/login') ||
@@ -64,7 +70,14 @@ async function bootstrap() {
     }
   });
 
-  // ── SPA fallback ───────────────────────────────────────────
+  // ── Clean URLs (sin extensión .html) ──────────────────────
+  // Cada ruta sirve su HTML correspondiente
+  const pages = ['login', 'matches', 'rankings', 'admin'];
+  for (const page of pages) {
+    fastify.get(`/${page}`, (req, reply) => reply.sendFile(`${page}.html`));
+  }
+
+  // ── Not Found: API → 404 JSON | resto → index.html ────────
   fastify.setNotFoundHandler((request, reply) => {
     if (request.url.startsWith('/api/')) {
       return reply.status(404).send({ error: 'Endpoint no encontrado' });
