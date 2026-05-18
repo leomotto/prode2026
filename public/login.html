@@ -9,37 +9,43 @@
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback" async defer></script>
 <style>
   body{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1rem}
-  body::after{content:'';position:fixed;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f5c518' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");pointer-events:none;z-index:0}
-  .auth-wrapper{width:100%;max-width:440px;position:relative;z-index:1}
+  .auth-wrapper{width:100%;max-width:420px;position:relative;z-index:1}
   .auth-logo{text-align:center;margin-bottom:2rem}
   .auth-logo .trophy{font-size:3rem;display:block;margin-bottom:.5rem}
-  .auth-logo h1{font-family:'Bebas Neue',sans-serif;font-size:2rem;background:linear-gradient(135deg,#fff 40%,var(--c-gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:.05em}
-  .auth-logo p{font-size:.85rem;color:var(--c-text-dim);margin-top:.25rem}
-  .auth-card{background:var(--c-navy-2);border:1px solid var(--c-border);border-radius:var(--radius-lg);overflow:hidden}
-  .auth-tabs{display:grid;grid-template-columns:1fr 1fr}
-  .auth-tab{padding:.875rem;text-align:center;border:none;background:none;color:var(--c-text-dim);font-size:.9rem;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;transition:var(--transition)}
-  .auth-tab.active{color:var(--c-gold);border-bottom-color:var(--c-gold);background:var(--c-gold-dim)}
+  .auth-logo h1{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;color:var(--navy);letter-spacing:.05em;margin-bottom:.25rem}
+  [data-theme="dark"] .auth-logo h1{color:#93c5fd}
+  .auth-logo p{font-size:.85rem;color:var(--text-dim)}
+  .auth-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-lg)}
+  [data-theme="dark"] .auth-card{background:#1a1d27;border-color:rgba(255,255,255,.1)}
+  .auth-tabs{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border)}
+  [data-theme="dark"] .auth-tabs{border-color:rgba(255,255,255,.1)}
+  .auth-tab{padding:.875rem;text-align:center;border:none;background:none;color:var(--text-dim);font-size:.9rem;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;transition:var(--transition)}
+  .auth-tab.active{color:var(--gold);border-bottom-color:var(--gold);background:var(--gold-dim)}
+  [data-theme="dark"] .auth-tab{color:var(--text-dim)}
+  [data-theme="dark"] .auth-tab.active{color:#fbbf24;border-color:#fbbf24;background:rgba(251,191,36,.1)}
   .auth-body{padding:1.75rem}
   .auth-panel{display:none}.auth-panel.active{display:block}
-  .divider-or{display:flex;align-items:center;gap:.75rem;margin:1.25rem 0;color:var(--c-text-dim);font-size:.78rem}
-  .divider-or::before,.divider-or::after{content:'';flex:1;border-top:1px solid var(--c-border)}
-  .btn-google{
-    width:100%;display:flex;align-items:center;justify-content:center;gap:.75rem;
-    padding:.75rem;border-radius:var(--radius);border:1px solid var(--c-border);
-    background:var(--c-navy-3);color:var(--c-text);font-size:.9rem;font-weight:600;
-    cursor:pointer;transition:var(--transition);
-  }
-  .btn-google:hover{border-color:var(--c-gold);color:var(--c-gold)}
+  .divider-or{display:flex;align-items:center;gap:.75rem;margin:1.25rem 0;color:var(--text-muted);font-size:.78rem}
+  .divider-or::before,.divider-or::after{content:'';flex:1;border-top:1px solid var(--border)}
+  [data-theme="dark"] .divider-or::before,[data-theme="dark"] .divider-or::after{border-color:rgba(255,255,255,.1)}
+  .btn-google{width:100%;display:flex;align-items:center;justify-content:center;gap:.75rem;padding:.75rem;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:.9rem;font-weight:600;cursor:pointer;transition:var(--transition)}
+  [data-theme="dark"] .btn-google{background:#222636;border-color:rgba(255,255,255,.12);color:#f0f2f8}
+  .btn-google:hover{border-color:var(--gold);color:var(--gold)}
   .btn-google svg{width:20px;height:20px;flex-shrink:0}
   .avatar-picker{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.5rem}
-  .avatar-option{width:40px;height:40px;border-radius:50%;background:var(--c-navy-3);border:2px solid var(--c-border);display:flex;align-items:center;justify-content:center;font-size:1.25rem;cursor:pointer;transition:var(--transition)}
-  .avatar-option:hover,.avatar-option.selected{border-color:var(--c-gold);background:var(--c-gold-dim)}
+  .avatar-option{width:40px;height:40px;border-radius:50%;background:var(--surface-2);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.25rem;cursor:pointer;transition:var(--transition)}
+  [data-theme="dark"] .avatar-option{background:#222636;border-color:rgba(255,255,255,.12)}
+  .avatar-option:hover,.avatar-option.selected{border-color:var(--gold);background:var(--gold-dim)}
   .cf-turnstile{margin:.75rem 0}
-  .error-msg{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:var(--radius);padding:.6rem .9rem;font-size:.82rem;color:var(--c-red);margin-bottom:.75rem;display:none}
+  .error-msg{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:var(--radius);padding:.6rem .9rem;font-size:.82rem;color:var(--red);margin-bottom:.75rem;display:none}
   .error-msg.show{display:block}
+  .theme-toggle-login{position:fixed;top:1rem;right:1rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.35rem .6rem;font-size:1rem;cursor:pointer;color:var(--text-dim);transition:var(--transition)}
+  [data-theme="dark"] .theme-toggle-login{background:#1a1d27;border-color:rgba(255,255,255,.12);color:#9aa3b8}
+  .theme-toggle-login:hover{border-color:var(--gold);color:var(--gold)}
 </style>
 </head>
 <body>
+<button class="theme-toggle-login" id="theme-btn-login" onclick="Theme.toggle();this.textContent=Theme.isDark()?'☀️':'🌙'" title="Modo oscuro/claro">🌙</button>
 <div class="auth-wrapper">
   <div class="auth-logo">
     <span class="trophy">🏆</span>
@@ -126,6 +132,7 @@
 <script src="/js/api.js"></script>
 <script>
 if (Auth.isLogged()) window.location.href = '/';
+document.getElementById('theme-btn-login').textContent = Theme.isDark() ? '☀️' : '🌙';
 
 let selectedAvatar = '⚽';
 let tsLoginId, tsRegisterId;
@@ -136,8 +143,8 @@ async function initTurnstile() {
     const cfg = await fetch('/api/config').then(r => r.json());
     const sitekey = cfg.turnstileSiteKey;
     if (!sitekey || !window.turnstile) return;
-    tsLoginId    = window.turnstile.render('#ts-login',    { sitekey, theme: 'dark' });
-    tsRegisterId = window.turnstile.render('#ts-register', { sitekey, theme: 'dark' });
+    tsLoginId    = window.turnstile.render('#ts-login',    { sitekey, theme: Theme.isDark() ? 'dark' : 'light' });
+    tsRegisterId = window.turnstile.render('#ts-register', { sitekey, theme: Theme.isDark() ? 'dark' : 'light' });
   } catch { /* Turnstile opcional en dev */ }
 }
 

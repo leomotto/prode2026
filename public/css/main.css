@@ -263,7 +263,6 @@ input,select,textarea{font-family:inherit}
   --text-dim: #9aa3b8;
   --text-muted:#6b7694;
   --border:   rgba(255,255,255,.1);
-  --navy:     #5b8cff;
 }
 [data-theme="dark"] body{background:var(--bg)}
 [data-theme="dark"] .card{box-shadow:none;border-color:rgba(255,255,255,.1)}
