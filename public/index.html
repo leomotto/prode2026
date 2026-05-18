@@ -7,20 +7,29 @@
 <meta name="description" content="Tu centro de comando del Prode del Mundial FIFA 2026">
 <link rel="stylesheet" href="/css/main.css">
 <script src="https://cdn.jsdelivr.net/npm/twemoji@14.0.2/dist/twemoji.min.js" crossorigin="anonymous"></script>
+<style>
+.dashboard-grid{display:grid;grid-template-columns:1fr 340px;gap:1.5rem;align-items:start}
+@media(max-width:900px){.dashboard-grid{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
+
 <nav class="nav">
   <div class="nav-inner">
-    <a href="/" class="nav-logo"><span>🏆</span> PRODE 2026</a>
+    <a href="/" class="nav-logo">
+      <span>🏆</span>
+      <div><div>PRODE MUNDIAL</div><small>2026</small></div>
+    </a>
     <div class="nav-links">
-      <a href="/" class="nav-link active">Dashboard</a>
-      <a href="/matches" class="nav-link">Partidos</a>
-      <a href="/rankings" class="nav-link">Ranking</a>
-      <a href="/admin.html" class="nav-link" id="nav-admin" style="display:none">Admin</a>
+      <a href="/" class="nav-link active">🏠 Inicio</a>
+      <a href="/matches" class="nav-link">📅 Partidos</a>
+      <a href="/rankings" class="nav-link">🏅 Ranking</a>
+      <a href="/admin" class="nav-link" id="nav-admin" style="display:none">🛡 Admin</a>
     </div>
     <div class="nav-user">
       <div class="nav-avatar" id="nav-avatar">⚽</div>
-      <button class="btn btn-secondary btn-sm" onclick="doLogout()">Salir</button>
+      <span class="nav-username" id="nav-username"></span>
+      <button class="btn btn-sm" style="background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2)" onclick="doLogout()">Salir</button>
     </div>
   </div>
 </nav>
@@ -28,60 +37,69 @@
 <div class="page-wrapper">
   <div class="container">
 
-    <!-- HERO + COUNTDOWN -->
+    <!-- HERO personalizado -->
     <div class="hero">
-      <div class="hero-eyebrow">🇦🇷 ¡Vamos Argentina! 🇦🇷</div>
-      <h1 class="hero-title">MUNDIAL<br>2026</h1>
-      <p class="hero-sub">11 de Junio al 19 de Julio · USA, México y Canadá</p>
-      <div class="countdown" id="countdown">
-        <div class="countdown-unit"><div class="countdown-num" id="cd-days">--</div><div class="countdown-label">Días</div></div>
-        <div class="countdown-unit"><div class="countdown-num" id="cd-hours">--</div><div class="countdown-label">Horas</div></div>
-        <div class="countdown-unit"><div class="countdown-num" id="cd-mins">--</div><div class="countdown-label">Min</div></div>
-        <div class="countdown-unit"><div class="countdown-num" id="cd-secs">--</div><div class="countdown-label">Seg</div></div>
-      </div>
-    </div>
-
-    <!-- ALERTA: partidos sin pronosticar -->
-    <div id="alert-pending" style="display:none" class="card card-featured mb-3">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
-        <div style="display:flex;align-items:center;gap:.75rem">
-          <span style="font-size:1.5rem">⚠️</span>
-          <div>
-            <div style="font-weight:700;color:var(--c-gold)">¡Partidos sin pronosticar!</div>
-            <div id="alert-pending-msg" class="text-sm text-dim">Tenés partidos próximos sin pronóstico.</div>
-          </div>
-        </div>
-        <a href="/matches" class="btn btn-primary btn-sm">Pronosticar ahora →</a>
-      </div>
+      <div class="hero-greeting">✨ PRODE MUNDIAL 2026</div>
+      <div class="hero-name">¡Hola, <span id="hero-name">jugador</span>! 🌍</div>
+      <div class="hero-sub">Cargá tus pronósticos y competí con tus amigos</div>
     </div>
 
     <!-- STATS PERSONALES -->
-    <div class="stats-grid mb-4" id="my-stats">
-      <div class="stat-card"><div class="stat-value" id="stat-pts">—</div><div class="stat-label">Mis puntos</div></div>
-      <div class="stat-card"><div class="stat-value" id="stat-exact">—</div><div class="stat-label">Exactos</div></div>
-      <div class="stat-card"><div class="stat-value" id="stat-bonus">—</div><div class="stat-label">Bonus pts</div></div>
-      <div class="stat-card"><div class="stat-value" id="stat-matches">—</div><div class="stat-label">Pronósticos</div></div>
+    <div class="stats-grid mb-3">
+      <div class="stat-card">
+        <div class="stat-icon">🏆</div>
+        <div><div class="stat-val" id="stat-pts">—</div><div class="stat-label">Tus Puntos</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📋</div>
+        <div><div class="stat-val" id="stat-matches">—</div><div class="stat-label">Pronósticos</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📅</div>
+        <div><div class="stat-val" id="stat-pending">—</div><div class="stat-label">Pendientes</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📈</div>
+        <div><div class="stat-val" id="stat-rank">—</div><div class="stat-label">Tu Posición</div></div>
+      </div>
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 340px;gap:1.5rem;align-items:start" class="dashboard-grid">
+    <!-- ALERTA PRONÓSTICOS PENDIENTES -->
+    <div id="alert-pending" style="display:none" class="pending-alert mb-3">
+      <div class="pending-alert-head">🔔 ¡Pronósticos pendientes!</div>
+      <div id="pending-list"></div>
+      <div class="pending-footer">
+        <a href="/matches" class="btn btn-sm" style="background:#92400e;color:#fff;width:100%;justify-content:center">Ver partidos →</a>
+      </div>
+    </div>
+
+    <div class="dashboard-grid">
 
       <!-- PRÓXIMOS PARTIDOS -->
       <div>
-        <h2 class="section-title">Próximos <span>Partidos</span></h2>
-        <div id="next-matches"><div class="spinner"></div></div>
-        <div class="mt-3">
-          <a href="/matches" class="btn btn-secondary">Ver todos los partidos →</a>
+        <div class="section-title">
+          Próximos Partidos
+          <a href="/matches">Ver todos →</a>
         </div>
+        <div id="next-matches"><div class="spinner"></div></div>
       </div>
 
-      <!-- TOP 5 RANKING -->
+      <!-- TOP RANKING + COUNTDOWN -->
       <div>
-        <h2 class="section-title">Top <span>Ranking</span></h2>
-        <div class="card" style="padding:.5rem">
+        <div class="section-title">
+          TOP Ranking
+          <a href="/rankings">Ver completo →</a>
+        </div>
+        <div class="card mb-3" style="padding:.5rem">
           <div id="top-ranking"><div class="spinner"></div></div>
         </div>
-        <div class="mt-3">
-          <a href="/rankings" class="btn btn-secondary w-full">Ver ranking completo →</a>
+
+        <div class="section-title" style="margin-top:1.5rem">Cuenta regresiva</div>
+        <div class="countdown" id="countdown">
+          <div class="countdown-unit"><div class="countdown-num" id="cd-days">--</div><div class="countdown-label">Días</div></div>
+          <div class="countdown-unit"><div class="countdown-num" id="cd-hours">--</div><div class="countdown-label">Horas</div></div>
+          <div class="countdown-unit"><div class="countdown-num" id="cd-mins">--</div><div class="countdown-label">Min</div></div>
+          <div class="countdown-unit"><div class="countdown-num" id="cd-secs">--</div><div class="countdown-label">Seg</div></div>
         </div>
       </div>
     </div>
@@ -92,23 +110,21 @@
 <script src="/js/api.js"></script>
 <script>
 Auth.require();
-
-// Setup nav
 const user = Auth.getUser();
 if (user) {
-  document.getElementById('nav-avatar').textContent = user.avatar || '⚽';
+  document.getElementById('nav-avatar').textContent = user.avatar || user.displayName?.[0] || '⚽';
+  document.getElementById('nav-username').textContent = user.displayName?.split(' ')[0] || '';
+  document.getElementById('hero-name').textContent = user.displayName?.split(' ')[0] || 'jugador';
   if (user.isAdmin) document.getElementById('nav-admin').style.display = '';
 }
 
-// Countdown
-const TARGET = new Date('2026-06-11T21:00:00-05:00');
+// Countdown al 11 junio 2026 21:00 UTC
+const TARGET = new Date('2026-06-12T00:00:00Z');
 function tick() {
   const diff = TARGET - Date.now();
-  if (diff <= 0) { document.getElementById('countdown').innerHTML = '<div class="badge badge-live" style="font-size:1rem;padding:.5rem 1.5rem">🔴 EL MUNDIAL ESTÁ EN CURSO</div>'; return; }
-  const d = Math.floor(diff / 86400000);
-  const h = Math.floor((diff % 86400000) / 3600000);
-  const m = Math.floor((diff % 3600000) / 60000);
-  const s = Math.floor((diff % 60000) / 1000);
+  if (diff <= 0) { document.getElementById('countdown').innerHTML = '<div class="badge-live" style="padding:.75rem 1.5rem;border-radius:var(--radius);font-weight:700">🔴 EL MUNDIAL ESTÁ EN CURSO</div>'; return; }
+  const d = Math.floor(diff/86400000), h = Math.floor((diff%86400000)/3600000),
+        m = Math.floor((diff%3600000)/60000), s = Math.floor((diff%60000)/1000);
   document.getElementById('cd-days').textContent  = String(d).padStart(2,'0');
   document.getElementById('cd-hours').textContent = String(h).padStart(2,'0');
   document.getElementById('cd-mins').textContent  = String(m).padStart(2,'0');
@@ -116,85 +132,104 @@ function tick() {
 }
 tick(); setInterval(tick, 1000);
 
-// My stats
-api.rankings.me().then(s => {
+// Stats
+Promise.all([api.rankings.me(), api.rankings.all()]).then(([s, all]) => {
   document.getElementById('stat-pts').textContent = s.totalPoints ?? 0;
-  document.getElementById('stat-exact').textContent = s.exactos ?? 0;
-  document.getElementById('stat-bonus').textContent = s.bonusTotal ?? 0;
   document.getElementById('stat-matches').textContent = s.partidos ?? 0;
+  const myId = Auth.getUser()?.id;
+  const rank = all.findIndex(r => r.userId === myId);
+  document.getElementById('stat-rank').textContent = rank >= 0 ? '#' + (rank+1) : '—';
 }).catch(() => {});
 
-// Pending alerts
+// Pendientes
 api.predictions.pending().then(pending => {
-  if (pending.length > 0) {
-    document.getElementById('alert-pending').style.display = '';
-    const names = pending.slice(0,2).map(m => `${m.teamAFlag}${m.teamBFlag}`).join(', ');
-    document.getElementById('alert-pending-msg').textContent =
-      `${pending.length} partido(s) próximo(s) sin pronóstico: ${names}`;
+  document.getElementById('stat-pending').textContent = pending.length;
+  if (!pending.length) return;
+  document.getElementById('alert-pending').style.display = '';
+  const list = document.getElementById('pending-list');
+  const shown = pending.slice(0, 5);
+  list.innerHTML = shown.map(m => {
+    const diff = new Date(m.date) - Date.now();
+    const h = Math.floor(diff / 3600000);
+    const timeStr = h > 24 ? `${Math.floor(h/24)}d` : `${h}h`;
+    return `<div class="pending-match-row">
+      <span class="pending-teams">
+        <span>${m.teamAFlag}</span>
+        <span>${m.teamAName} vs ${m.teamBName}</span>
+        <span>${m.teamBFlag}</span>
+      </span>
+      <span class="pending-timer">🕐 ${timeStr}</span>
+    </div>`;
+  }).join('');
+  renderEmojis(list);
+  if (pending.length > 5) {
+    list.innerHTML += `<div style="font-size:.75rem;color:var(--text-dim);text-align:center;padding:.4rem 0">+${pending.length-5} más...</div>`;
   }
-}).catch(() => {});
+}).catch(() => { document.getElementById('stat-pending').textContent = '0'; });
 
-// Next matches (status UPCOMING, featured first)
+// Próximos partidos
+function teamCode(flag) {
+  try { return [...flag].map(c => String.fromCharCode(c.codePointAt(0) - 0x1F1E6 + 65)).join(''); } catch { return '??'; }
+}
+
 api.matches.all('?status=UPCOMING').then(matches => {
   const el = document.getElementById('next-matches');
-  const sorted = matches.sort((a,b) => new Date(a.date) - new Date(b.date)).slice(0, 6);
+  const sorted = matches.sort((a,b) => new Date(a.date)-new Date(b.date)).slice(0, 6);
   if (!sorted.length) { el.innerHTML = '<div class="empty-state"><div class="icon">📅</div><p>No hay partidos próximos</p></div>'; return; }
-  el.innerHTML = sorted.map(m => `
-    <div class="fixture-card ${m.argentina ? 'argentina':''} ${m.featured?'featured':''} mb-2">
-      <div class="fc-topbar">
-        <div class="fc-meta">
-          ${m.argentina ? '<span class="badge badge-arg" style="font-size:.68rem">🇦🇷 ARG</span>' : ''}
-          ${m.featured  ? '<span class="badge badge-gold" style="font-size:.68rem">⭐</span>' : ''}
-          <span class="badge badge-upcoming" style="font-size:.68rem">Próximo</span>
+  el.innerHTML = `<div class="matches-grid">${sorted.map(m => `
+    <div class="fixture-card ${m.argentina?'argentina':''} ${m.featured?'featured':''}">
+      <div class="fc-head">
+        <div class="fc-badges">
+          <span class="badge badge-phase">Fase de Grupos</span>
+          ${m.groupName ? `<span class="badge badge-group">Grupo ${m.groupName}</span>` : ''}
+          ${m.featured  ? '<span class="badge badge-featured">Destacado</span>' : ''}
         </div>
-        <div style="font-size:.72rem;color:var(--c-text-dim)">${Fmt.datetime(m.date)}</div>
+        <span class="badge badge-upcoming">Próximo</span>
       </div>
-      <div class="fc-body" style="padding:.6rem .875rem">
-        <div class="fc-team">
-          <span class="fc-flag" style="font-size:1.6rem">${m.teamAFlag}</span>
+      <div class="fc-body">
+        <div class="fc-team-home">
+          <div class="fc-code">${teamCode(m.teamAFlag)}</div>
+          <div class="fc-flag-sm">${m.teamAFlag}</div>
           <div class="fc-name">${m.teamAName}</div>
         </div>
-        <div class="fc-center" style="min-width:70px">
-          <div class="fc-time">${Fmt.time(m.date)}</div>
-          <div class="fc-score-main tbd" style="font-size:.9rem">VS</div>
+        <div class="fc-vs-block">
+          <div class="fc-vs">vs</div>
+          <div class="fc-time-disp">${Fmt.time(m.date)}</div>
         </div>
-        <div class="fc-team away">
-          <span class="fc-flag" style="font-size:1.6rem">${m.teamBFlag}</span>
+        <div class="fc-team-away">
+          <div class="fc-code">${teamCode(m.teamBFlag)}</div>
+          <div class="fc-flag-sm">${m.teamBFlag}</div>
           <div class="fc-name">${m.teamBName}</div>
         </div>
       </div>
-      <div class="fc-footer">
-        <span class="fc-venue">📍 ${m.city}</span>
+      <div class="fc-foot">
+        <span class="fc-venue">🕐 ${Fmt.datetime(m.date)} &nbsp;📍 ${m.city}</span>
         <a href="/matches" class="btn btn-primary btn-sm">Pronosticar</a>
       </div>
-    </div>`).join('');
+    </div>`).join('')}</div>`;
   renderEmojis(el);
 }).catch(() => {
-  document.getElementById('next-matches').innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>Error al cargar partidos</p></div>';
+  document.getElementById('next-matches').innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>Error al cargar</p></div>';
 });
 
-// Top 5 ranking
+// Top ranking
 api.rankings.all().then(ranking => {
   const el = document.getElementById('top-ranking');
   const top5 = ranking.slice(0, 5);
   if (!top5.length) { el.innerHTML = '<div class="empty-state" style="padding:1.5rem"><p>Sin datos aún</p></div>'; return; }
   const myId = Auth.getUser()?.id;
   el.innerHTML = `<table class="ranking-table">
-    <tbody>
-    ${top5.map(r => `
-      <tr class="${r.userId === myId ? 'me' : ''} rank-${r.rank}">
-        <td class="rank-pos">${r.rank <= 3 ? ['🥇','🥈','🥉'][r.rank-1] : r.rank}</td>
-        <td><div class="rank-user"><span class="rank-avatar">${r.avatar}</span><span style="font-weight:600">${r.displayName}</span></div></td>
+    <tbody>${top5.map(r => `
+      <tr class="${r.userId===myId?'me':''} rank-${r.rank}">
+        <td class="rank-pos">${r.rank<=3?['🥇','🥈','🥉'][r.rank-1]:r.rank}</td>
+        <td><div class="rank-user"><div class="rank-avatar">${r.avatar||'⚽'}</div><span class="rank-name">${r.displayName}</span></div></td>
         <td class="rank-points">${r.totalPoints}</td>
       </tr>`).join('')}
     </tbody>
   </table>`;
 }).catch(() => {});
 
-function doLogout() {
-  Auth.clear();
-  window.location.href = '/login';
-}
+function doLogout() { Auth.clear(); window.location.href = '/login'; }
 </script>
 </body>
 </html>
