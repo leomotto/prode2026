@@ -11,7 +11,7 @@ on:
 # ALWAYSDATA_SITE_ID   → número del sitio (URL del panel)
 # ALWAYSDATA_API_KEY   → API key de Alwaysdata
 # ALWAYSDATA_ACCOUNT   → muchacholoco
-# GITHUB_PAT           → Personal Access Token con scope "repo" (para git pull)
+# GH_PAT             → Personal Access Token con scope "repo" (para git pull)
 # ─────────────────────────────────────────────────────────────────────────────
 
 jobs:
@@ -30,13 +30,13 @@ jobs:
           username: ${{ secrets.ALWAYSDATA_SSH_USER }}
           key:      ${{ secrets.ALWAYSDATA_SSH_KEY }}
           port:     22
-          envs:     GITHUB_PAT
+          envs:     GH_PAT
           script: |
             set -e
             cd $HOME/prode2026
 
             echo "🔗 Actualizando credenciales git..."
-            git remote set-url origin https://leomotto:${GITHUB_PAT}@github.com/leomotto/prode2026.git
+            git remote set-url origin https://leomotto:${GH_PAT}@github.com/leomotto/prode2026.git
 
             echo "📥 Pulling latest code..."
             git pull origin main
@@ -52,7 +52,7 @@ jobs:
 
             echo "✅ Código actualizado."
         env:
-          GITHUB_PAT: ${{ secrets.GITHUB_PAT }}
+          GH_PAT: ${{ secrets.GH_PAT }}
 
       - name: 🔄 Reiniciar sitio en Alwaysdata
         run: |
