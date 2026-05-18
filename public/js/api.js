@@ -159,6 +159,59 @@ function renderEmojis(el) {
   }
 }
 
+/* ── COUNTRY CODE (ISO2 → FIFA 3 letras) ────────────── */
+const FIFA_CODE = {
+  'AD':'AND','AE':'UAE','AF':'AFG','AL':'ALB','AM':'ARM','AO':'ANG','AR':'ARG',
+  'AT':'AUT','AU':'AUS','AZ':'AZE','BA':'BIH','BE':'BEL','BF':'BFA','BG':'BUL',
+  'BH':'BHR','BJ':'BEN','BO':'BOL','BR':'BRA','BT':'BHU','BW':'BOT','BY':'BLR',
+  'BZ':'BLZ','CA':'CAN','CD':'COD','CF':'CAF','CG':'CGO','CH':'SUI','CI':'CIV',
+  'CL':'CHI','CM':'CMR','CN':'CHN','CO':'COL','CR':'CRC','CU':'CUB','CV':'CPV',
+  'CY':'CYP','CZ':'CZE','DE':'GER','DK':'DEN','DO':'DOM','DZ':'ALG','EC':'ECU',
+  'EE':'EST','EG':'EGY','ES':'ESP','ET':'ETH','FI':'FIN','FJ':'FIJ','FR':'FRA',
+  'GA':'GAB','GB':'ENG','GE':'GEO','GH':'GHA','GM':'GAM','GN':'GUI','GQ':'EQG',
+  'GR':'GRE','GT':'GUA','GW':'GNB','GY':'GUY','HN':'HON','HR':'CRO','HT':'HAI',
+  'HU':'HUN','ID':'IDN','IE':'IRL','IL':'ISR','IN':'IND','IQ':'IRQ','IR':'IRN',
+  'IS':'ISL','IT':'ITA','JM':'JAM','JO':'JOR','JP':'JPN','KE':'KEN','KG':'KGZ',
+  'KP':'PRK','KR':'KOR','KW':'KUW','KZ':'KAZ','LB':'LIB','LI':'LIE','LK':'SRI',
+  'LR':'LBR','LS':'LES','LT':'LTU','LU':'LUX','LV':'LVA','LY':'LBA','MA':'MAR',
+  'MD':'MDA','ME':'MNE','MG':'MAD','MK':'MKD','ML':'MLI','MN':'MNG','MR':'MTN',
+  'MT':'MLT','MU':'MRI','MV':'MDV','MW':'MWI','MX':'MEX','MY':'MAS','MZ':'MOZ',
+  'NA':'NAM','NE':'NIG','NG':'NGA','NI':'NCA','NL':'NED','NO':'NOR','NP':'NEP',
+  'NZ':'NZL','OM':'OMA','PA':'PAN','PE':'PER','PG':'PNG','PH':'PHI','PK':'PAK',
+  'PL':'POL','PT':'POR','PY':'PAR','QA':'QAT','RO':'ROU','RS':'SRB','RU':'RUS',
+  'RW':'RWA','SA':'KSA','SB':'SOL','SE':'SWE','SG':'SIN','SI':'SVN','SK':'SVK',
+  'SL':'SLE','SM':'SMR','SN':'SEN','SO':'SOM','SR':'SUR','SS':'SSD','SV':'SLV',
+  'SY':'SYR','SZ':'SWZ','TD':'CHA','TG':'TOG','TH':'THA','TJ':'TJK','TN':'TUN',
+  'TO':'TON','TR':'TUR','TT':'TRI','TZ':'TAN','UA':'UKR','UG':'UGA','US':'USA',
+  'UY':'URU','UZ':'UZB','VE':'VEN','VN':'VIE','YE':'YEM','ZA':'RSA','ZM':'ZAM','ZW':'ZIM',
+};
+function teamCode(flag) {
+  try {
+    const iso2 = [...flag].map(c => String.fromCharCode(c.codePointAt(0) - 0x1F1E6 + 65)).join('');
+    return FIFA_CODE[iso2] || iso2;
+  } catch { return '???'; }
+}
+
+/* ── DARK MODE ────────────────────────────────── */
+const Theme = {
+  init() {
+    const saved = localStorage.getItem('prode_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', saved);
+  },
+  toggle() {
+    const current = document.documentElement.getAttribute('data-theme') || 'light';
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('prode_theme', next);
+    return next;
+  },
+  isDark() { return document.documentElement.getAttribute('data-theme') === 'dark'; },
+};
+Theme.init();
+
+/* ── LOGOUT GLOBAL ───────────────────────────── */
+function doLogout() { Auth.clear(); window.location.href = '/login'; }
+
 /* ── MODAL HELPER ────────────────────────────────────────── */
 function openModal(id)  { document.getElementById(id)?.classList.add('open'); }
 function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }

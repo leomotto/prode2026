@@ -24,7 +24,8 @@
     <div class="nav-user">
       <div class="nav-avatar" id="nav-avatar">⚽</div>
       <span class="nav-username" id="nav-username"></span>
-      <button class="btn btn-sm" style="background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2)" onclick="Auth.clear();location.href='/login'">Salir</button>
+      <button class="btn-theme" onclick="Theme.toggle();this.textContent=Theme.isDark()?'☀️':'🌙'" id="btn-theme">🌙</button>
+      <button class="btn btn-sm" style="background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2)" onclick="doLogout()">Salir</button>
     </div>
   </div>
 </nav>
@@ -129,13 +130,10 @@ if (user) {
   document.getElementById('nav-username').textContent = user.displayName?.split(' ')[0] || '';
   if (user.isAdmin) document.getElementById('nav-admin').style.display = '';
 }
+document.getElementById('btn-theme').textContent = Theme.isDark() ? '☀️' : '🌙';
 
 let allMatches = [], myPredictions = {}, currentFilter = '';
 let scoreA = 0, scoreB = 0;
-
-function teamCode(flag) {
-  try { return [...flag].map(c => String.fromCharCode(c.codePointAt(0) - 0x1F1E6 + 65)).join(''); } catch { return '??'; }
-}
 
 const PHASE_LABEL = { GRUPOS:'Fase de Grupos', DIECISEISAVOS:'1/32 de Final', OCTAVOS:'Octavos', CUARTOS:'Cuartos de Final', SEMIFINAL:'Semifinal', TERCER_PUESTO:'3er Puesto', FINAL:'Final' };
 const PHASE_ORDER = { GRUPOS:1, DIECISEISAVOS:2, OCTAVOS:3, CUARTOS:4, SEMIFINAL:5, TERCER_PUESTO:6, FINAL:7 };

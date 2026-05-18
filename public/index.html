@@ -29,6 +29,7 @@
     <div class="nav-user">
       <div class="nav-avatar" id="nav-avatar">⚽</div>
       <span class="nav-username" id="nav-username"></span>
+      <button class="btn-theme" onclick="Theme.toggle();this.textContent=Theme.isDark()?'☀️':'🌙'" id="btn-theme">🌙</button>
       <button class="btn btn-sm" style="background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2)" onclick="doLogout()">Salir</button>
     </div>
   </div>
@@ -117,6 +118,7 @@ if (user) {
   document.getElementById('hero-name').textContent = user.displayName?.split(' ')[0] || 'jugador';
   if (user.isAdmin) document.getElementById('nav-admin').style.display = '';
 }
+document.getElementById('btn-theme').textContent = Theme.isDark() ? '☀️' : '🌙';
 
 // Countdown al 11 junio 2026 21:00 UTC
 const TARGET = new Date('2026-06-12T00:00:00Z');
