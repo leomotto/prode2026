@@ -166,9 +166,9 @@
     </div>
     <div class="modal-body">
       <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:.75rem;margin-bottom:1rem;text-align:center">
-        <div><div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--navy)" id="dash-code-a">LOC</div><div style="font-size:.75rem;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="dash-name-a"></div></div>
+        <div><div style="font-size:1.5rem;line-height:1;margin-bottom:0.2rem" id="dash-flag-a"></div><div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--navy)" id="dash-code-a">LOC</div><div style="font-size:.75rem;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="dash-name-a"></div></div>
         <div style="font-size:.75rem;font-weight:700;color:var(--text-muted)">VS</div>
-        <div><div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--navy)" id="dash-code-b">VIS</div><div style="font-size:.75rem;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="dash-name-b"></div></div>
+        <div><div style="font-size:1.5rem;line-height:1;margin-bottom:0.2rem" id="dash-flag-b"></div><div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--navy)" id="dash-code-b">VIS</div><div style="font-size:.75rem;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="dash-name-b"></div></div>
       </div>
       <div class="score-stepper-row">
         <div class="score-stepper"><div class="score-stepper-label" id="dash-label-a">Local</div>
@@ -187,7 +187,7 @@
   </div>
 </div>
 
-<script src="/js/api.js"></script>
+<script src="/js/api.js?v=1.4.2"></script>
 <script>
 Auth.require();
 const user = Auth.getUser();
@@ -363,6 +363,8 @@ function openDashPred(matchId) {
   document.getElementById('dash-modal-date').textContent = Fmt.datetime(m.date);
   document.getElementById('dash-code-a').textContent = teamCode(m.teamAFlag);
   document.getElementById('dash-code-b').textContent = teamCode(m.teamBFlag);
+  if(document.getElementById('dash-flag-a')) document.getElementById('dash-flag-a').textContent = m.teamAFlag;
+  if(document.getElementById('dash-flag-b')) document.getElementById('dash-flag-b').textContent = m.teamBFlag;
   document.getElementById('dash-name-a').textContent = m.teamAName;
   document.getElementById('dash-name-b').textContent = m.teamBName;
   document.getElementById('dash-label-a').textContent = m.teamAName;

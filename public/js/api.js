@@ -281,6 +281,14 @@ function setActiveNav() {
       Auth.save(token, user);
       window.history.replaceState({}, '', '/');
       Toast.success('¡Bienvenido!', `Sesión iniciada con Google`);
+      if (document.getElementById('nav-avatar')) document.getElementById('nav-avatar').textContent = user.avatar || '⚽';
+      if (document.getElementById('nav-username')) document.getElementById('nav-username').textContent = user.displayName?.split(' ')[0] || '';
+      if (document.getElementById('hero-name')) document.getElementById('hero-name').textContent = user.displayName?.split(' ')[0] || 'jugador';
+      if (document.getElementById('dash-avatar')) document.getElementById('dash-avatar').textContent = user.avatar || '⚽';
+      if (user.isAdmin) {
+        if (document.getElementById('nav-admin')) document.getElementById('nav-admin').style.display = '';
+        if (document.getElementById('mobile-nav-admin')) document.getElementById('mobile-nav-admin').style.display = '';
+      }
     }).catch(() => {});
   }
 })();

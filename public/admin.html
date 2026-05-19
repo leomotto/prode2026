@@ -123,11 +123,13 @@
 
       <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:1rem;margin-bottom:1.5rem;text-align:center">
         <div>
+          <div style="font-size:2rem;line-height:1;margin-bottom:0.2rem" id="res-flag-a"></div>
           <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--navy)" id="res-code-a">LOC</div>
           <div style="font-size:.8rem;color:var(--text-dim)" id="res-name-a">Local</div>
         </div>
         <div style="font-size:.85rem;font-weight:700;color:var(--text-muted)">VS</div>
         <div>
+          <div style="font-size:2rem;line-height:1;margin-bottom:0.2rem" id="res-flag-b"></div>
           <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--navy)" id="res-code-b">VIS</div>
           <div style="font-size:.8rem;color:var(--text-dim)" id="res-name-b">Visitante</div>
         </div>
@@ -183,7 +185,7 @@
   </div>
 </div>
 
-<script src="/js/api.js"></script>
+<script src="/js/api.js?v=1.4.2"></script>
 <script>
 Auth.require();
 const user = Auth.getUser();
@@ -479,6 +481,8 @@ function openResult(matchId) {
   document.getElementById('result-match-subtitle').textContent = Fmt.datetime(m.date);
   document.getElementById('res-code-a').textContent = teamCode(m.teamAFlag);
   document.getElementById('res-code-b').textContent = teamCode(m.teamBFlag);
+  if(document.getElementById('res-flag-a')) document.getElementById('res-flag-a').textContent = m.teamAFlag;
+  if(document.getElementById('res-flag-b')) document.getElementById('res-flag-b').textContent = m.teamBFlag;
   document.getElementById('res-name-a').textContent = m.teamAName;
   document.getElementById('res-name-b').textContent = m.teamBName;
   document.getElementById('res-team-a').textContent = m.teamAName;

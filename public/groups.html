@@ -233,7 +233,7 @@
   </div>
 </div>
 
-<script src="/js/api.js"></script>
+<script src="/js/api.js?v=1.4.2"></script>
 <script>
 Auth.require();
 const user = Auth.getUser();
@@ -460,12 +460,27 @@ async function sendChatMessage() {
   const input = document.getElementById('chat-input');
   const txt = input.value.trim();
   if (!txt || !currentGroup) return;
+  
+  // Optimistic UI update
+  const cEl = document.getElementById('chat-messages');
+  const user = Auth.getUser();
+  const time = Fmt.time(new Date());
+  const name = user?.displayName?.split(' ')[0] || 'Yo';
+  const fakeDiv = document.createElement('div');
+  fakeDiv.className = 'chat-msg';
+  fakeDiv.innerHTML = `<div class="msg-meta"><span class="msg-author">${name}</span><span class="msg-time">${time}</span></div><div class="msg-text" style="opacity:0.7">${txt}</div>`;
+  cEl.appendChild(fakeDiv);
+  cEl.scrollTop = cEl.scrollHeight;
+
+  input.value = '';
   input.disabled = true;
   try {
     await api.groups.sendMessage(currentGroup.id, txt);
-    input.value = '';
-    loadChat();
-  } catch(e) { Toast.error('Error enviando mensaje', e.message); }
+    await loadChat();
+  } catch(e) { 
+    Toast.error('Error enviando mensaje', e.message); 
+    fakeDiv.remove();
+  }
   finally { input.disabled = false; input.focus(); }
 }
 
