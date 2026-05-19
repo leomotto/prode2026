@@ -145,28 +145,80 @@ async function bootstrap() {
     }
   }, 60_000); // cada 60 segundos
 
-  // ── Job: Sincronización automática de resultados (Fase 2) ──
+  // ── Job: Sincronización automática de resultados (Fase 3) ──
   setInterval(async () => {
-    if (!config.FOOTBALL_API_KEY) return;
+    if (!config.API_FOOTBALL_KEY) return;
     try {
-      // 1. Buscar partidos EN VIVO
-      const liveMatches = await fastify.db.match.findMany({ where: { status: 'LIVE' } });
-      if (!liveMatches.length) return;
+      // 1. Buscar partidos EN VIVO o que deberían haber empezado hoy
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const activeMatches = await fastify.db.match.findMany({
+        where: {
+          OR: [
+            { status: 'LIVE' },
+            { date: { gte: today, lte: new Date(today.getTime() + 24 * 60 * 60 * 1000) } }
+          ]
+        }
+      });
+      if (!activeMatches.length) return;
 
-      // 2. Aquí se llamaría a football-data.org o similar usando la API KEY
-      // const response = await fetch('https://api.football-data.org/v4/matches', {
-      //   headers: { 'X-Auth-Token': config.FOOTBALL_API_KEY }
-      // });
-      // const data = await response.json();
-      
-      // 3. Procesar resultados y actualizar en DB
-      // Para cada partido actualizado:
-      // await fastify.db.match.update(...)
-      // Si el partido finalizó, calcular puntos:
-      // const MatchService = require('./services/MatchService');
-      // await MatchService.calculatePoints(matchId);
+      // 2. Fetch fixtures from api-football for today
+      const dateStr = today.toISOString().split('T')[0];
+      const response = await fetch(`https://v3.football.api-sports.io/fixtures?date=${dateStr}`, {
+        headers: {
+          'x-rapidapi-host': 'v3.football.api-sports.io',
+          'x-apisports-key': config.API_FOOTBALL_KEY
+        }
+      });
+      const data = await response.json();
+      if (!data.response || data.errors?.length) {
+        fastify.log.warn('Error from api-football: ' + JSON.stringify(data.errors));
+        return;
+      }
 
-      fastify.log.info('Auto-sync check ejecutado para partidos en vivo.');
+      const MatchService = require('./services/MatchService');
+
+      for (const localMatch of activeMatches) {
+        // Find matching fixture in API response (rough matching by team code/name)
+        // Note: FIFA codes might not exactly match API's 3-letter codes, so we check substring of names or codes
+        const apiFixture = data.response.find(f => {
+          const home = f.teams.home.name.toUpperCase();
+          const away = f.teams.away.name.toUpperCase();
+          return (home.includes(localMatch.teamAName.toUpperCase()) || localMatch.teamAName.toUpperCase().includes(home) || home === localMatch.teamACode) &&
+                 (away.includes(localMatch.teamBName.toUpperCase()) || localMatch.teamBName.toUpperCase().includes(away) || away === localMatch.teamBCode);
+        });
+
+        if (!apiFixture) continue;
+
+        const statusShort = apiFixture.fixture.status.short; // "1H", "HT", "2H", "FT", "AET", "PEN"
+        const goalsHome = apiFixture.goals.home;
+        const goalsAway = apiFixture.goals.away;
+
+        // Is it finished?
+        const isFinished = ['FT', 'AET', 'PEN'].includes(statusShort);
+
+        // Update if it's currently LIVE locally, OR if it just finished
+        if (localMatch.status === 'LIVE' || isFinished) {
+          if (goalsHome !== null && goalsAway !== null) {
+            await fastify.db.match.update({
+              where: { id: localMatch.id },
+              data: {
+                resultA: goalsHome,
+                resultB: goalsAway,
+                status: isFinished ? 'FINISHED' : 'LIVE'
+              }
+            });
+
+            if (isFinished && localMatch.status !== 'FINISHED') {
+              // Trigger scoring calculation!
+              await MatchService.calculatePointsForMatch(fastify.db, localMatch.id);
+              fastify.log.info(`✅ Auto-Sync Finalizado: ${localMatch.teamAName} vs ${localMatch.teamBName} (${goalsHome}-${goalsAway})`);
+            } else {
+              fastify.log.info(`⚽ Auto-Sync En Vivo: ${localMatch.teamAName} vs ${localMatch.teamBName} (${goalsHome}-${goalsAway})`);
+            }
+          }
+        }
+      }
     } catch (e) {
       fastify.log.warn('Auto-sync error: ' + e.message);
     }

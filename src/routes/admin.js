@@ -128,26 +128,10 @@ async function adminRoutes(fastify) {
       data: { resultA, resultB, status: 'FINISHED' },
     });
 
-    // Traer todas las predicciones de este partido
-    const predictions = await fastify.db.prediction.findMany({ where: { matchId: id } });
-
-    // Calcular y actualizar puntos para cada pronóstico
-    let updated = 0;
-    for (const pred of predictions) {
-      const base = calcularPuntos({ resultA, resultB }, pred).base;
-      const bonus = calcularBonus(pred, { resultA, resultB, realFirstScorer, realCardsCount, realCornersCount, realMvp });
-      await fastify.db.prediction.update({
-        where: { id: pred.id },
-        data: {
-          pointsBase: base,
-          pointsBonus: bonus,
-          pointsTotal: base + bonus,
-          calculatedAt: new Date(),
-          locked: true,
-        },
-      });
-      updated++;
-    }
+    const MatchService = require('../services/MatchService');
+    const { updatedPredictions } = await MatchService.calculatePointsForMatch(fastify.db, id, {
+      realFirstScorer, realCardsCount, realCornersCount, realMvp
+    });
 
     // Enviar emails de resultado (async, sin bloquear la respuesta)
     const updatedPreds = await fastify.db.prediction.findMany({

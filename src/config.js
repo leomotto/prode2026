@@ -28,4 +28,5 @@ module.exports = {
   TURNSTILE_SITE_KEY:     process.env.TURNSTILE_SITE_KEY || '',
   APP_URL:                process.env.APP_URL,
   ADMIN_SETUP_KEY:        process.env.ADMIN_SETUP_KEY || '',
+  API_FOOTBALL_KEY:       process.env.API_FOOTBALL_KEY || '',
 };
