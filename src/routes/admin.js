@@ -23,16 +23,34 @@ async function adminRoutes(fastify) {
     const valid = ['UPCOMING', 'LIVE', 'FINISHED'];
     if (!valid.includes(status)) return reply.status(400).send({ error: 'Estado inválido' });
 
+    const updateData = { status };
+    if (status === 'UPCOMING') {
+      updateData.resultA = null;
+      updateData.resultB = null;
+    }
+
     const match = await fastify.db.match.update({
       where: { id: request.params.id },
-      data: { status },
+      data: updateData,
     });
 
-    // Si pasa a LIVE → bloquear predicciones
-    if (status === 'LIVE') {
+    // Si pasa a LIVE o FINISHED → bloquear predicciones
+    if (status === 'LIVE' || status === 'FINISHED') {
       await fastify.db.prediction.updateMany({
         where: { matchId: request.params.id },
         data: { locked: true },
+      });
+    } else if (status === 'UPCOMING') {
+      // Si vuelve a UPCOMING → desbloquear predicciones y resetear puntos calculados
+      await fastify.db.prediction.updateMany({
+        where: { matchId: request.params.id },
+        data: {
+          locked: false,
+          pointsBase: null,
+          pointsBonus: null,
+          pointsTotal: null,
+          calculatedAt: null,
+        },
       });
     }
     return match;
