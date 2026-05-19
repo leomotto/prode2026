@@ -35,15 +35,16 @@ async function authPlugin(fastify) {
       }
       request.user = { ...request.user, isAdmin: user.isAdmin };
     } catch {
-      reply.status(401).send({ error: 'Token inválido o expirado' });
+      return reply.status(401).send({ error: 'Token inválido o expirado' });
     }
   });
 
   // Decorator: adminOnly
   fastify.decorate('adminOnly', async function (request, reply) {
     await fastify.authenticate(request, reply);
+    if (reply.sent) return reply;
     if (!request.user?.isAdmin) {
-      reply.status(403).send({ error: 'Acceso restringido a administradores' });
+      return reply.status(403).send({ error: 'Acceso restringido a administradores' });
     }
   });
 }

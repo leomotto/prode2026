@@ -376,7 +376,7 @@ function openEditUser(id) {
   document.getElementById('edit-user-name').value = u.displayName;
   document.getElementById('edit-user-email').value = u.email;
   document.getElementById('edit-user-avatar').value = u.avatar || '⚽';
-  document.getElementById('modal-edit-user').style.display = 'flex';
+  openModal('modal-edit-user');
 }
 
 async function saveEditUser() {
@@ -484,10 +484,6 @@ function openResult(matchId) {
   document.getElementById('res-team-b').textContent = m.teamBName;
   document.getElementById('res-a').value = m.resultA ?? 0;
   document.getElementById('res-b').value = m.resultB ?? 0;
-  document.getElementById('res-scorer').value = '';
-  document.getElementById('res-mvp').value = '';
-  document.getElementById('res-cards').value = '';
-  document.getElementById('res-corners').value = '';
   openModal('modal-result');
 }
 
@@ -496,10 +492,10 @@ async function saveResult() {
   const body = {
     resultA: parseInt(document.getElementById('res-a').value)||0,
     resultB: parseInt(document.getElementById('res-b').value)||0,
-    realFirstScorer: document.getElementById('res-scorer').value||null,
-    realMvp: document.getElementById('res-mvp').value||null,
-    realCardsCount: document.getElementById('res-cards').value!==''?parseInt(document.getElementById('res-cards').value):null,
-    realCornersCount: document.getElementById('res-corners').value!==''?parseInt(document.getElementById('res-corners').value):null,
+    realFirstScorer: null,
+    realMvp: null,
+    realCardsCount: null,
+    realCornersCount: null,
   };
   try {
     const { predictionsUpdated } = await api.admin.setResult(id, body);

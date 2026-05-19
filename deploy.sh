@@ -17,8 +17,9 @@ npx prisma generate
 echo "🗄️ Actualizando Base de Datos..."
 npx prisma db push --accept-data-loss
 
-echo "🔄 Reiniciando servidor (AlwaysData Passenger)..."
+echo "🔄 Reiniciando servidor (AlwaysData Passenger & PM2)..."
 mkdir -p tmp
 touch tmp/restart.txt
+pm2 restart all || true
 
 echo "✅ Deploy completado exitosamente!"

@@ -416,3 +416,18 @@ input,select,textarea{font-family:inherit}
 .podium-avatar{font-size:2rem}
 .podium-name{font-size:.78rem;font-weight:700;color:var(--text)}
 .podium-pts{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--gold)}
+
+/* ── DARK MODE READABILITY OVERRIDES ── */
+[data-theme="dark"] .btn-primary { background: #2563eb; color: #fff; }
+[data-theme="dark"] .btn-primary:hover { background: #3b82f6; box-shadow: 0 0 12px rgba(59, 130, 246, 0.3); }
+[data-theme="dark"] .btn-danger { background: rgba(239,68,68,0.15); color: #fca5a5; border-color: rgba(239,68,68,0.3); }
+[data-theme="dark"] .btn-danger:hover { background: rgba(239,68,68,0.25); border-color: rgba(239,68,68,0.5); }
+[data-theme="dark"] [style*="color:var(--navy)"],
+[data-theme="dark"] [style*="color: var(--navy)"] {
+  color: var(--text) !important;
+}
+[data-theme="dark"] .modal-body [style*="color:var(--navy)"],
+[data-theme="dark"] .modal-body [style*="color: var(--navy)"] {
+  color: var(--text-dim) !important;
+}
+

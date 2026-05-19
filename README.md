@@ -55,12 +55,10 @@ El proyecto cuenta con un flujo CI/CD configurado a través de **GitHub Actions*
 
 ## 📊 Reglas y Puntos
 
-La competencia es feroz. El modelo de puntuación base es:
-* **Marcador exacto:** 10 puntos 🎯
-* **Ganador y diferencia de goles:** 7 puntos
-* **Ganador y goles de un equipo:** 5 puntos
-* **Ganador correcto:** 3 puntos
-* **Fallo total:** 0 puntos
+La competencia es feroz. El modelo de puntuación oficial es:
+* **Resultado exacto:** 3 puntos 🎯 (Ej. pronosticás 2-1 y el partido termina 2-1)
+* **Resultado correcto (ganador o empate):** 1 punto ✅ (Ej. pronosticás 3-1 y gana 2-0; o pronosticás 0-0 y empatan 1-1)
+* **Resultado incorrecto:** 0 puntos ❌
 
 ---
 
