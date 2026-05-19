@@ -7,10 +7,12 @@ if [ -n "$GH_PAT" ]; then
 fi
 
 echo "🧹 Limpiando cambios locales en el servidor..."
+git config core.autocrlf input
 git reset --hard HEAD
 
 echo "📥 Descargando últimos cambios..."
-git pull origin main
+git fetch origin main
+git reset --hard origin/main
 
 echo "📦 Instalando dependencias..."
 npm ci --omit=dev
