@@ -56,6 +56,42 @@ async function adminRoutes(fastify) {
     return match;
   });
 
+  // POST /api/admin/matches/:id/reset — limpiar partido y resultados
+  fastify.post('/matches/:id/reset', { preHandler: fastify.adminOnly }, async (request, reply) => {
+    const { id } = request.params;
+    const current = await fastify.db.match.findUnique({ where: { id } });
+    if (!current) return reply.status(404).send({ error: 'Partido no encontrado' });
+
+    // Si la fecha ya pasó o pasa pronto, la movemos a mañana para que el cron auto-live no lo vuelva a bloquear
+    let newDate = current.date;
+    if (newDate <= new Date(Date.now() + 2 * 60 * 60 * 1000)) {
+      newDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    }
+    
+    const match = await fastify.db.match.update({
+      where: { id },
+      data: { 
+        resultA: null, 
+        resultB: null, 
+        status: 'UPCOMING',
+        date: newDate 
+      },
+    });
+
+    await fastify.db.prediction.updateMany({
+      where: { matchId: id },
+      data: {
+        locked: false,
+        pointsBase: null,
+        pointsBonus: null,
+        pointsTotal: null,
+        calculatedAt: null,
+      },
+    });
+
+    return match;
+  });
+
   // PATCH /api/admin/matches/:id/featured — destacar partido
   fastify.patch('/matches/:id/featured', { preHandler: fastify.adminOnly }, async (request) => {
     const { featured } = request.body;

@@ -49,13 +49,14 @@ const api = {
   },
   // Admin
   admin: {
-    matches:      ()        => api.get('/admin/matches'),
-    createMatch:  (b)       => api.post('/admin/matches', b),
-    setStatus:    (id, s)   => api.patch(`/admin/matches/${id}/status`, { status: s }),
-    setFeatured:  (id, f)   => api.patch(`/admin/matches/${id}/featured`, { featured: f }),
-    setResult:    (id, b)   => api.post(`/admin/matches/${id}/result`, b),
-    users:        ()        => api.get('/admin/users'),
-    updateUser:   (id, b)   => api.patch(`/admin/users/${id}`, b),
+    matches:      ()       => api.get('/admin/matches'),
+    createMatch:  (b)      => api.post('/admin/matches', b),
+    setStatus:    (id, st) => api.patch(`/admin/matches/${id}/status`, { status: st }),
+    setFeatured:  (id, f)  => api.patch(`/admin/matches/${id}/featured`, { featured: f }),
+    setResult:    (id, b)  => api.post(`/admin/matches/${id}/result`, b),
+    resetMatch:   (id)     => api.post(`/admin/matches/${id}/reset`),
+    users:        ()       => api.get('/admin/users'),
+    updateUser:   (id, b)  => api.patch(`/admin/users/${id}`, b),
   },
   // Grupos privados
   groups: {
@@ -385,7 +386,7 @@ if (window.location.pathname !== '/login' && Auth.isLogged()) {
 
 // ── VERSION FOOTER & TURNSTILE CENTERING ─────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  const version = 'v1.4.1';
+  const version = 'v1.4.2';
   
   // 1. Center Turnstile containers programmatically
   const tsContainers = document.querySelectorAll('#ts-login, #ts-register');

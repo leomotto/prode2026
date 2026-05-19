@@ -146,8 +146,9 @@
       </div>
 
     </div>
-    <div class="modal-footer">
+    <div class="modal-footer" style="display:flex;gap:.5rem">
       <button class="btn btn-secondary" onclick="closeModal('modal-result')">Cancelar</button>
+      <button class="btn btn-sm" style="background:rgba(239,68,68,.1);color:var(--red);margin-right:auto" onclick="resetMatch()">Limpiar Resultado</button>
       <button class="btn btn-primary" onclick="saveResult()">✅ Guardar Resultado</button>
     </div>
   </div>
@@ -485,6 +486,19 @@ function openResult(matchId) {
   document.getElementById('res-a').value = m.resultA ?? 0;
   document.getElementById('res-b').value = m.resultB ?? 0;
   openModal('modal-result');
+}
+
+async function resetMatch() {
+  const id = document.getElementById('result-match-id').value;
+  if (!confirm('¿Estás seguro de que querés resetear este partido? Se borrará el resultado, los puntajes calculados y volverá a estado Próximo para que los usuarios puedan volver a pronosticar.')) return;
+  try {
+    await api.admin.resetMatch(id);
+    Toast.success('Partido reseteado a Próximo');
+    closeModal('modal-result');
+    loadAdminData();
+  } catch(e) {
+    Toast.error('Error reseteando partido', e.message);
+  }
 }
 
 async function saveResult() {
