@@ -481,8 +481,8 @@ function openResult(matchId) {
   document.getElementById('result-match-subtitle').textContent = Fmt.datetime(m.date);
   document.getElementById('res-code-a').textContent = teamCode(m.teamAFlag);
   document.getElementById('res-code-b').textContent = teamCode(m.teamBFlag);
-  if(document.getElementById('res-flag-a')) document.getElementById('res-flag-a').textContent = m.teamAFlag;
-  if(document.getElementById('res-flag-b')) document.getElementById('res-flag-b').textContent = m.teamBFlag;
+  if(document.getElementById('res-flag-a')) { document.getElementById('res-flag-a').textContent = m.teamAFlag; renderEmojis(document.getElementById('res-flag-a')); }
+  if(document.getElementById('res-flag-b')) { document.getElementById('res-flag-b').textContent = m.teamBFlag; renderEmojis(document.getElementById('res-flag-b')); }
   document.getElementById('res-name-a').textContent = m.teamAName;
   document.getElementById('res-name-b').textContent = m.teamBName;
   document.getElementById('res-team-a').textContent = m.teamAName;

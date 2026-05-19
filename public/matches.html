@@ -286,8 +286,8 @@ function openPrediction(matchId) {
   const codeA = teamCode(m.teamAFlag), codeB = teamCode(m.teamBFlag);
 
   document.getElementById('modal-date').textContent = Fmt.datetime(m.date);
-  if(document.getElementById('modal-flag-a')) document.getElementById('modal-flag-a').textContent = m.teamAFlag;
-  if(document.getElementById('modal-flag-b')) document.getElementById('modal-flag-b').textContent = m.teamBFlag;
+  if(document.getElementById('modal-flag-a')) { document.getElementById('modal-flag-a').textContent = m.teamAFlag; renderEmojis(document.getElementById('modal-flag-a')); }
+  if(document.getElementById('modal-flag-b')) { document.getElementById('modal-flag-b').textContent = m.teamBFlag; renderEmojis(document.getElementById('modal-flag-b')); }
   document.getElementById('modal-code-a').textContent = codeA;
   document.getElementById('modal-code-b').textContent = codeB;
   document.getElementById('modal-name-a').textContent = m.teamAName;

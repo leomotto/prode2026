@@ -363,8 +363,8 @@ function openDashPred(matchId) {
   document.getElementById('dash-modal-date').textContent = Fmt.datetime(m.date);
   document.getElementById('dash-code-a').textContent = teamCode(m.teamAFlag);
   document.getElementById('dash-code-b').textContent = teamCode(m.teamBFlag);
-  if(document.getElementById('dash-flag-a')) document.getElementById('dash-flag-a').textContent = m.teamAFlag;
-  if(document.getElementById('dash-flag-b')) document.getElementById('dash-flag-b').textContent = m.teamBFlag;
+  if(document.getElementById('dash-flag-a')) { document.getElementById('dash-flag-a').textContent = m.teamAFlag; renderEmojis(document.getElementById('dash-flag-a')); }
+  if(document.getElementById('dash-flag-b')) { document.getElementById('dash-flag-b').textContent = m.teamBFlag; renderEmojis(document.getElementById('dash-flag-b')); }
   document.getElementById('dash-name-a').textContent = m.teamAName;
   document.getElementById('dash-name-b').textContent = m.teamBName;
   document.getElementById('dash-label-a').textContent = m.teamAName;
