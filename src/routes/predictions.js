@@ -74,15 +74,28 @@ async function predictionsRoutes(fastify) {
   fastify.put('/:id', { preHandler: fastify.authenticate }, async (request, reply) => {
     const pred = await fastify.db.prediction.findUnique({ where: { id: request.params.id } });
     if (!pred || pred.userId !== request.user.id) return reply.status(404).send({ error: 'Pronóstico no encontrado' });
-    if (pred.locked) return reply.status(400).send({ error: 'El pronóstico está bloqueado (partido en curso)' });
 
     const match = await fastify.db.match.findUnique({ where: { id: pred.matchId } });
-    if (match.status !== 'UPCOMING') return reply.status(400).send({ error: 'El partido ya comenzó' });
+    if (!match) return reply.status(404).send({ error: 'Partido no encontrado' });
+
+    // El partido determina si el pronóstico está bloqueado: solo se puede si es UPCOMING
+    if (match.status !== 'UPCOMING') {
+      return reply.status(400).send({ error: 'El pronóstico está bloqueado (partido en curso)' });
+    }
 
     const { scoreA, scoreB, firstScorer, cardsCount, cornersCount, btts, mvp } = request.body;
     const updated = await fastify.db.prediction.update({
       where: { id: request.params.id },
-      data: { scoreA, scoreB, firstScorer, cardsCount, cornersCount, btts, mvp },
+      data: {
+        scoreA,
+        scoreB,
+        firstScorer,
+        cardsCount,
+        cornersCount,
+        btts,
+        mvp,
+        locked: false, // Desbloquear de forma proactiva en base de datos si fuera legacy
+      },
     });
     return updated;
   });
