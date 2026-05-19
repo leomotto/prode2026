@@ -144,30 +144,39 @@
         </div>
       </div>
 
-      <hr class="divider">
-      <div style="font-size:.8rem;font-weight:700;color:var(--text-dim);margin-bottom:.75rem">Datos Bonus (para calcular puntos extra)</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
-        <div class="form-group">
-          <label class="form-label">Primer Goleador</label>
-          <input class="form-input" id="res-scorer" type="text" placeholder="Apellido">
-        </div>
-        <div class="form-group">
-          <label class="form-label">MVP del partido</label>
-          <input class="form-input" id="res-mvp" type="text" placeholder="Apellido">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Tarjetas totales</label>
-          <input class="form-input" id="res-cards" type="number" min="0">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Córners totales</label>
-          <input class="form-input" id="res-corners" type="number" min="0">
-        </div>
-      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modal-result')">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveResult()">✅ Guardar y Calcular Puntos</button>
+      <button class="btn btn-primary" onclick="saveResult()">✅ Guardar Resultado</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR USUARIO -->
+<div class="modal-overlay" id="modal-edit-user">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Editar Perfil de Usuario</div>
+      <button class="btn-close" onclick="closeModal('modal-edit-user')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-user-id">
+      <div class="form-group">
+        <label class="form-label">Nombre (Mostrado en Ranking)</label>
+        <input type="text" id="edit-user-name" class="form-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" id="edit-user-email" class="form-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Emoji Avatar</label>
+        <input type="text" id="edit-user-avatar" class="form-input" maxlength="2">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-edit-user')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-save-user" onclick="saveEditUser()">Guardar Cambios</button>
     </div>
   </div>
 </div>
@@ -274,7 +283,7 @@ function renderAdminUsers(users) {
   document.getElementById('admin-users').innerHTML = users.map(u => `
     <div style="display:flex;align-items:center;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid var(--border);gap:.5rem">
       <div style="display:flex;align-items:center;gap:.5rem;min-width:0">
-        <span style="font-size:1.2rem">${u.avatar}</span>
+        <span style="font-size:1.2rem">${u.avatar||'⚽'}</span>
         <div>
           <div style="font-size:.85rem;font-weight:600;color:var(--text)">${u.displayName}</div>
           <div style="font-size:.72rem;color:var(--text-dim)">${u.email}</div>
@@ -282,6 +291,7 @@ function renderAdminUsers(users) {
       </div>
       <div style="display:flex;gap:.4rem;flex-shrink:0;align-items:center">
         ${u.isAdmin ? '<span class="badge badge-featured">Admin</span>' : ''}
+        <button onclick="openEditUser('${u.id}')" class="btn btn-sm btn-primary">✏️ Editar</button>
         <button onclick="toggleAdmin('${u.id}', ${!u.isAdmin})" class="btn btn-secondary btn-sm">${u.isAdmin ? 'Quitar Admin' : 'Hacer Admin'}</button>
       </div>
     </div>`).join('');
@@ -300,11 +310,28 @@ function renderAdminGroups(groups) {
         <button onclick="deleteGroup('${g.id}')" class="btn btn-sm" style="background:rgba(239,68,68,.1);color:var(--red)">Eliminar Grupo</button>
       </div>
       <div style="font-size:.85rem;color:var(--text);margin-bottom:.75rem">
-        Miembros (${g.memberCount}): ${g.members.map(m => m.user.displayName).join(', ')}
+        <div style="font-weight:700;margin-bottom:.5rem;color:var(--text-dim);text-transform:uppercase;font-size:.7rem">Miembros (${g.memberCount})</div>
+        <div style="display:flex;flex-direction:column;gap:.5rem">
+          ${g.members.map(m => {
+            const isOwner = m.userId === g.ownerId;
+            const badge = isOwner ? '<span class="badge badge-finished">Dueño</span>' : 
+                         (m.role === 'MANAGER' ? '<span class="badge badge-live">Encargado</span>' : '<span class="badge" style="background:var(--surface-2);color:var(--text-dim)">Miembro</span>');
+            const toggleRoleBtn = !isOwner ? `<button class="btn btn-sm ${m.role==='MANAGER'?'btn-secondary':'btn-primary'}" style="padding:.2rem .4rem;font-size:.7rem" onclick="setGroupManager('${g.id}', '${m.userId}', '${m.role==='MANAGER'?'MEMBER':'MANAGER'}')">${m.role==='MANAGER'?'Quitar Encargado':'Hacer Encargado'}</button>` : '';
+            const removeBtn = !isOwner ? `<button class="btn btn-sm btn-danger" style="padding:.2rem .4rem;font-size:.7rem" onclick="adminRemoveUser('${g.id}', '${m.userId}')">Expulsar</button>` : '';
+            return `<div style="display:flex;align-items:center;justify-content:space-between;padding:.3rem .5rem;background:var(--surface);border-radius:var(--radius);border:1px solid var(--border)">
+              <div style="display:flex;align-items:center;gap:.5rem">
+                <span>${m.user.avatar||'⚽'}</span>
+                <span style="font-weight:600">${m.user.displayName}</span>
+                ${badge}
+              </div>
+              <div style="display:flex;gap:.3rem">${toggleRoleBtn}${removeBtn}</div>
+            </div>`;
+          }).join('')}
+        </div>
       </div>
-      <div style="display:flex;gap:.5rem">
+      <div style="display:flex;gap:.5rem;margin-top:1rem;border-top:1px dashed var(--border);padding-top:1rem">
         <select id="sel-add-${g.id}" class="form-input" style="width:200px;font-size:.8rem;padding:.4rem">
-          <option value="">Añadir usuario...</option>
+          <option value="">Añadir usuario al grupo...</option>
           ${allAdminUsers.filter(u => !g.members.some(m => m.userId === u.id)).map(u => `<option value="${u.id}">${u.displayName} (${u.email})</option>`).join('')}
         </select>
         <button class="btn btn-primary btn-sm" onclick="adminAddUser('${g.id}')">Añadir</button>
@@ -322,6 +349,51 @@ async function adminAddUser(groupId) {
     Toast.success('Usuario añadido');
     loadAdminData(); // recargar
   } catch(e) { Toast.error('Error', e.message); }
+}
+
+async function adminRemoveUser(groupId, userId) {
+  if (!confirm('¿Expulsar a este usuario del grupo?')) return;
+  try {
+    await api.groups.adminRemove(groupId, userId);
+    Toast.success('Usuario expulsado');
+    loadAdminData();
+  } catch(e) { Toast.error('Error', e.message); }
+}
+
+async function setGroupManager(groupId, userId, role) {
+  try {
+    await api.request(`/api/groups/${groupId}/members/${userId}/role`, { method: 'PUT', body: JSON.stringify({ role }) });
+    Toast.success(`Rol actualizado a ${role}`);
+    loadAdminData();
+  } catch(e) { Toast.error('Error', e.message); }
+}
+
+function openEditUser(id) {
+  const u = allAdminUsers.find(x => x.id === id);
+  if(!u) return;
+  document.getElementById('edit-user-id').value = u.id;
+  document.getElementById('edit-user-name').value = u.displayName;
+  document.getElementById('edit-user-email').value = u.email;
+  document.getElementById('edit-user-avatar').value = u.avatar || '⚽';
+  document.getElementById('modal-edit-user').style.display = 'flex';
+}
+
+async function saveEditUser() {
+  const id = document.getElementById('edit-user-id').value;
+  const displayName = document.getElementById('edit-user-name').value.trim();
+  const email = document.getElementById('edit-user-email').value.trim();
+  const avatar = document.getElementById('edit-user-avatar').value.trim();
+  if(!displayName || !email) return Toast.warn('Nombre y Email requeridos');
+  
+  const btn = document.getElementById('btn-save-user');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+  try {
+    await api.request(`/api/admin/users/${id}`, { method: 'PUT', body: JSON.stringify({ displayName, email, avatar }) });
+    closeModal('modal-edit-user');
+    Toast.success('Perfil actualizado');
+    loadAdminData();
+  } catch(e) { Toast.error('Error', e.message); }
+  finally { btn.disabled = false; btn.textContent = 'Guardar Cambios'; }
 }
 
 async function deleteGroup(groupId) {

@@ -385,14 +385,17 @@ function switchGroupTab(tabId, btn) {
 async function loadPrizes() {
   if (!currentGroup) return;
   const isOwner = currentGroup.isOwner;
+  const isManager = currentGroup.isManager;
+  const canEdit = isOwner || isManager;
+  
   const viewEl = document.getElementById('gd-prizes-view');
   const editEl = document.getElementById('gd-prizes-edit');
-  editEl.style.display = isOwner ? 'block' : 'none';
+  editEl.style.display = canEdit ? 'block' : 'none';
 
   let prizes = {};
   try { if (currentGroup.prizes) prizes = JSON.parse(currentGroup.prizes); } catch(e){}
 
-  if (isOwner) {
+  if (canEdit) {
     document.getElementById('prize-1').value = prizes['1'] || '';
     document.getElementById('prize-2').value = prizes['2'] || '';
     document.getElementById('prize-3').value = prizes['3'] || '';

@@ -153,6 +153,7 @@ model Group {
 model GroupMember {
   groupId  String
   userId   String
+  role     String   @default("MEMBER") // MEMBER, MANAGER
   joinedAt DateTime @default(now())
 
   group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)

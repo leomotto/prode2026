@@ -318,21 +318,39 @@ api.predictions.mine().then(preds => {
   const finished = preds.filter(p => p.match.status === 'FINISHED' || p.match.resultA !== null).slice(0,5);
   const all = preds.slice(0,8);
   if (!all.length) { el.innerHTML = '<div class="empty-state" style="padding:1.5rem"><p>Aún no hay pronósticos</p></div>'; return; }
-  el.innerHTML = all.map(p => {
+  el.innerHTML = `<div class="matches-grid" style="grid-template-columns:1fr;gap:.5rem">${all.map(p => {
     const isFinished = p.match.status === 'FINISHED' || p.match.resultA !== null;
     const points = p.pointsTotal ?? 0;
-    const icon = !isFinished ? '⏳' : (points===3?'🎯':points===1?'✅':'❌');
-    const pts = !isFinished ? '' : `<span style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:${points>0?'var(--green)':'var(--text-dim)'}">${points>0?'+'+points:'0'}</span>`;
-    const result = isFinished ? `<span style="font-size:.8rem;color:var(--text-dim)">(${p.match.resultA}—${p.match.resultB})</span>` : '';
-    return `<div style="display:flex;align-items:center;gap:.75rem;padding:.65rem 1rem;border-bottom:1px solid var(--border)">
-      <div style="font-size:1.2rem;width:24px;text-align:center">${icon}</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:.85rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.match.teamAName} vs ${p.match.teamBName}</div>
-        <div style="font-size:.75rem;color:var(--text-dim)">Tu pronóstico: ${p.scoreA}—${p.scoreB} ${result}</div>
+    const icon = !isFinished ? '⏳ Pendiente' : (points===3?'🎯 Exacto (+3)':points===1?'✅ Ganador (+1)':'❌ Sin puntos (0)');
+    const badgeClass = !isFinished ? 'badge-upcoming' : (points>0?'badge-finished':'badge-live');
+    const resultDisp = isFinished ? `${p.match.resultA} — ${p.match.resultB}` : 'vs';
+    
+    return `<div class="fixture-card">
+      <div class="fc-head">
+        <div class="fc-badges">
+          <span class="badge ${badgeClass}">${icon}</span>
+        </div>
       </div>
-      ${pts}
+      <div class="fc-body">
+        <div class="fc-team-home">
+          <div class="fc-code">${teamCode(p.match.teamAFlag)}</div>
+          <div class="fc-flag-sm">${p.match.teamAFlag}</div>
+          <div class="fc-name">${p.match.teamAName}</div>
+        </div>
+        <div class="fc-vs-block">
+          <div style="font-size:.7rem;color:var(--text-dim);margin-bottom:.2rem">Tu pronóstico</div>
+          <div class="badge badge-finished" style="font-size:.9rem;padding:.3rem .5rem">${p.scoreA} — ${p.scoreB}</div>
+          <div style="font-size:.7rem;color:var(--text-dim);margin-top:.2rem">Real: ${resultDisp}</div>
+        </div>
+        <div class="fc-team-away">
+          <div class="fc-code">${teamCode(p.match.teamBFlag)}</div>
+          <div class="fc-flag-sm">${p.match.teamBFlag}</div>
+          <div class="fc-name">${p.match.teamBName}</div>
+        </div>
+      </div>
     </div>`;
-  }).join('');
+  }).join('')}</div>`;
+  renderEmojis(el);
 }).catch(() => { document.getElementById('recent-preds').innerHTML = ''; });
 
 // Dashboard prediction modal

@@ -319,11 +319,11 @@ input,select,textarea{font-family:inherit}
 [data-theme="dark"]{
   --bg:       #0f1117;
   --surface:  #1a1d27;
-  --surface-2:#222636;
-  --text:     #f0f2f8;
-  --text-dim: #9aa3b8;
-  --text-muted:#6b7694;
-  --border:   rgba(255,255,255,.1);
+  --surface-2:#242938;
+  --text:     #f8fafc;
+  --text-dim: #cbd5e1;
+  --text-muted:#94a3b8;
+  --border:   rgba(255,255,255,.15);
 }
 [data-theme="dark"] body{background:var(--bg)}
 [data-theme="dark"] .card{box-shadow:none;border-color:rgba(255,255,255,.1)}

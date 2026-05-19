@@ -29,6 +29,7 @@ async function groupRoutes(fastify) {
       ...m.group,
       memberCount: m.group.members.length,
       isOwner: m.group.ownerId === userId,
+      isManager: m.role === 'MANAGER',
     }));
   });
 
@@ -122,6 +123,7 @@ async function groupRoutes(fastify) {
         userId:      m.user.id,
         displayName: m.user.displayName,
         avatar:      m.user.avatar,
+        role:        m.role,
         totalPoints: agg._sum.pointsTotal ?? 0,
         partidos:    agg._count._all,
         isOwner:     false, // se calcula abajo
@@ -162,16 +164,19 @@ async function groupRoutes(fastify) {
 
   // ── PRIZES ────────────────────────────────────────────────────────
 
-  // PUT /api/groups/:id/prizes — actualizar premios (solo owner)
-  fastify.put('/:id/prizes', {
-    preHandler: fastify.authenticate,
-    schema: { body: { type: 'object', required: ['prizes'], properties: { prizes: { type: 'string' } } } },
-  }, async (request, reply) => {
+  // PUT /api/groups/:id/prizes — editar premios del grupo (owner o manager)
+  fastify.put('/:id/prizes', { preHandler: fastify.authenticate }, async (request, reply) => {
     const { id } = request.params;
     const { prizes } = request.body;
-    const group = await fastify.db.group.findUnique({ where: { id } });
+    const group = await fastify.db.group.findUnique({ where: { id }, include: { members: true } });
     if (!group) return reply.status(404).send({ error: 'Grupo no encontrado' });
-    if (group.ownerId !== request.user.id) return reply.status(403).send({ error: 'Solo el creador puede editar premios' });
+    
+    const isOwner = group.ownerId === request.user.id;
+    const isManager = group.members.some(m => m.userId === request.user.id && m.role === 'MANAGER');
+    
+    if (!isOwner && !isManager) {
+      return reply.status(403).send({ error: 'Solo el creador o un encargado puede editar premios' });
+    }
     
     await fastify.db.group.update({ where: { id }, data: { prizes } });
     return { ok: true };
@@ -247,6 +252,21 @@ async function groupRoutes(fastify) {
     if (!request.user.isAdmin) return reply.status(403).send({ error: 'Sin acceso' });
     const { id, userId } = request.params;
     await fastify.db.groupMember.deleteMany({ where: { groupId: id, userId } });
+    return { ok: true };
+  });
+
+  // PUT /api/groups/:id/members/:userId/role — asignar encargado (admin)
+  fastify.put('/:id/members/:userId/role', {
+    preHandler: fastify.authenticate,
+    schema: { body: { type: 'object', required: ['role'], properties: { role: { type: 'string', enum: ['MEMBER', 'MANAGER'] } } } },
+  }, async (request, reply) => {
+    if (!request.user.isAdmin) return reply.status(403).send({ error: 'Sin acceso' });
+    const { id, userId } = request.params;
+    const { role } = request.body;
+    await fastify.db.groupMember.updateMany({
+      where: { groupId: id, userId },
+      data: { role },
+    });
     return { ok: true };
   });
 }

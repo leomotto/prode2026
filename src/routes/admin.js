@@ -109,16 +109,42 @@ async function adminRoutes(fastify) {
       fastify.log.warn('Email bulk error: ' + e.message)
     );
 
-    return { match, predictionsUpdated: updated };
+    return { updated, message: 'Resultados procesados correctamente' };
 
   });
 
   // GET /api/admin/users — lista de usuarios
   fastify.get('/users', { preHandler: fastify.adminOnly }, async () => {
     return fastify.db.user.findMany({
-      select: { id: true, email: true, displayName: true, avatar: true, isAdmin: true, isActive: true, createdAt: true },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, email: true, displayName: true, avatar: true, isAdmin: true, createdAt: true },
     });
+  });
+
+  // PUT /api/admin/users/:id — editar perfil de usuario
+  fastify.put('/users/:id', {
+    preHandler: fastify.adminOnly,
+    schema: {
+      body: {
+        type: 'object',
+        properties: {
+          displayName: { type: 'string' },
+          email: { type: 'string' },
+          avatar: { type: 'string' },
+        },
+      }
+    }
+  }, async (request, reply) => {
+    const { displayName, email, avatar } = request.body;
+    try {
+      const updated = await fastify.db.user.update({
+        where: { id: request.params.id },
+        data: { displayName, email, avatar },
+      });
+      return updated;
+    } catch (e) {
+      return reply.status(400).send({ error: 'Error actualizando usuario (¿Email duplicado?)' });
+    }
   });
 
   // PATCH /api/admin/users/:id — toggle admin / active
