@@ -34,35 +34,7 @@ jobs:
           script: |
             set -e
             cd $HOME/prode2026
-
-            echo "🔗 Actualizando credenciales git..."
-            git remote set-url origin https://leomotto:${GH_PAT}@github.com/leomotto/prode2026.git
-
-            echo "📥 Pulling latest code..."
-            git pull origin main
-
-            echo "📦 Instalando dependencias..."
-            npm ci --omit=dev
-
-            echo "⚙️  Generando Prisma client..."
-            npx prisma generate
-
-            echo "🗄️  Sincronizando schema DB..."
-            npx prisma db push --accept-data-loss
-
-            echo "✅ Código actualizado."
+            chmod +x deploy.sh
+            ./deploy.sh
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
-
-      - name: 🔄 Reiniciar sitio en Alwaysdata
-        run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
-            "https://api.alwaysdata.com/v1/site/${{ secrets.ALWAYSDATA_SITE_ID }}/restart/" \
-            -u "${{ secrets.ALWAYSDATA_API_KEY }} account=${{ secrets.ALWAYSDATA_ACCOUNT }}:" \
-            -H "Content-Type: application/json")
-          echo "Alwaysdata API response: $STATUS"
-          if [ "$STATUS" != "204" ] && [ "$STATUS" != "200" ]; then
-            echo "⚠️  Restart puede haber fallado (HTTP $STATUS) - verificar manualmente"
-          else
-            echo "✅ Sitio reiniciado correctamente"
-          fi
