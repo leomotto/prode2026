@@ -1,9 +1,13 @@
 #!/bin/bash
+set -e
 
 if [ -n "$GH_PAT" ]; then
   echo "🔗 Actualizando credenciales git..."
   git remote set-url origin https://leomotto:${GH_PAT}@github.com/leomotto/prode2026.git
 fi
+
+echo "🧹 Limpiando cambios locales en el servidor..."
+git reset --hard HEAD
 
 echo "📥 Descargando últimos cambios..."
 git pull origin main

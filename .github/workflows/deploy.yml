@@ -34,7 +34,9 @@ jobs:
           script: |
             set -e
             cd $HOME/prode2026
+            git reset --hard HEAD
             chmod +x deploy.sh
             ./deploy.sh
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
+
