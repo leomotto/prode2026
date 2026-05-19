@@ -382,3 +382,57 @@ const HelpWidget = {
 if (window.location.pathname !== '/login' && Auth.isLogged()) {
   document.addEventListener('DOMContentLoaded', () => HelpWidget.init());
 }
+
+// ── VERSION FOOTER & TURNSTILE CENTERING ─────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const version = 'v1.4.1';
+  
+  // 1. Center Turnstile containers programmatically
+  const tsContainers = document.querySelectorAll('#ts-login, #ts-register');
+  tsContainers.forEach(container => {
+    container.style.width = '100%';
+    container.style.display = 'flex';
+    container.style.justifyContent = 'center';
+    container.style.alignItems = 'center';
+    container.style.margin = '0.75rem auto';
+  });
+
+  // 2. Inject elegant footer
+  const isLoginPage = window.location.pathname === '/login' || window.location.pathname === '/login.html' || window.location.pathname.endsWith('/login');
+  if (isLoginPage) {
+    const authWrapper = document.querySelector('.auth-wrapper');
+    if (authWrapper && !document.getElementById('site-version-footer')) {
+      const loginFooter = document.createElement('div');
+      loginFooter.id = 'site-version-footer';
+      loginFooter.style.textAlign = 'center';
+      loginFooter.style.marginTop = '1.5rem';
+      loginFooter.style.fontSize = '0.75rem';
+      loginFooter.style.color = 'var(--text-dim)';
+      loginFooter.style.opacity = '0.7';
+      loginFooter.innerHTML = `PRODE MUNDIAL 2026 — <span style="font-weight: 600; color: var(--gold);">${version}</span>`;
+      authWrapper.appendChild(loginFooter);
+    }
+  } else {
+    const wrapper = document.querySelector('.page-wrapper') || document.body;
+    if (wrapper && !document.getElementById('site-version-footer')) {
+      const footer = document.createElement('footer');
+      footer.id = 'site-version-footer';
+      footer.className = 'site-footer';
+      footer.style.textAlign = 'center';
+      footer.style.padding = '1.5rem 1rem';
+      footer.style.marginTop = 'auto';
+      footer.style.fontSize = '0.78rem';
+      footer.style.color = 'var(--text-dim)';
+      footer.style.borderTop = '1px solid var(--border)';
+      footer.style.opacity = '0.7';
+      footer.innerHTML = `
+        <div style="max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 0.25rem;">
+          <div>🏆 PRODE MUNDIAL 2026 — <span style="font-weight: 600; color: var(--gold);">${version}</span></div>
+          <div style="font-size: 0.7rem; color: var(--text-muted);">Implementado con Git CI/CD Automático • Todos los derechos reservados</div>
+        </div>
+      `;
+      wrapper.appendChild(footer);
+    }
+  }
+});
+

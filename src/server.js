@@ -50,6 +50,32 @@ async function bootstrap() {
     prefix: '/',
   });
 
+  // ── Favicon explicit serving ──────────────────────────────
+  const fs = require('fs');
+  const faviconPath = path.join(__dirname, '..', 'public', 'favicon.svg');
+  let faviconBuffer;
+  try {
+    faviconBuffer = fs.readFileSync(faviconPath);
+  } catch (e) {
+    console.error('Warning: Could not read favicon.svg at startup:', e.message);
+  }
+
+  fastify.get('/favicon.svg', (req, reply) => {
+    if (faviconBuffer) {
+      reply.type('image/svg+xml').send(faviconBuffer);
+    } else {
+      reply.status(404).send('Not Found');
+    }
+  });
+
+  fastify.get('/favicon.ico', (req, reply) => {
+    if (faviconBuffer) {
+      reply.type('image/svg+xml').send(faviconBuffer);
+    } else {
+      reply.status(404).send('Not Found');
+    }
+  });
+
   // ── API Routes ─────────────────────────────────────────────
   fastify.register(require('./routes/auth'),        { prefix: '/api/auth' });
   fastify.register(require('./routes/matches'),     { prefix: '/api/matches' });
