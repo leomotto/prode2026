@@ -362,7 +362,7 @@ async function adminRemoveUser(groupId, userId) {
 
 async function setGroupManager(groupId, userId, role) {
   try {
-    await api.request(`/api/groups/${groupId}/members/${userId}/role`, { method: 'PUT', body: JSON.stringify({ role }) });
+    await api.put(`/groups/${groupId}/members/${userId}/role`, { role });
     Toast.success(`Rol actualizado a ${role}`);
     loadAdminData();
   } catch(e) { Toast.error('Error', e.message); }
@@ -388,7 +388,7 @@ async function saveEditUser() {
   const btn = document.getElementById('btn-save-user');
   btn.disabled = true; btn.textContent = 'Guardando...';
   try {
-    await api.request(`/api/admin/users/${id}`, { method: 'PUT', body: JSON.stringify({ displayName, email, avatar }) });
+    await api.put(`/admin/users/${id}`, { displayName, email, avatar });
     closeModal('modal-edit-user');
     Toast.success('Perfil actualizado');
     loadAdminData();
