@@ -315,18 +315,19 @@ function renderNextMatches(matches, preds) {
 // Últimas predicciones con resultado
 api.predictions.mine().then(preds => {
   const el = document.getElementById('recent-preds');
-  const finished = preds.filter(p => p.status === 'FINISHED' || p.resultA !== null).slice(0,5);
+  const finished = preds.filter(p => p.match.status === 'FINISHED' || p.match.resultA !== null).slice(0,5);
   const all = preds.slice(0,8);
   if (!all.length) { el.innerHTML = '<div class="empty-state" style="padding:1.5rem"><p>Aún no hay pronósticos</p></div>'; return; }
   el.innerHTML = all.map(p => {
-    const isFinished = p.resultA !== null;
-    const icon = !isFinished ? '⏳' : (p.points===3?'🎯':p.points===1?'✅':'❌');
-    const pts = !isFinished ? '' : `<span style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:${p.points>0?'var(--green)':'var(--text-dim)'}">${p.points>0?'+'+p.points:'0'}</span>`;
-    const result = isFinished ? `<span style="font-size:.8rem;color:var(--text-dim)">(${p.resultA}—${p.resultB})</span>` : '';
+    const isFinished = p.match.status === 'FINISHED' || p.match.resultA !== null;
+    const points = p.pointsTotal ?? 0;
+    const icon = !isFinished ? '⏳' : (points===3?'🎯':points===1?'✅':'❌');
+    const pts = !isFinished ? '' : `<span style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:${points>0?'var(--green)':'var(--text-dim)'}">${points>0?'+'+points:'0'}</span>`;
+    const result = isFinished ? `<span style="font-size:.8rem;color:var(--text-dim)">(${p.match.resultA}—${p.match.resultB})</span>` : '';
     return `<div style="display:flex;align-items:center;gap:.75rem;padding:.65rem 1rem;border-bottom:1px solid var(--border)">
       <div style="font-size:1.2rem;width:24px;text-align:center">${icon}</div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:.85rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.teamAName} vs ${p.teamBName}</div>
+        <div style="font-size:.85rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.match.teamAName} vs ${p.match.teamBName}</div>
         <div style="font-size:.75rem;color:var(--text-dim)">Tu pronóstico: ${p.scoreA}—${p.scoreB} ${result}</div>
       </div>
       ${pts}
