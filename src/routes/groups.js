@@ -159,6 +159,97 @@ async function groupRoutes(fastify) {
     await fastify.db.groupMember.deleteMany({ where: { groupId: id, userId } });
     return { ok: true };
   });
+
+  // ── PRIZES ────────────────────────────────────────────────────────
+
+  // PUT /api/groups/:id/prizes — actualizar premios (solo owner)
+  fastify.put('/:id/prizes', {
+    preHandler: fastify.authenticate,
+    schema: { body: { type: 'object', required: ['prizes'], properties: { prizes: { type: 'string' } } } },
+  }, async (request, reply) => {
+    const { id } = request.params;
+    const { prizes } = request.body;
+    const group = await fastify.db.group.findUnique({ where: { id } });
+    if (!group) return reply.status(404).send({ error: 'Grupo no encontrado' });
+    if (group.ownerId !== request.user.id) return reply.status(403).send({ error: 'Solo el creador puede editar premios' });
+    
+    await fastify.db.group.update({ where: { id }, data: { prizes } });
+    return { ok: true };
+  });
+
+  // ── MESSAGES ──────────────────────────────────────────────────────
+
+  // GET /api/groups/:id/messages — listar mensajes
+  fastify.get('/:id/messages', { preHandler: fastify.authenticate }, async (request, reply) => {
+    const { id } = request.params;
+    const membership = await fastify.db.groupMember.findUnique({ where: { groupId_userId: { groupId: id, userId: request.user.id } } });
+    if (!membership) return reply.status(403).send({ error: 'No sos miembro del grupo' });
+    
+    const messages = await fastify.db.groupMessage.findMany({
+      where: { groupId: id },
+      include: { user: { select: { id: true, displayName: true, avatar: true } } },
+      orderBy: { createdAt: 'asc' }, // cronológico para chat
+      take: 100 // limit to last 100 messages
+    });
+    return messages;
+  });
+
+  // POST /api/groups/:id/messages — enviar mensaje
+  fastify.post('/:id/messages', {
+    preHandler: fastify.authenticate,
+    schema: { body: { type: 'object', required: ['content'], properties: { content: { type: 'string', minLength: 1, maxLength: 500 } } } },
+  }, async (request, reply) => {
+    const { id } = request.params;
+    const { content } = request.body;
+    const membership = await fastify.db.groupMember.findUnique({ where: { groupId_userId: { groupId: id, userId: request.user.id } } });
+    if (!membership) return reply.status(403).send({ error: 'No sos miembro del grupo' });
+    
+    const msg = await fastify.db.groupMessage.create({
+      data: { groupId: id, userId: request.user.id, content: content.trim() },
+      include: { user: { select: { id: true, displayName: true, avatar: true } } },
+    });
+    return msg;
+  });
+
+  // ── ADMIN ENDPOINTS ──────────────────────────────────────────────
+
+  // GET /api/groups/admin/all — todos los grupos (solo admin)
+  fastify.get('/admin/all', { preHandler: fastify.authenticate }, async (request, reply) => {
+    if (!request.user.isAdmin) return reply.status(403).send({ error: 'Sin acceso' });
+    const groups = await fastify.db.group.findMany({
+      include: {
+        owner:   { select: { id: true, displayName: true, email: true } },
+        members: { include: { user: { select: { id: true, displayName: true, email: true, avatar: true } } } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return groups.map(g => ({ ...g, memberCount: g.members.length }));
+  });
+
+  // POST /api/groups/:id/members — agregar usuario al grupo (admin)
+  fastify.post('/:id/members', {
+    preHandler: fastify.authenticate,
+    schema: { body: { type: 'object', required: ['userId'], properties: { userId: { type: 'string' } } } },
+  }, async (request, reply) => {
+    if (!request.user.isAdmin) return reply.status(403).send({ error: 'Sin acceso' });
+    const { id } = request.params;
+    const { userId } = request.body;
+    const group = await fastify.db.group.findUnique({ where: { id }, include: { members: true } });
+    if (!group) return reply.status(404).send({ error: 'Grupo no encontrado' });
+    if (group.members.find(m => m.userId === userId))
+      return reply.status(400).send({ error: 'El usuario ya es miembro' });
+    await fastify.db.groupMember.create({ data: { groupId: id, userId } });
+    return { ok: true };
+  });
+
+  // DELETE /api/groups/:id/members/:userId — sacar usuario del grupo (admin)
+  fastify.delete('/:id/members/:userId', { preHandler: fastify.authenticate }, async (request, reply) => {
+    if (!request.user.isAdmin) return reply.status(403).send({ error: 'Sin acceso' });
+    const { id, userId } = request.params;
+    await fastify.db.groupMember.deleteMany({ where: { groupId: id, userId } });
+    return { ok: true };
+  });
 }
 
 module.exports = groupRoutes;
+

@@ -1,7 +1,8 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<script>(function(){var t=localStorage.getItem('prode_theme')||'light';document.documentElement.setAttribute('data-theme',t)})();</script>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>👥 Grupos Privados — Prode Mundial 2026</title>
 <meta name="description" content="Creá o unite a un grupo privado para competir con tus amigos en el Prode Mundial 2026">
@@ -32,6 +33,19 @@
 .empty-groups .icon{font-size:3rem;margin-bottom:.75rem}
 .share-link{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:.5rem .75rem;font-size:.8rem;font-family:monospace;word-break:break-all;cursor:pointer}
 .share-link:hover{border-color:var(--navy)}
+/* Chat styles */
+.chat-box{height:300px;overflow-y:auto;padding:1rem;background:var(--bg);display:flex;flex-direction:column;gap:.75rem}
+.chat-msg{display:flex;flex-direction:column;max-width:85%}
+.chat-msg.mine{align-self:flex-end}
+.chat-msg.theirs{align-self:flex-start}
+.chat-bubble{padding:.5rem .75rem;border-radius:var(--radius);font-size:.85rem;background:var(--surface);border:1px solid var(--border);position:relative}
+.chat-msg.mine .chat-bubble{background:var(--navy);color:#fff;border-color:var(--navy)}
+.chat-info{font-size:.7rem;color:var(--text-dim);margin-bottom:.2rem;display:flex;align-items:center;gap:.3rem}
+.chat-msg.mine .chat-info{justify-content:flex-end}
+.chat-input-area{padding:.75rem;border-top:1px solid var(--border);display:flex;gap:.5rem;background:var(--surface)}
+/* Prizes */
+.prize-card{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;margin-bottom:.75rem;display:flex;gap:1rem;align-items:center}
+.prize-icon{font-size:2rem}
 </style>
 </head>
 <body>
@@ -148,16 +162,57 @@
               </div>
             </div>
             <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem">
-              <button class="btn btn-sm" style="background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim)" onclick="copyInviteLink()">📋 Copiar link de invitación</button>
+              <button class="btn btn-sm" style="background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim)" onclick="copyInviteLink()">📋 Copiar link</button>
               <button class="btn btn-sm btn-danger" id="gd-leave-btn" onclick="leaveCurrentGroup()">Salir del grupo</button>
               <button class="btn btn-sm" style="background:var(--red);color:#fff;display:none" id="gd-delete-btn" onclick="deleteCurrentGroup()">🗑 Eliminar</button>
             </div>
           </div>
-          <!-- Ranking -->
-          <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border)">
-            <div style="font-size:.8rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;margin-bottom:.5rem">Ranking del grupo — <span id="gd-member-count">0</span> participantes</div>
+          
+          <!-- Tabs -->
+          <div class="tabs" style="border-bottom:1px solid var(--border);padding:0 1rem;background:var(--surface-2);gap:1rem">
+            <button class="tab-btn active" onclick="switchGroupTab('ranking', this)" style="border-bottom-width:2px;border-radius:0">🏅 Ranking</button>
+            <button class="tab-btn" onclick="switchGroupTab('premios', this)" style="border-bottom-width:2px;border-radius:0">🎁 Premios</button>
+            <button class="tab-btn" onclick="switchGroupTab('chat', this)" style="border-bottom-width:2px;border-radius:0">💬 Chat</button>
           </div>
-          <div id="gd-ranking"><div class="spinner" style="margin:2rem auto"></div></div>
+
+          <!-- Tab: Ranking -->
+          <div id="gtab-ranking">
+            <div style="padding:.75rem 1.25rem;border-bottom:1px solid var(--border)">
+              <div style="font-size:.8rem;font-weight:700;color:var(--text-dim);text-transform:uppercase">Posiciones — <span id="gd-member-count">0</span> participantes</div>
+            </div>
+            <div id="gd-ranking"><div class="spinner" style="margin:2rem auto"></div></div>
+          </div>
+
+          <!-- Tab: Premios -->
+          <div id="gtab-premios" style="display:none;padding:1.25rem">
+            <div id="gd-prizes-view"></div>
+            <div id="gd-prizes-edit" style="display:none;margin-top:1.5rem;border-top:1px dashed var(--border);padding-top:1.5rem">
+              <div style="font-size:.85rem;font-weight:700;margin-bottom:.75rem">Configurar Premios (Solo Admin)</div>
+              <div class="form-group">
+                <label class="form-label">🥇 1er Puesto</label>
+                <input type="text" id="prize-1" class="form-input" placeholder="Ej: La recaudación, Un asado, etc.">
+              </div>
+              <div class="form-group">
+                <label class="form-label">🥈 2do Puesto</label>
+                <input type="text" id="prize-2" class="form-input" placeholder="Ej: Recupera la inscripción">
+              </div>
+              <div class="form-group">
+                <label class="form-label">🥉 3er Puesto / Otros</label>
+                <input type="text" id="prize-3" class="form-input" placeholder="Opcional">
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="savePrizes()">Guardar Premios</button>
+            </div>
+          </div>
+
+          <!-- Tab: Chat -->
+          <div id="gtab-chat" style="display:none">
+            <div class="chat-box" id="chat-box"><div class="spinner" style="margin:auto"></div></div>
+            <div class="chat-input-area">
+              <input type="text" id="chat-input" class="form-input" placeholder="Escribí un mensaje..." onkeypress="if(event.key==='Enter') sendChatMessage()">
+              <button class="btn btn-primary" onclick="sendChatMessage()">Enviar</button>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -314,6 +369,108 @@ async function deleteCurrentGroup() {
     await loadGroups();
   } catch(e) { Toast.error('Error', e.message); }
 }
+
+function switchGroupTab(tabId, btn) {
+  document.querySelectorAll('#group-detail-panel .tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('gtab-ranking').style.display = 'none';
+  document.getElementById('gtab-premios').style.display = 'none';
+  document.getElementById('gtab-chat').style.display = 'none';
+  document.getElementById('gtab-' + tabId).style.display = 'block';
+
+  if (tabId === 'premios') loadPrizes();
+  if (tabId === 'chat') loadChat();
+}
+
+async function loadPrizes() {
+  if (!currentGroup) return;
+  const isOwner = currentGroup.isOwner;
+  const viewEl = document.getElementById('gd-prizes-view');
+  const editEl = document.getElementById('gd-prizes-edit');
+  editEl.style.display = isOwner ? 'block' : 'none';
+
+  let prizes = {};
+  try { if (currentGroup.prizes) prizes = JSON.parse(currentGroup.prizes); } catch(e){}
+
+  if (isOwner) {
+    document.getElementById('prize-1').value = prizes['1'] || '';
+    document.getElementById('prize-2').value = prizes['2'] || '';
+    document.getElementById('prize-3').value = prizes['3'] || '';
+  }
+
+  if (!prizes['1'] && !prizes['2'] && !prizes['3']) {
+    viewEl.innerHTML = '<div style="text-align:center;color:var(--text-dim);padding:1rem">No hay premios configurados aún.</div>';
+  } else {
+    viewEl.innerHTML = `
+      ${prizes['1'] ? `<div class="prize-card"><div class="prize-icon">🥇</div><div><div style="font-size:.75rem;color:var(--text-dim);text-transform:uppercase;font-weight:700">1er Puesto</div><div style="font-weight:800;color:var(--gold)">${prizes['1']}</div></div></div>` : ''}
+      ${prizes['2'] ? `<div class="prize-card"><div class="prize-icon">🥈</div><div><div style="font-size:.75rem;color:var(--text-dim);text-transform:uppercase;font-weight:700">2do Puesto</div><div style="font-weight:800;color:var(--text)">${prizes['2']}</div></div></div>` : ''}
+      ${prizes['3'] ? `<div class="prize-card"><div class="prize-icon">🥉</div><div><div style="font-size:.75rem;color:var(--text-dim);text-transform:uppercase;font-weight:700">3er Puesto / Menciones</div><div style="font-weight:800;color:var(--text)">${prizes['3']}</div></div></div>` : ''}
+    `;
+  }
+}
+
+async function savePrizes() {
+  const prizes = {
+    '1': document.getElementById('prize-1').value.trim(),
+    '2': document.getElementById('prize-2').value.trim(),
+    '3': document.getElementById('prize-3').value.trim(),
+  };
+  try {
+    const json = JSON.stringify(prizes);
+    await api.groups.setPrizes(currentGroup.id, json);
+    currentGroup.prizes = json;
+    Toast.success('Premios actualizados');
+    loadPrizes();
+  } catch(e) { Toast.error('Error', e.message); }
+}
+
+async function loadChat() {
+  if (!currentGroup) return;
+  const box = document.getElementById('chat-box');
+  try {
+    const messages = await api.groups.getMessages(currentGroup.id);
+    if (!messages.length) {
+      box.innerHTML = '<div style="margin:auto;text-align:center;color:var(--text-dim);font-size:.85rem">Aún no hay mensajes.<br>¡Rompé el hielo!</div>';
+      return;
+    }
+    const myId = Auth.getUser()?.id;
+    box.innerHTML = messages.map(m => {
+      const mine = m.userId === myId;
+      const time = new Date(m.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      return `
+        <div class="chat-msg ${mine?'mine':'theirs'}">
+          <div class="chat-info">
+            ${!mine ? `<span>${m.user.avatar}</span> <strong>${m.user.displayName}</strong>` : ''}
+            <span style="font-size:.65rem;opacity:.7">${time}</span>
+            ${mine ? `<strong>Vos</strong> <span>${m.user.avatar}</span>` : ''}
+          </div>
+          <div class="chat-bubble">${m.content}</div>
+        </div>
+      `;
+    }).join('');
+    box.scrollTop = box.scrollHeight;
+  } catch(e) { box.innerHTML = `<div style="margin:auto;color:var(--red)">Error: ${e.message}</div>`; }
+}
+
+async function sendChatMessage() {
+  const input = document.getElementById('chat-input');
+  const txt = input.value.trim();
+  if (!txt || !currentGroup) return;
+  input.disabled = true;
+  try {
+    await api.groups.sendMessage(currentGroup.id, txt);
+    input.value = '';
+    loadChat();
+  } catch(e) { Toast.error('Error enviando mensaje', e.message); }
+  finally { input.disabled = false; input.focus(); }
+}
+
+// Polling for chat every 15s if chat is open
+setInterval(() => {
+  if (currentGroup && document.getElementById('gtab-chat').style.display === 'block') {
+    loadChat();
+  }
+}, 15000);
 
 // Manejar ?join=CODIGO desde link de invitación
 const urlParams = new URLSearchParams(window.location.search);

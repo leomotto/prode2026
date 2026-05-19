@@ -210,13 +210,14 @@ input,select,textarea{font-family:inherit}
 @media(max-width:540px){
   .modal-overlay{padding:.5rem .5rem 0;align-items:flex-end}
   .modal{max-width:100%;border-radius:var(--radius-lg) var(--radius-lg) 0 0;max-height:88vh}
-  .modal-body{padding:1rem}
-  .modal-footer{padding:.75rem 1rem}
-  .modal-header{padding:1rem}
-  .score-stepper-row{gap:.5rem;margin:1rem 0}
-  .stepper-btn{width:32px;height:32px;font-size:1rem}
-  .stepper-val{font-size:2rem;width:2.25rem}
-  .score-stepper-label{font-size:.7rem}
+  .modal-body{padding:.875rem}
+  .modal-footer{padding:.625rem .875rem}
+  .modal-header{padding:.875rem}
+  .score-stepper-row{gap:.375rem;margin:.75rem 0}
+  .stepper-btn{width:28px;height:28px;font-size:.9rem}
+  .stepper-val{font-size:1.75rem;width:2rem}
+  .score-stepper-label{font-size:.65rem;max-width:100px}
+  .stepper-controls{gap:.375rem}
 }
 
 /* ── TOASTS ── */
@@ -250,6 +251,18 @@ input,select,textarea{font-family:inherit}
 .hero-greeting{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--gold);margin-bottom:.5rem}
 .hero-name{font-size:1.75rem;font-weight:800;color:#fff;margin-bottom:.25rem}
 .hero-sub{font-size:.9rem;color:rgba(255,255,255,.6)}
+
+/* ── DASHBOARD GREETING ── */
+.dash-greeting{background:linear-gradient(135deg,var(--navy),var(--navy-2));border-radius:var(--radius-lg);padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.dash-greeting-left{display:flex;align-items:center;gap:.875rem}
+.dash-greeting-avatar{font-size:2.2rem;width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,.2);flex-shrink:0}
+.dash-greeting-name{font-size:1.1rem;font-weight:800;color:#fff}
+.dash-greeting-sub{font-size:.8rem;color:rgba(255,255,255,.6);margin-top:.1rem}
+.countdown-inline{background:rgba(0,0,0,.2);border-radius:var(--radius);padding:.4rem .875rem;display:flex;align-items:center;gap:.5rem;white-space:nowrap}
+.cd-label{font-size:.72rem;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.05em}
+#cd-inline{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--gold)}
+@media(max-width:600px){.dash-greeting-right{display:none}}
+@media(max-width:480px){.dash-greeting{padding:.875rem 1rem}.dash-greeting-avatar{width:40px;height:40px;font-size:1.8rem}}
 
 /* ── PENDING ALERT ── */
 .pending-alert{background:#fff9db;border:1.5px solid #fde68a;border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1.5rem}

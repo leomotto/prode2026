@@ -25,10 +25,12 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  predictions    Prediction[]
-  sessions       UserSession[]
-  ownedGroups    Group[]       @relation("GroupOwner")
+  predictions      Prediction[]
+  sessions         UserSession[]
+  ownedGroups      Group[]        @relation("GroupOwner")
   groupMemberships GroupMember[]
+  groupMessages    GroupMessage[]
+  helpRequests     HelpRequest[]
 
   @@map("users")
 }
@@ -135,13 +137,15 @@ model Group {
   name        String   @db.VarChar(60)
   code        String   @unique // código 6 chars: "MESSI6"
   description String?  @db.VarChar(200)
+  prizes      String?  // JSON string: {"1":"...","2":"...","3":"..."}
   ownerId     String
   maxMembers  Int      @default(50)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  owner   User          @relation("GroupOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  members GroupMember[]
+  owner    User           @relation("GroupOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members  GroupMember[]
+  messages GroupMessage[]
 
   @@map("groups")
 }
@@ -157,3 +161,35 @@ model GroupMember {
   @@id([groupId, userId])
   @@map("group_members")
 }
+
+model GroupMessage {
+  id        String   @id @default(cuid())
+  groupId   String
+  userId    String
+  content   String   @db.VarChar(500)
+  createdAt DateTime @default(now())
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("group_messages")
+}
+
+// ============================================================
+// HELP REQUESTS
+// ============================================================
+model HelpRequest {
+  id        String   @id @default(cuid())
+  userId    String
+  subject   String   @db.VarChar(100)
+  message   String   @db.VarChar(1000)
+  status    String   @default("OPEN") // OPEN, RESOLVED
+  adminNote String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("help_requests")
+}
+

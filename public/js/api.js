@@ -59,13 +59,27 @@ const api = {
   },
   // Grupos privados
   groups: {
-    mine:    ()       => api.get('/groups/mine'),
-    create:  (b)      => api.post('/groups', b),
-    join:    (code)   => api.post('/groups/join', { code }),
-    ranking: (id)     => api.get(`/groups/${id}/ranking`),
-    leave:   (id)     => api._req('DELETE', `/groups/${id}/leave`),
-    delete:  (id)     => api._req('DELETE', `/groups/${id}`),
+    mine:          ()           => api.get('/groups/mine'),
+    create:        (b)          => api.post('/groups', b),
+    join:          (code)       => api.post('/groups/join', { code }),
+    ranking:       (id)         => api.get(`/groups/${id}/ranking`),
+    leave:         (id)         => api._req('DELETE', `/groups/${id}/leave`),
+    delete:        (id)         => api._req('DELETE', `/groups/${id}`),
+    // Admin
+    adminAll:      ()           => api.get('/groups/admin/all'),
+    adminAdd:      (id, userId) => api.post(`/groups/${id}/members`, { userId }),
+    adminRemove:   (id, userId) => api._req('DELETE', `/groups/${id}/members/${userId}`),
+    // Prizes & Messages
+    setPrizes:     (id, prizes) => api._req('PUT', `/groups/${id}/prizes`, { prizes }),
+    getMessages:   (id)         => api.get(`/groups/${id}/messages`),
+    sendMessage:   (id, content)=> api.post(`/groups/${id}/messages`, { content }),
   },
+  // Soporte / Ayuda
+  help: {
+    create:        (b)          => api.post('/help', b),
+    adminAll:      ()           => api.get('/help/admin'),
+    adminUpdate:   (id, b)      => api._req('PUT', `/help/admin/${id}`, b),
+  }
 };
 
 
@@ -293,3 +307,78 @@ function closeMobileMenu() {
 // Cerrar con ESC
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMobileMenu(); });
 
+/* ── HELP WIDGET ─────────────────────────────────────────── */
+const HelpWidget = {
+  init() {
+    if (document.getElementById('help-fab')) return; // ya existe
+    
+    // FAB Button
+    const fab = document.createElement('button');
+    fab.id = 'help-fab';
+    fab.innerHTML = '❓';
+    fab.title = 'Soporte / Ayuda';
+    Object.assign(fab.style, {
+      position: 'fixed', bottom: '20px', left: '20px', width: '50px', height: '50px',
+      borderRadius: '50%', background: 'var(--navy)', color: '#fff', fontSize: '1.5rem',
+      border: 'none', boxShadow: 'var(--shadow-lg)', cursor: 'pointer', zIndex: '990',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'var(--transition)'
+    });
+    fab.onmouseover = () => fab.style.transform = 'scale(1.1)';
+    fab.onmouseout = () => fab.style.transform = 'scale(1)';
+    fab.onclick = () => this.open();
+    document.body.appendChild(fab);
+
+    // Modal
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'modal-help';
+    overlay.innerHTML = `
+      <div class="modal">
+        <div class="modal-header">
+          <div><div class="modal-title">¿Necesitás ayuda?</div></div>
+          <button class="btn-close" onclick="HelpWidget.close()">✕</button>
+        </div>
+        <div class="modal-body">
+          <p style="font-size:.85rem;color:var(--text-dim);margin-bottom:1rem">Envianos un mensaje y el administrador te responderá a tu mail.</p>
+          <div class="form-group">
+            <label class="form-label">Asunto</label>
+            <input type="text" id="help-subject" class="form-input" placeholder="Ej: No me suma los puntos..." maxlength="100">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Mensaje</label>
+            <textarea id="help-message" class="form-input" rows="4" placeholder="Describí tu problema..." maxlength="1000"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="HelpWidget.close()">Cancelar</button>
+          <button class="btn btn-primary" id="help-submit" onclick="HelpWidget.submit()">Enviar Solicitud</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+  },
+  open() { 
+    if(!Auth.isLogged()) { Toast.warn('Debés iniciar sesión'); return; }
+    document.getElementById('help-subject').value = '';
+    document.getElementById('help-message').value = '';
+    openModal('modal-help'); 
+  },
+  close() { closeModal('modal-help'); },
+  async submit() {
+    const subject = document.getElementById('help-subject').value.trim();
+    const message = document.getElementById('help-message').value.trim();
+    if (!subject || !message) return Toast.warn('Completá ambos campos');
+    const btn = document.getElementById('help-submit');
+    btn.disabled = true; btn.textContent = 'Enviando...';
+    try {
+      await api.help.create({ subject, message });
+      Toast.success('¡Enviado!', 'El administrador revisará tu solicitud.');
+      this.close();
+    } catch(e) { Toast.error('Error', e.message); }
+    finally { btn.disabled = false; btn.textContent = 'Enviar Solicitud'; }
+  }
+};
+// Auto-init only if logged in and not on login page
+if (window.location.pathname !== '/login' && Auth.isLogged()) {
+  document.addEventListener('DOMContentLoaded', () => HelpWidget.init());
+}

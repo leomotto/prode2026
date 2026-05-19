@@ -57,6 +57,7 @@ async function bootstrap() {
   fastify.register(require('./routes/rankings'),    { prefix: '/api/rankings' });
   fastify.register(require('./routes/admin'),       { prefix: '/api/admin' });
   fastify.register(require('./routes/groups'),      { prefix: '/api/groups' });
+  fastify.register(require('./routes/help'),        { prefix: '/api/help' });
 
   // ── Config pública (solo datos NO sensibles) ───────────────
   // Expone solo lo que el frontend necesita y es seguro publicar
@@ -117,6 +118,34 @@ async function bootstrap() {
       fastify.log.warn('Auto-live job error: ' + e.message);
     }
   }, 60_000); // cada 60 segundos
+
+  // ── Job: Sincronización automática de resultados (Fase 2) ──
+  setInterval(async () => {
+    if (!config.FOOTBALL_API_KEY) return;
+    try {
+      // 1. Buscar partidos EN VIVO
+      const liveMatches = await fastify.db.match.findMany({ where: { status: 'LIVE' } });
+      if (!liveMatches.length) return;
+
+      // 2. Aquí se llamaría a football-data.org o similar usando la API KEY
+      // const response = await fetch('https://api.football-data.org/v4/matches', {
+      //   headers: { 'X-Auth-Token': config.FOOTBALL_API_KEY }
+      // });
+      // const data = await response.json();
+      
+      // 3. Procesar resultados y actualizar en DB
+      // Para cada partido actualizado:
+      // await fastify.db.match.update(...)
+      // Si el partido finalizó, calcular puntos:
+      // const MatchService = require('./services/MatchService');
+      // await MatchService.calculatePoints(matchId);
+
+      fastify.log.info('Auto-sync check ejecutado para partidos en vivo.');
+    } catch (e) {
+      fastify.log.warn('Auto-sync error: ' + e.message);
+    }
+  }, 5 * 60_000); // cada 5 minutos
+
 
 }
 
