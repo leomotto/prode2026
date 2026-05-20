@@ -268,7 +268,9 @@ api.rankings.all().then(ranking => {
       <td><div class="rank-user"><div class="rank-avatar">${r.avatar||'⚽'}</div><span class="rank-name">${r.displayName}</span></div></td>
       <td class="rank-points">${r.totalPoints}</td>
     </tr>`).join('')}</tbody></table>`;
-}).catch(() => {});
+}).catch(() => {
+  document.getElementById('top-ranking').innerHTML = '<div class="empty-state" style="padding:1.5rem"><p>No se pudo cargar el ranking</p></div>';
+});
 
 // Mis grupos
 api.groups.mine().then(groups => {
