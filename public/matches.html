@@ -253,7 +253,7 @@ function renderCard(m) {
     <div class="fc-pred-row">
       <span class="fc-pred-label">✅ Tu pronóstico:</span>
       <span class="fc-pred-score">${pred.scoreA} - ${pred.scoreB}</span>
-      ${pred.pointsTotal !== null ? `<span class="fc-pred-pts">+${pred.pointsTotal} pts</span>` : ''}
+      ${m.status === 'FINISHED' && pred.pointsTotal !== null ? `<span class="fc-pred-pts">+${pred.pointsTotal} pts</span>` : ''}
     </div>` : ''}
 
     <div class="fc-foot">

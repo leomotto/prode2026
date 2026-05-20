@@ -333,7 +333,7 @@ function renderRecentPreds() {
     const all = preds.slice(0,8);
     if (!all.length) { el.innerHTML = '<div class="empty-state" style="padding:1.5rem"><p>Aún no hay pronósticos</p></div>'; return; }
     el.innerHTML = `<div class="matches-grid" style="grid-template-columns:1fr;gap:.5rem">${all.map(p => {
-      const isFinished = p.match.status === 'FINISHED' || p.match.resultA !== null;
+      const isFinished = p.match.status === 'FINISHED';
       const points = p.pointsTotal ?? 0;
       const icon = !isFinished ? '⏳ Pendiente' : (points===3?'🎯 Exacto (+3)':points===1?'✅ Ganador (+1)':'❌ Sin puntos (0)');
       const badgeClass = !isFinished ? 'badge-upcoming' : (points>0?'badge-finished':'badge-live');

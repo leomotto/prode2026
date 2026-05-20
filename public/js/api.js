@@ -102,7 +102,7 @@ const Auth = {
   },
   isLogged() { return !!localStorage.getItem('prode_token'); },
   isAdmin()  { return this.getUser()?.isAdmin === true; },
-  require()  { if (!this.isLogged()) { window.location.href = '/login'; return false; } return true; },
+  require()  { if (!this.isLogged() || !this.getUser()) { this.clear(); window.location.href = '/login'; return false; } return true; },
 };
 
 /* ── TOAST ───────────────────────────────────────────────── */

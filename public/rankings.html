@@ -136,9 +136,9 @@ function renderRanking(ranking, title = '', isGroup = false) {
       <thead>
         <tr>
           <th style="width:50px">#</th>
-          <th>Jugador</th>
+          <th>Participante</th>
           <th>Pts</th>
-          ${!isGroup ? '<th>Exactos</th><th>Ganador</th><th>Bonus</th>' : ''}
+          ${!isGroup ? '<th>Exactos</th><th>Ganador</th>' : ''}
           <th>Partidos</th>
         </tr>
       </thead>
@@ -153,7 +153,7 @@ function renderRanking(ranking, title = '', isGroup = false) {
               </div>
             </div></td>
             <td class="rank-points">${r.totalPoints}</td>
-            ${!isGroup ? `<td><span class="badge badge-featured">${r.exactos}</span></td><td style="color:var(--green);font-weight:700">${r.ganadores}</td><td style="color:var(--blue)">${r.bonusTotal}</td>` : ''}
+            ${!isGroup ? `<td><span class="badge badge-featured">${r.exactos}</span></td><td style="color:var(--green);font-weight:700">${r.ganadores}</td>` : ''}
             <td style="color:var(--text-dim)">${r.partidos}</td>
           </tr>`).join('')}
       </tbody>
