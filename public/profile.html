@@ -258,7 +258,7 @@ async function loadTickets() {
           <span class="badge ${t.status==='OPEN'?'badge-live':'badge-finished'}">${t.status}</span>
         </div>
         <div style="font-size:.85rem;color:var(--text);margin-bottom:.75rem">${t.message}</div>
-        ${t.adminNote ? `<div style="font-size:.8rem;background:var(--surface-2);padding:.5rem;border-radius:var(--radius);border-left:3px solid var(--blue)"><strong>Respuesta Admin:</strong><br>${t.adminNote.replace(/\\n/g, '<br>')}</div>` : ''}
+        ${t.adminNote ? `<div style="font-size:.8rem;background:var(--surface-2);padding:.5rem;border-radius:var(--radius);border-left:3px solid var(--blue)"><strong>Respuesta Admin:</strong><br>${t.adminNote.replace(/\n/g, '<br>')}</div>` : ''}
         <div style="font-size:.7rem;color:var(--text-dim);margin-top:.5rem;text-align:right">${new Date(t.createdAt).toLocaleString('es-AR')}</div>
       </div>
     `).join('');
@@ -270,7 +270,7 @@ async function loadTickets() {
 loadTickets();
 
 async function shareStats() {
-  const text = \`🏆 Mis Stats en Prode Mundial 2026: Posición \${myStatsForShare.rank} | \${myStatsForShare.pts} Puntos | Efectividad: \${myStatsForShare.winRate}%. ¡Sumate!\`;
+  const text = `🏆 Mis Stats en Prode Mundial 2026: Posición ${myStatsForShare.rank} | ${myStatsForShare.pts} Puntos | Efectividad: ${myStatsForShare.winRate}%. ¡Sumate!`;
   try {
     if (navigator.share) {
       await navigator.share({ title: 'Prode Mundial 2026', text: text });
@@ -289,10 +289,10 @@ async function downloadPredictionsCSV() {
     const predictions = await api.predictions.mine();
     if (!predictions || !predictions.length) return Toast.warn('No hay pronósticos para descargar');
     
-    let csv = "ID Partido,Equipo Local,Equipo Visitante,Fase,Fecha,Mi Pronóstico (L),Mi Pronóstico (V),Puntos Obtenidos\\n";
+    let csv = "ID Partido,Equipo Local,Equipo Visitante,Fase,Fecha,Mi Pronóstico (L),Mi Pronóstico (V),Puntos Obtenidos\n";
     predictions.forEach(p => {
       const pTotal = p.pointsTotal !== null ? p.pointsTotal : 'Pendiente';
-      csv += \`"\${p.matchId}","\${p.match.teamAName}","\${p.match.teamBName}","\${p.match.phase}","\${p.match.date}","\${p.scoreA}","\${p.scoreB}","\${pTotal}"\\n\`;
+      csv += `"${p.matchId}","${p.match.teamAName}","${p.match.teamBName}","${p.match.phase}","${p.match.date}","${p.scoreA}","${p.scoreB}","${pTotal}"\n`;
     });
     
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
