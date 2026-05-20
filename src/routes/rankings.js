@@ -12,8 +12,8 @@ async function rankingsRoutes(fastify) {
       select: { id: true, displayName: true, avatar: true },
     });
 
-    // Traer predicciones calculadas solo para partidos finalizados
-    const predWhere = { match: { status: 'FINISHED' } };
+    // Traer predicciones calculadas solo para partidos finalizados Y con puntos calculados
+    const predWhere = { match: { status: 'FINISHED' }, pointsTotal: { not: null } };
     if (phase) {
       predWhere.match.phase = phase.toUpperCase();
     }

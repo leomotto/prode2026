@@ -59,6 +59,7 @@
   <a href="/" class="mobile-nav-link" onclick="closeMobileMenu()">🏠 Inicio</a>
   <a href="/matches" class="mobile-nav-link" onclick="closeMobileMenu()">📅 Partidos</a>
   <a href="/rankings" class="mobile-nav-link" onclick="closeMobileMenu()">🏅 Ranking</a>
+  <a href="/standings" class="mobile-nav-link" onclick="closeMobileMenu()">⚽ Torneo</a>
   <a href="/groups" class="mobile-nav-link" onclick="closeMobileMenu()">👥 Grupos</a>
   <a href="/rules" class="mobile-nav-link" onclick="closeMobileMenu()">📖 Reglamento</a>
   <hr class="mobile-nav-divider">
@@ -138,23 +139,39 @@
   </div>
 </div>
 
-<script src="/js/api.js?v=1.4.6"></script>
+<script src="/js/api.js?v=1.4.7"></script>
 <script>
 Auth.require();
-const user = Auth.getUser();
-if (user) {
-  document.getElementById('nav-avatar').textContent = user.avatar || '⚽';
-  document.getElementById('nav-username').textContent = user.displayName?.split(' ')[0] || '';
-  if (user.isAdmin) { document.getElementById('nav-admin').style.display=''; const m=document.getElementById('mobile-nav-admin'); if(m) m.style.display=''; }
-  // Pre-fill form
-  document.getElementById('edit-name').value = user.displayName || '';
-  document.getElementById('edit-avatar-input').value = user.avatar || '';
-  document.getElementById('avatar-preview').textContent = user.avatar || '⚽';
-  document.getElementById('profile-avatar-display').textContent = user.avatar || '⚽';
-  document.getElementById('profile-name-display').textContent = user.displayName || '';
-  document.getElementById('profile-email-display').textContent = user.email || '';
-  if (!user.googleId) document.getElementById('password-section').style.display = '';
+let user = Auth.getUser();
+
+// Populate nav & form from localStorage immediately (fast)
+function applyUserToUI(u) {
+  if (!u) return;
+  const nav = document.getElementById('nav-avatar');
+  if (nav) nav.textContent = u.avatar || '⚽';
+  const navName = document.getElementById('nav-username');
+  if (navName) navName.textContent = (u.displayName || '').split(' ')[0];
+  if (u.isAdmin) {
+    const a = document.getElementById('nav-admin'); if (a) a.style.display='';
+    const m = document.getElementById('mobile-nav-admin'); if (m) m.style.display='';
+  }
+  document.getElementById('edit-name').value = u.displayName || '';
+  document.getElementById('edit-avatar-input').value = u.avatar || '';
+  document.getElementById('avatar-preview').textContent = u.avatar || '⚽';
+  document.getElementById('profile-avatar-display').textContent = u.avatar || '⚽';
+  document.getElementById('profile-name-display').textContent = u.displayName || u.email || 'Usuario';
+  document.getElementById('profile-email-display').textContent = u.email || '';
+  if (!u.googleId) document.getElementById('password-section').style.display = '';
 }
+applyUserToUI(user);
+
+// Then refresh from server to get up-to-date data
+api.auth.me().then(fresh => {
+  Auth.save(localStorage.getItem('prode_token'), fresh); // update localStorage
+  user = fresh;
+  applyUserToUI(fresh);
+}).catch(() => { /* usar datos del localStorage ya aplicados */ });
+
 document.getElementById('btn-theme').textContent = Theme.isDark() ? '☀️' : '🌙';
 
 // Emoji options

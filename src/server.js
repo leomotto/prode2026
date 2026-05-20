@@ -44,10 +44,18 @@ async function bootstrap() {
   await fastify.register(require('./plugins/db'));
   await fastify.register(require('./plugins/auth'));
 
+  // ── Clean URLs — registrar ANTES del static plugin ─────────
+  // Sin esto, @fastify/static intercepta /standings etc. y sirve index.html
+  const pages = ['login', 'matches', 'rankings', 'admin', 'profile', 'groups', 'rules', 'standings'];
+  for (const page of pages) {
+    fastify.get(`/${page}`, (req, reply) => reply.sendFile(`${page}.html`));
+  }
+
   // ── Archivos estáticos ─────────────────────────────────────
   await fastify.register(require('@fastify/static'), {
     root: path.join(__dirname, '..', 'public'),
     prefix: '/',
+    wildcard: false,  // no interceptar rutas no-archivo; deja pasar al notFoundHandler
   });
 
   // ── Favicon explicit serving ──────────────────────────────
@@ -99,13 +107,6 @@ async function bootstrap() {
       routeOptions.config = { rateLimit: { max: 5, timeWindow: '1 minute' } };
     }
   });
-
-  // ── Clean URLs (sin extensión .html) ──────────────────────
-  // Cada ruta sirve su HTML correspondiente
-  const pages = ['login', 'matches', 'rankings', 'admin', 'profile', 'groups', 'rules', 'standings'];
-  for (const page of pages) {
-    fastify.get(`/${page}`, (req, reply) => reply.sendFile(`${page}.html`));
-  }
 
   // ── Not Found: API → 404 JSON | resto → index.html ────────
   fastify.setNotFoundHandler((request, reply) => {

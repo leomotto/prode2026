@@ -393,7 +393,7 @@ if (window.location.pathname !== '/login' && Auth.isLogged()) {
 
 // ── VERSION FOOTER & TURNSTILE CENTERING ─────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  const version = 'v1.4.6';
+  const version = 'v1.4.7';
   
   // 1. Center Turnstile containers programmatically
   const tsContainers = document.querySelectorAll('#ts-login, #ts-register');
