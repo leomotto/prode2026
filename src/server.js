@@ -44,22 +44,32 @@ async function bootstrap() {
   await fastify.register(require('./plugins/db'));
   await fastify.register(require('./plugins/auth'));
 
-  // ── Clean URLs — registrar ANTES del static plugin ─────────
-  // Sin esto, @fastify/static intercepta /standings etc. y sirve index.html
-  const pages = ['login', 'matches', 'rankings', 'admin', 'profile', 'groups', 'rules', 'standings'];
-  for (const page of pages) {
-    fastify.get(`/${page}`, (req, reply) => reply.sendFile(`${page}.html`));
-  }
-
   // ── Archivos estáticos ─────────────────────────────────────
   await fastify.register(require('@fastify/static'), {
     root: path.join(__dirname, '..', 'public'),
     prefix: '/',
-    wildcard: false,  // no interceptar rutas no-archivo; deja pasar al notFoundHandler
   });
 
-  // ── Favicon explicit serving ──────────────────────────────
+  // ── Clean URLs (sin extensión .html) ──────────────────────
+  // IMPORTANTE: deben ir DESPUÉS del registro del static plugin
+  // porque reply.sendFile() es decorado por ese plugin.
   const fs = require('fs');
+  const pagesDir = path.join(__dirname, '..', 'public');
+  const pages = ['login', 'matches', 'rankings', 'admin', 'profile', 'groups', 'rules', 'standings'];
+  for (const page of pages) {
+    const filePath = path.join(pagesDir, `${page}.html`);
+    fastify.get(`/${page}`, async (req, reply) => {
+      try {
+        const content = await fs.promises.readFile(filePath);
+        return reply.type('text/html').send(content);
+      } catch (e) {
+        fastify.log.error(`Error serving ${page}.html: ${e.message}`);
+        return reply.status(404).send('Page not found');
+      }
+    });
+  }
+
+  // ── Favicon explicit serving ──────────────────────────────
   const faviconPath = path.join(__dirname, '..', 'public', 'favicon.svg');
   let faviconBuffer;
   try {
