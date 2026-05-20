@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta charset="UTF-8">
+<script>(function(){var t=localStorage.getItem('prode_theme')||'light';document.documentElement.setAttribute('data-theme',t)})();</script>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tabla del Torneo — Prode Mundial 2026</title>
+<meta name="description" content="Posiciones de las selecciones en el Mundial 2026. Partidos jugados, goles, diferencia de gol y puntos por grupo.">
+<link rel="stylesheet" href="/css/main.css">
+<script src="https://cdn.jsdelivr.net/npm/twemoji@14.0.2/dist/twemoji.min.js" crossorigin="anonymous"></script>
+<style>
+.st-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1.25rem;margin-top:1.25rem}
+.st-group{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow)}
+.st-group-header{background:linear-gradient(135deg,var(--navy) 0%,#1a3a6e 100%);color:#fff;padding:.75rem 1rem;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.04em;display:flex;align-items:center;gap:.5rem}
+[data-theme="dark"] .st-group-header{background:linear-gradient(135deg,#1e2a4a 0%,#0f1729 100%)}
+.st-table{width:100%;border-collapse:collapse}
+.st-table th{background:var(--surface-2);font-size:.68rem;font-weight:700;text-transform:uppercase;color:var(--text-dim);padding:.5rem .6rem;text-align:center;letter-spacing:.04em}
+.st-table th:first-child{text-align:left}
+.st-table td{padding:.6rem .6rem;font-size:.82rem;text-align:center;border-top:1px solid var(--border);vertical-align:middle}
+.st-table td:first-child{text-align:left}
+.st-table tbody tr:hover{background:var(--surface-2)}
+.st-team-cell{display:flex;align-items:center;gap:.5rem}
+.st-flag{font-size:1.2rem;line-height:1;flex-shrink:0}
+.st-name{font-weight:600;color:var(--text);font-size:.83rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st-pts{font-weight:800;color:var(--navy);font-size:.95rem}
+[data-theme="dark"] .st-pts{color:#93c5fd}
+.st-qual-1{background:rgba(34,197,94,.08);border-left:3px solid #22c55e}
+.st-qual-2{background:rgba(59,130,246,.06);border-left:3px solid #3b82f6}
+.st-empty{padding:3rem;text-align:center;color:var(--text-dim);font-size:.9rem}
+.phase-tabs{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.5rem}
+.phase-tab{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:.4rem .9rem;font-size:.8rem;font-weight:600;cursor:pointer;color:var(--text-dim);transition:var(--transition)}
+.phase-tab.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+[data-theme="dark"] .phase-tab.active{background:#3b82f6;border-color:#3b82f6}
+.legend{display:flex;gap:1rem;flex-wrap:wrap;font-size:.72rem;color:var(--text-dim);margin-top:.5rem;padding:.5rem 0}
+.legend-item{display:flex;align-items:center;gap:.3rem}
+.legend-dot{width:10px;height:10px;border-radius:50%}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo"><span>🏆</span><div><div>PRODE MUNDIAL</div><small>2026</small></div></a>
+    <div class="nav-links">
+      <a href="/" class="nav-link">🏠 Inicio</a>
+      <a href="/matches" class="nav-link">📅 Partidos</a>
+      <a href="/rankings" class="nav-link">🏅 Ranking</a>
+      <a href="/standings" class="nav-link active">⚽ Torneo</a>
+      <a href="/groups" class="nav-link">👥 Grupos</a>
+      <a href="/rules" class="nav-link">📖 Reglamento</a>
+      <a href="/admin" class="nav-link" id="nav-admin" style="display:none">🛡 Admin</a>
+    </div>
+    <div class="nav-user">
+      <a href="/profile" class="nav-avatar" id="nav-avatar" title="Mi perfil">⚽</a>
+      <span class="nav-username" id="nav-username"></span>
+      <button class="btn-theme" onclick="Theme.toggle();this.textContent=Theme.isDark()?'☀️':'🌙'" id="btn-theme">🌙</button>
+      <button class="btn-exit btn btn-sm" style="background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2)" onclick="doLogout()">Salir</button>
+      <button id="nav-hamburger" class="nav-hamburger" onclick="toggleMobileMenu()" aria-label="Menú"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+
+<!-- Mobile Nav -->
+<div class="mobile-nav-overlay" id="mobile-nav-overlay" onclick="closeMobileMenu()"></div>
+<div class="mobile-nav-drawer" id="mobile-nav-drawer">
+  <a href="/" class="mobile-nav-link" onclick="closeMobileMenu()">🏠 Inicio</a>
+  <a href="/matches" class="mobile-nav-link" onclick="closeMobileMenu()">📅 Partidos</a>
+  <a href="/rankings" class="mobile-nav-link" onclick="closeMobileMenu()">🏅 Ranking</a>
+  <a href="/standings" class="mobile-nav-link active" onclick="closeMobileMenu()">⚽ Torneo</a>
+  <a href="/groups" class="mobile-nav-link" onclick="closeMobileMenu()">👥 Grupos</a>
+  <a href="/rules" class="mobile-nav-link" onclick="closeMobileMenu()">📖 Reglamento</a>
+  <hr class="mobile-nav-divider">
+  <a href="/admin" class="mobile-nav-link" id="mobile-nav-admin" style="display:none" onclick="closeMobileMenu()">🛡 Admin</a>
+  <a href="/profile" class="mobile-nav-link" onclick="closeMobileMenu()">👤 Mi Perfil</a>
+  <button class="mobile-nav-link" onclick="doLogout()">🚪 Salir</button>
+  <hr class="mobile-nav-divider">
+  <button class="mobile-nav-link" id="mobile-theme-btn" onclick="Theme.toggle();document.getElementById('mobile-theme-btn').textContent=Theme.isDark()?'☀️ Modo claro':'🌙 Modo oscuro'">🌙 Modo oscuro</button>
+</div>
+
+<div class="page-wrapper">
+  <div class="container" style="padding-top:1.5rem;padding-bottom:3rem">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.25rem">
+      <h1 style="font-size:1.6rem;font-weight:800;color:var(--navy)">⚽ Posiciones del Torneo</h1>
+      <div style="font-size:.8rem;color:var(--text-dim)">Actualizado con resultados oficiales</div>
+    </div>
+
+    <div class="phase-tabs" id="phase-tabs">
+      <button class="phase-tab active" onclick="setPhase('GRUPOS',this)">📅 Fase de Grupos</button>
+    </div>
+
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div><span>Clasificado directo (1°)</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div><span>Clasificado (2°)</span></div>
+    </div>
+
+    <div id="standings-container"><div class="spinner" style="margin:3rem auto"></div></div>
+  </div>
+</div>
+
+<script src="/js/api.js?v=1.4.6"></script>
+<script>
+Auth.require();
+const user = Auth.getUser();
+if (user) {
+  document.getElementById('nav-avatar').textContent = user.avatar || '⚽';
+  document.getElementById('nav-username').textContent = user.displayName?.split(' ')[0] || '';
+  if (user.isAdmin) {
+    document.getElementById('nav-admin').style.display='';
+    const m=document.getElementById('mobile-nav-admin'); if(m) m.style.display='';
+  }
+}
+document.getElementById('btn-theme').textContent = Theme.isDark() ? '☀️' : '🌙';
+
+let currentPhase = 'GRUPOS';
+
+function setPhase(phase, btn) {
+  document.querySelectorAll('.phase-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentPhase = phase;
+  loadStandings(phase);
+}
+
+async function loadStandings(phase = 'GRUPOS') {
+  const el = document.getElementById('standings-container');
+  el.innerHTML = '<div class="spinner" style="margin:3rem auto"></div>';
+  try {
+    const groups = await api.get(`/standings?phase=${phase}`);
+    if (!groups.length) {
+      el.innerHTML = `<div class="st-empty">
+        <div style="font-size:3rem;margin-bottom:1rem">⏳</div>
+        <div style="font-weight:700;margin-bottom:.5rem">Sin resultados aún</div>
+        <div>La tabla se actualizará cuando finalicen los primeros partidos.</div>
+      </div>`;
+      return;
+    }
+    el.innerHTML = '<div class="st-grid">' + groups.map(g => renderGroup(g)).join('') + '</div>';
+    renderEmojis(el);
+  } catch(e) {
+    el.innerHTML = `<div class="st-empty">Error cargando posiciones: ${e.message}</div>`;
+  }
+}
+
+function renderGroup({ group, teams }) {
+  return `
+    <div class="st-group">
+      <div class="st-group-header">⚽ ${currentPhase === 'GRUPOS' ? 'Grupo ' + group : group}</div>
+      <table class="st-table">
+        <thead>
+          <tr>
+            <th style="width:40%">Equipo</th>
+            <th title="Partidos Jugados">PJ</th>
+            <th title="Ganados">G</th>
+            <th title="Empatados">E</th>
+            <th title="Perdidos">P</th>
+            <th title="Goles a Favor">GF</th>
+            <th title="Goles en Contra">GC</th>
+            <th title="Diferencia de Gol">DG</th>
+            <th title="Puntos"><strong>Pts</strong></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${teams.map((t, i) => `
+            <tr class="${i===0?'st-qual-1':i===1?'st-qual-2':''}">
+              <td>
+                <div class="st-team-cell">
+                  <span class="st-flag">${t.flag}</span>
+                  <span class="st-name">${t.name}</span>
+                </div>
+              </td>
+              <td>${t.pj}</td>
+              <td>${t.pg}</td>
+              <td>${t.pe}</td>
+              <td>${t.pp}</td>
+              <td>${t.gf}</td>
+              <td>${t.gc}</td>
+              <td style="color:${t.gd>0?'var(--green)':t.gd<0?'var(--red)':'var(--text-dim)'}">${t.gd>0?'+':''}${t.gd}</td>
+              <td class="st-pts">${t.pts}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+loadStandings('GRUPOS');
+</script>
+</body>
+</html>

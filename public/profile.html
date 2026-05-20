@@ -38,6 +38,7 @@
       <a href="/" class="nav-link">🏠 Inicio</a>
       <a href="/matches" class="nav-link">📅 Partidos</a>
       <a href="/rankings" class="nav-link">🏅 Ranking</a>
+      <a href="/standings" class="nav-link">⚽ Torneo</a>
       <a href="/groups" class="nav-link">👥 Grupos</a>
       <a href="/rules" class="nav-link">📖 Reglamento</a>
       <a href="/admin" class="nav-link" id="nav-admin" style="display:none">🛡 Admin</a>
@@ -137,7 +138,7 @@
   </div>
 </div>
 
-<script src="/js/api.js?v=1.4.5"></script>
+<script src="/js/api.js?v=1.4.6"></script>
 <script>
 Auth.require();
 const user = Auth.getUser();
@@ -175,21 +176,28 @@ AVATARS.forEach(e => {
 let myStatsForShare = {};
 
 // Load stats
-Promise.all([api.rankings.me(), api.rankings.all()]).then(([me, all]) => {
-  document.getElementById('ps-pts').textContent = me.totalPoints ?? 0;
-  document.getElementById('ps-preds').textContent = me.partidos ?? 0;
-  document.getElementById('ps-exact').textContent = me.exactos ?? 0;
-  document.getElementById('ps-winrate').textContent = (me.winRate ?? 0) + '%';
-  const idx = all.findIndex(r => r.userId === user?.id);
-  const rank = idx >= 0 ? '#' + (idx + 1) : '—';
-  document.getElementById('ps-rank').textContent = rank;
-  
-  myStatsForShare = {
-    pts: me.totalPoints ?? 0,
-    rank: rank,
-    winRate: me.winRate ?? 0
-  };
-}).catch(() => {});
+async function loadStats() {
+  try {
+    const [me, all] = await Promise.all([api.rankings.me(), api.rankings.all()]);
+    document.getElementById('ps-pts').textContent = me.totalPoints ?? 0;
+    document.getElementById('ps-preds').textContent = me.partidos ?? 0;
+    document.getElementById('ps-exact').textContent = me.exactos ?? 0;
+    document.getElementById('ps-winrate').textContent = (me.winRate ?? 0) + '%';
+    const idx = all.findIndex(r => r.userId === user?.id);
+    const rank = idx >= 0 ? '#' + (idx + 1) : (me.totalPoints > 0 ? '#?' : '—');
+    document.getElementById('ps-rank').textContent = rank;
+    myStatsForShare = { pts: me.totalPoints ?? 0, rank, winRate: me.winRate ?? 0 };
+  } catch(e) {
+    // No hay partidos finalizados todavía — es normal
+    document.getElementById('ps-pts').textContent = '0';
+    document.getElementById('ps-preds').textContent = '0';
+    document.getElementById('ps-exact').textContent = '0';
+    document.getElementById('ps-winrate').textContent = '0%';
+    document.getElementById('ps-rank').textContent = '—';
+    myStatsForShare = { pts: 0, rank: '—', winRate: 0 };
+  }
+}
+loadStats();
 
 async function loadTickets() {
   try {

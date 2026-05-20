@@ -147,7 +147,7 @@ async function adminRoutes(fastify) {
       fastify.log.warn('Email bulk error: ' + e.message)
     );
 
-    return { updated, message: 'Resultados procesados correctamente' };
+    return { updated: updatedPreds.length, message: 'Resultados procesados correctamente' };
 
   });
 
@@ -229,7 +229,7 @@ async function adminRoutes(fastify) {
     const predictions = await fastify.db.prediction.findMany({
       where: { userId: id },
       include: {
-        match: true
+        match: { select: { teamAName: true, teamBName: true, date: true, status: true, resultA: true, resultB: true } }
       },
       orderBy: { match: { date: 'asc' } }
     });

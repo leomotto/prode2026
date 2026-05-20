@@ -84,6 +84,7 @@ async function bootstrap() {
   fastify.register(require('./routes/admin'),       { prefix: '/api/admin' });
   fastify.register(require('./routes/groups'),      { prefix: '/api/groups' });
   fastify.register(require('./routes/help'),        { prefix: '/api/help' });
+  fastify.register(require('./routes/standings'),   { prefix: '/api/standings' });
 
   // ── Config pública (solo datos NO sensibles) ───────────────
   // Expone solo lo que el frontend necesita y es seguro publicar
@@ -101,7 +102,7 @@ async function bootstrap() {
 
   // ── Clean URLs (sin extensión .html) ──────────────────────
   // Cada ruta sirve su HTML correspondiente
-  const pages = ['login', 'matches', 'rankings', 'admin', 'profile', 'groups', 'rules'];
+  const pages = ['login', 'matches', 'rankings', 'admin', 'profile', 'groups', 'rules', 'standings'];
   for (const page of pages) {
     fastify.get(`/${page}`, (req, reply) => reply.sendFile(`${page}.html`));
   }
