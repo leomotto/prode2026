@@ -151,6 +151,31 @@ async function adminRoutes(fastify) {
 
   });
 
+  // POST /api/admin/matches/reset-all — limpiar TODOS los partidos y resultados
+  fastify.post('/matches/reset-all', { preHandler: fastify.adminOnly }, async (request, reply) => {
+    // Todos a estado UPCOMING, sin resultados
+    await fastify.db.match.updateMany({
+      data: { 
+        resultA: null, 
+        resultB: null, 
+        status: 'UPCOMING'
+      },
+    });
+
+    // Desbloquear y limpiar puntos de TODAS las predicciones
+    await fastify.db.prediction.updateMany({
+      data: {
+        locked: false,
+        pointsBase: null,
+        pointsBonus: null,
+        pointsTotal: null,
+        calculatedAt: null,
+      },
+    });
+
+    return { success: true, message: 'Todos los partidos han sido reseteados.' };
+  });
+
   // GET /api/admin/users — lista de usuarios
   fastify.get('/users', { preHandler: fastify.adminOnly }, async () => {
     return fastify.db.user.findMany({
@@ -193,6 +218,23 @@ async function adminRoutes(fastify) {
     if (isActive !== undefined) data.isActive = Boolean(isActive);
     return fastify.db.user.update({ where: { id: request.params.id }, data,
       select: { id: true, email: true, displayName: true, isAdmin: true, isActive: true } });
+  });
+
+  // GET /api/admin/users/:id/predictions — ver predicciones de un usuario
+  fastify.get('/users/:id/predictions', { preHandler: fastify.adminOnly }, async (request, reply) => {
+    const { id } = request.params;
+    const user = await fastify.db.user.findUnique({ where: { id } });
+    if (!user) return reply.status(404).send({ error: 'Usuario no encontrado' });
+
+    const predictions = await fastify.db.prediction.findMany({
+      where: { userId: id },
+      include: {
+        match: true
+      },
+      orderBy: { match: { date: 'asc' } }
+    });
+
+    return { user, predictions };
   });
 }
 

@@ -243,8 +243,7 @@ function doLogout() { Auth.clear(); window.location.href = '/login'; }
 Promise.all([api.rankings.me(), api.rankings.all()]).then(([s, all]) => {
   document.getElementById('stat-pts').textContent   = s.totalPoints ?? 0;
   document.getElementById('stat-exact').textContent = s.exactos ?? 0;
-  const pct = s.partidos > 0 ? Math.round(((s.exactos + s.ganadores) / s.partidos) * 100) : 0;
-  document.getElementById('stat-pct').textContent = pct + '%';
+  document.getElementById('stat-pct').textContent = (s.winRate ?? 0) + '%';
   const myId = Auth.getUser()?.id;
   const rank = all.findIndex(r => r.userId === myId);
   document.getElementById('stat-rank').textContent = rank >= 0 ? '#' + (rank+1) : '—';

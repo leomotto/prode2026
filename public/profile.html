@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -19,7 +19,8 @@
 .profile-big-avatar{font-size:5rem;line-height:1;margin-bottom:.75rem}
 .profile-display-name{font-size:1.3rem;font-weight:800;color:var(--navy)}
 .profile-email{font-size:.85rem;color:var(--text-dim);margin-bottom:1rem}
-.stat-bar{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:1rem}
+.stat-bar{display:grid;grid-template-columns:repeat(5, 1fr);gap:.5rem;margin-top:1rem}
+@media(max-width:600px){.stat-bar{grid-template-columns:repeat(3, 1fr)}}
 .stat-bar-item{background:var(--surface-2);border-radius:var(--radius);padding:.6rem;text-align:center;border:1px solid var(--border)}
 .stat-bar-val{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:var(--navy)}
 .stat-bar-label{font-size:.7rem;color:var(--text-dim)}
@@ -80,8 +81,14 @@
         <div class="stat-bar">
           <div class="stat-bar-item"><div class="stat-bar-val" id="ps-pts">—</div><div class="stat-bar-label">Puntos</div></div>
           <div class="stat-bar-item"><div class="stat-bar-val" id="ps-rank">—</div><div class="stat-bar-label">Posición</div></div>
-          <div class="stat-bar-item"><div class="stat-bar-val" id="ps-preds">—</div><div class="stat-bar-label">Pronosticados</div></div>
+          <div class="stat-bar-item"><div class="stat-bar-val" id="ps-preds">—</div><div class="stat-bar-label">Partidos</div></div>
           <div class="stat-bar-item"><div class="stat-bar-val" id="ps-exact">—</div><div class="stat-bar-label">Exactos</div></div>
+          <div class="stat-bar-item"><div class="stat-bar-val" id="ps-winrate">—</div><div class="stat-bar-label">Efectividad</div></div>
+        </div>
+        
+        <div style="display:flex;gap:.5rem;margin-top:1.5rem;justify-content:center;flex-wrap:wrap">
+          <button class="btn btn-secondary btn-sm" onclick="shareStats()">📋 Compartir Stats</button>
+          <button class="btn btn-secondary btn-sm" onclick="downloadPredictionsCSV()">⬇️ Descargar Backup</button>
         </div>
       </div>
 
@@ -160,14 +167,63 @@ AVATARS.forEach(e => {
   picker.appendChild(btn);
 });
 
+let myStatsForShare = {};
+
 // Load stats
 Promise.all([api.rankings.me(), api.rankings.all()]).then(([me, all]) => {
   document.getElementById('ps-pts').textContent = me.totalPoints ?? 0;
   document.getElementById('ps-preds').textContent = me.partidos ?? 0;
   document.getElementById('ps-exact').textContent = me.exactos ?? 0;
+  document.getElementById('ps-winrate').textContent = (me.winRate ?? 0) + '%';
   const idx = all.findIndex(r => r.userId === user?.id);
-  document.getElementById('ps-rank').textContent = idx >= 0 ? '#' + (idx + 1) : '—';
+  const rank = idx >= 0 ? '#' + (idx + 1) : '—';
+  document.getElementById('ps-rank').textContent = rank;
+  
+  myStatsForShare = {
+    pts: me.totalPoints ?? 0,
+    rank: rank,
+    winRate: me.winRate ?? 0
+  };
 }).catch(() => {});
+
+async function shareStats() {
+  const text = \`🏆 Mis Stats en Prode Mundial 2026: Posición \${myStatsForShare.rank} | \${myStatsForShare.pts} Puntos | Efectividad: \${myStatsForShare.winRate}%. ¡Sumate!\`;
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: 'Prode Mundial 2026', text: text });
+    } else {
+      await navigator.clipboard.writeText(text);
+      Toast.success('¡Copiado!', 'Estadísticas copiadas al portapapeles');
+    }
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+async function downloadPredictionsCSV() {
+  try {
+    Toast.success('Generando Backup...');
+    const predictions = await api.predictions.mine();
+    if (!predictions || !predictions.length) return Toast.warn('No hay pronósticos para descargar');
+    
+    let csv = "ID Partido,Equipo Local,Equipo Visitante,Fase,Fecha,Mi Pronóstico (L),Mi Pronóstico (V),Puntos Obtenidos\\n";
+    predictions.forEach(p => {
+      const pTotal = p.pointsTotal !== null ? p.pointsTotal : 'Pendiente';
+      csv += \`"\${p.matchId}","\${p.match.teamAName}","\${p.match.teamBName}","\${p.match.phase}","\${p.match.date}","\${p.scoreA}","\${p.scoreB}","\${pTotal}"\\n\`;
+    });
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'Mis_Pronosticos_Prode2026.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch(e) {
+    Toast.error('Error', e.message);
+  }
+}
 
 async function saveProfile() {
   const displayName = document.getElementById('edit-name').value.trim();

@@ -59,7 +59,10 @@ async function rankingsRoutes(fastify) {
     const ranking = Object.values(statsMap)
       .filter(s => s.partidos > 0)
       .sort((a, b) => b.totalPoints - a.totalPoints || b.exactos - a.exactos)
-      .map((s, i) => ({ ...s, rank: i + 1 }));
+      .map((s, i) => {
+        const winRate = s.partidos > 0 ? Math.round((s.ganadores / s.partidos) * 100) : 0;
+        return { ...s, rank: i + 1, winRate };
+      });
 
     return ranking;
   });
@@ -74,8 +77,12 @@ async function rankingsRoutes(fastify) {
     });
     const totalPoints = preds.reduce((s, p) => s + (p.pointsTotal || 0), 0);
     const exactos     = preds.filter(p => p.pointsBase === 10).length;
+    const ganadores   = preds.filter(p => p.pointsBase >= 3).length;
     const bonusTotal  = preds.reduce((s, p) => s + (p.pointsBonus || 0), 0);
-    return { totalPoints, exactos, bonusTotal, partidos: preds.length };
+    const partidos    = preds.length;
+    const winRate     = partidos > 0 ? Math.round((ganadores / partidos) * 100) : 0;
+    
+    return { totalPoints, exactos, ganadores, bonusTotal, partidos, winRate };
   });
 }
 

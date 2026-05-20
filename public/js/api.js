@@ -55,8 +55,10 @@ const api = {
     setFeatured:  (id, f)  => api.patch(`/admin/matches/${id}/featured`, { featured: f }),
     setResult:    (id, b)  => api.post(`/admin/matches/${id}/result`, b),
     resetMatch:   (id)     => api.post(`/admin/matches/${id}/reset`),
+    resetAllMatches:()     => api.post('/admin/matches/reset-all'),
     users:        ()       => api.get('/admin/users'),
     updateUser:   (id, b)  => api.patch(`/admin/users/${id}`, b),
+    getUserPredictions: (id) => api.get(`/admin/users/${id}/predictions`),
   },
   // Grupos privados
   groups: {
