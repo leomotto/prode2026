@@ -87,7 +87,7 @@ async function authRoutes(fastify) {
   fastify.get('/me', { preHandler: fastify.authenticate }, async (request) => {
     const user = await fastify.db.user.findUnique({
       where: { id: request.user.id },
-      select: { id: true, email: true, displayName: true, avatar: true, isAdmin: true, createdAt: true },
+      select: { id: true, email: true, displayName: true, avatar: true, isAdmin: true, googleId: true, createdAt: true },
     });
     return user;
   });
