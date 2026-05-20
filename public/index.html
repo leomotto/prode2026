@@ -164,38 +164,44 @@
       </div>
       <button class="btn-close" onclick="closeModal('modal-dash-pred')">✕</button>
     </div>
-    <div class="modal-body">
-      <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:.75rem;margin-bottom:1rem;text-align:center">
+    <div class="modal-body" style="padding: 1rem 0">
+      <div class="fc-body">
         <div class="fc-team-home">
           <div class="fc-code" id="dash-code-a">LOC</div>
           <div class="fc-flag-sm" id="dash-flag-a"></div>
-          <div class="fc-name" id="dash-name-a"></div>
+          <div class="fc-name" id="dash-name-a">Local</div>
+          <div class="stepper-controls" style="margin-top:.75rem">
+            <button class="stepper-btn" onclick="dAdj('a',-1)">−</button>
+            <div class="stepper-val" id="dash-val-a">0</div>
+            <button class="stepper-btn" onclick="dAdj('a',1)">+</button>
+          </div>
         </div>
-        <div style="font-size:.75rem;font-weight:700;color:var(--text-muted)">VS</div>
+        <div class="fc-vs-block">
+          <div class="fc-vs" style="font-size:1.2rem">—</div>
+        </div>
         <div class="fc-team-away">
           <div class="fc-code" id="dash-code-b">VIS</div>
           <div class="fc-flag-sm" id="dash-flag-b"></div>
-          <div class="fc-name" id="dash-name-b"></div>
+          <div class="fc-name" id="dash-name-b">Visitante</div>
+          <div class="stepper-controls" style="margin-top:.75rem">
+            <button class="stepper-btn" onclick="dAdj('b',-1)">−</button>
+            <div class="stepper-val" id="dash-val-b">0</div>
+            <button class="stepper-btn" onclick="dAdj('b',1)">+</button>
+          </div>
         </div>
-      </div>
-      <div class="score-stepper-row">
-        <div class="score-stepper"><div class="score-stepper-label" id="dash-label-a">Local</div>
-          <div class="stepper-controls"><button class="stepper-btn" onclick="dAdj('a',-1)">−</button><div class="stepper-val" id="dash-val-a">0</div><button class="stepper-btn" onclick="dAdj('a',1)">+</button></div></div>
-        <div class="score-sep">—</div>
-        <div class="score-stepper"><div class="score-stepper-label" id="dash-label-b">Visitante</div>
-          <div class="stepper-controls"><button class="stepper-btn" onclick="dAdj('b',-1)">−</button><div class="stepper-val" id="dash-val-b">0</div><button class="stepper-btn" onclick="dAdj('b',1)">+</button></div></div>
       </div>
       <input type="hidden" id="dash-match-id">
       <input type="hidden" id="dash-pred-id">
     </div>
-    <div class="modal-footer">
+    <div class="modal-footer" style="display:flex;gap:.5rem;flex-wrap:wrap">
       <button class="btn btn-secondary" onclick="closeModal('modal-dash-pred')">Cancelar</button>
+      <button class="btn btn-sm" style="background:rgba(239,68,68,.1);color:var(--red);margin-right:auto" onclick="deleteDashPred()" id="dash-del-btn" style="display:none">Borrar Pronóstico</button>
       <button class="btn btn-primary" onclick="saveDashPred()" id="dash-save-btn">Confirmar</button>
     </div>
   </div>
 </div>
 
-<script src="/js/api.js?v=1.4.3"></script>
+<script src="/js/api.js?v=1.4.4"></script>
 <script>
 Auth.require();
 const user = Auth.getUser();
@@ -321,45 +327,47 @@ function renderNextMatches(matches, preds) {
 }
 
 // Últimas predicciones con resultado
-api.predictions.mine().then(preds => {
-  const el = document.getElementById('recent-preds');
-  const finished = preds.filter(p => p.match.status === 'FINISHED' || p.match.resultA !== null).slice(0,5);
-  const all = preds.slice(0,8);
-  if (!all.length) { el.innerHTML = '<div class="empty-state" style="padding:1.5rem"><p>Aún no hay pronósticos</p></div>'; return; }
-  el.innerHTML = `<div class="matches-grid" style="grid-template-columns:1fr;gap:.5rem">${all.map(p => {
-    const isFinished = p.match.status === 'FINISHED' || p.match.resultA !== null;
-    const points = p.pointsTotal ?? 0;
-    const icon = !isFinished ? '⏳ Pendiente' : (points===3?'🎯 Exacto (+3)':points===1?'✅ Ganador (+1)':'❌ Sin puntos (0)');
-    const badgeClass = !isFinished ? 'badge-upcoming' : (points>0?'badge-finished':'badge-live');
-    const resultDisp = isFinished ? `${p.match.resultA} — ${p.match.resultB}` : 'vs';
-    
-    return `<div class="fixture-card">
-      <div class="fc-head">
-        <div class="fc-badges">
-          <span class="badge ${badgeClass}">${icon}</span>
+function renderRecentPreds() {
+  api.predictions.mine().then(preds => {
+    const el = document.getElementById('recent-preds');
+    const all = preds.slice(0,8);
+    if (!all.length) { el.innerHTML = '<div class="empty-state" style="padding:1.5rem"><p>Aún no hay pronósticos</p></div>'; return; }
+    el.innerHTML = `<div class="matches-grid" style="grid-template-columns:1fr;gap:.5rem">${all.map(p => {
+      const isFinished = p.match.status === 'FINISHED' || p.match.resultA !== null;
+      const points = p.pointsTotal ?? 0;
+      const icon = !isFinished ? '⏳ Pendiente' : (points===3?'🎯 Exacto (+3)':points===1?'✅ Ganador (+1)':'❌ Sin puntos (0)');
+      const badgeClass = !isFinished ? 'badge-upcoming' : (points>0?'badge-finished':'badge-live');
+      const resultDisp = isFinished ? `${p.match.resultA} — ${p.match.resultB}` : 'vs';
+      
+      return `<div class="fixture-card">
+        <div class="fc-head">
+          <div class="fc-badges">
+            <span class="badge ${badgeClass}">${icon}</span>
+          </div>
         </div>
-      </div>
-      <div class="fc-body">
-        <div class="fc-team-home">
-          <div class="fc-code">${teamCode(p.match.teamAFlag)}</div>
-          <div class="fc-flag-sm">${p.match.teamAFlag}</div>
-          <div class="fc-name">${p.match.teamAName}</div>
+        <div class="fc-body">
+          <div class="fc-team-home">
+            <div class="fc-code">${teamCode(p.match.teamAFlag)}</div>
+            <div class="fc-flag-sm">${p.match.teamAFlag}</div>
+            <div class="fc-name">${p.match.teamAName}</div>
+          </div>
+          <div class="fc-vs-block">
+            <div style="font-size:.7rem;color:var(--text-dim);margin-bottom:.2rem">Tu pronóstico</div>
+            <div class="badge badge-finished" style="font-size:.9rem;padding:.3rem .5rem">${p.scoreA} — ${p.scoreB}</div>
+            <div style="font-size:.7rem;color:var(--text-dim);margin-top:.2rem">Real: ${resultDisp}</div>
+          </div>
+          <div class="fc-team-away">
+            <div class="fc-code">${teamCode(p.match.teamBFlag)}</div>
+            <div class="fc-flag-sm">${p.match.teamBFlag}</div>
+            <div class="fc-name">${p.match.teamBName}</div>
+          </div>
         </div>
-        <div class="fc-vs-block">
-          <div style="font-size:.7rem;color:var(--text-dim);margin-bottom:.2rem">Tu pronóstico</div>
-          <div class="badge badge-finished" style="font-size:.9rem;padding:.3rem .5rem">${p.scoreA} — ${p.scoreB}</div>
-          <div style="font-size:.7rem;color:var(--text-dim);margin-top:.2rem">Real: ${resultDisp}</div>
-        </div>
-        <div class="fc-team-away">
-          <div class="fc-code">${teamCode(p.match.teamBFlag)}</div>
-          <div class="fc-flag-sm">${p.match.teamBFlag}</div>
-          <div class="fc-name">${p.match.teamBName}</div>
-        </div>
-      </div>
-    </div>`;
-  }).join('')}</div>`;
-  renderEmojis(el);
-}).catch(() => { document.getElementById('recent-preds').innerHTML = ''; });
+      </div>`;
+    }).join('')}</div>`;
+    renderEmojis(el);
+  }).catch(() => { document.getElementById('recent-preds').innerHTML = ''; });
+}
+renderRecentPreds();
 
 // Dashboard prediction modal
 let dashScoreA = 0, dashScoreB = 0;
@@ -374,19 +382,36 @@ function openDashPred(matchId) {
   if(document.getElementById('dash-flag-b')) { document.getElementById('dash-flag-b').textContent = m.teamBFlag; renderEmojis(document.getElementById('dash-flag-b')); }
   document.getElementById('dash-name-a').textContent = m.teamAName;
   document.getElementById('dash-name-b').textContent = m.teamBName;
-  document.getElementById('dash-label-a').textContent = m.teamAName;
-  document.getElementById('dash-label-b').textContent = m.teamBName;
   document.getElementById('dash-match-id').value = matchId;
   document.getElementById('dash-pred-id').value = pred?.id || '';
   dashScoreA = pred?.scoreA ?? 0; dashScoreB = pred?.scoreB ?? 0;
   document.getElementById('dash-val-a').textContent = dashScoreA;
   document.getElementById('dash-val-b').textContent = dashScoreB;
+  document.getElementById('dash-del-btn').style.display = pred ? 'block' : 'none';
   openModal('modal-dash-pred');
 }
 function dAdj(side, d) {
   if (side === 'a') { dashScoreA = Math.max(0, dashScoreA+d); document.getElementById('dash-val-a').textContent = dashScoreA; }
   else              { dashScoreB = Math.max(0, dashScoreB+d); document.getElementById('dash-val-b').textContent = dashScoreB; }
 }
+
+async function deleteDashPred() {
+  const predId  = document.getElementById('dash-pred-id').value;
+  const matchId = document.getElementById('dash-match-id').value;
+  if(!predId) return;
+  const btn = document.getElementById('dash-del-btn');
+  btn.disabled = true; btn.textContent = 'Borrando...';
+  try {
+    await api.predictions.delete(predId);
+    delete dashPreds[matchId];
+    Toast.success('¡Pronóstico borrado!');
+    closeModal('modal-dash-pred');
+    renderNextMatches(dashMatches, dashPreds);
+    renderRecentPreds();
+  } catch (err) { Toast.error('Error', err.message); }
+  finally { btn.disabled = false; btn.textContent = 'Borrar Pronóstico'; }
+}
+
 async function saveDashPred() {
   const matchId = document.getElementById('dash-match-id').value;
   const predId  = document.getElementById('dash-pred-id').value;
@@ -399,6 +424,7 @@ async function saveDashPred() {
     Toast.success('¡Pronóstico guardado!', `${dashScoreA} — ${dashScoreB}`);
     closeModal('modal-dash-pred');
     renderNextMatches(dashMatches, dashPreds);
+    renderRecentPreds();
   } catch (err) { Toast.error('Error', err.message); }
   finally { btn.disabled = false; btn.textContent = 'Confirmar'; }
 }

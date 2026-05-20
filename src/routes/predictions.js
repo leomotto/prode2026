@@ -99,6 +99,22 @@ async function predictionsRoutes(fastify) {
     });
     return updated;
   });
+
+  // DELETE /api/predictions/:id — borrar pronóstico
+  fastify.delete('/:id', { preHandler: fastify.authenticate }, async (request, reply) => {
+    const pred = await fastify.db.prediction.findUnique({ where: { id: request.params.id } });
+    if (!pred || pred.userId !== request.user.id) return reply.status(404).send({ error: 'Pronóstico no encontrado' });
+
+    const match = await fastify.db.match.findUnique({ where: { id: pred.matchId } });
+    if (!match) return reply.status(404).send({ error: 'Partido no encontrado' });
+
+    if (match.status !== 'UPCOMING') {
+      return reply.status(400).send({ error: 'El pronóstico está bloqueado (partido en curso)' });
+    }
+
+    await fastify.db.prediction.delete({ where: { id: request.params.id } });
+    return { success: true };
+  });
 }
 
 module.exports = predictionsRoutes;

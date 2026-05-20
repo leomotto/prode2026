@@ -91,36 +91,26 @@
       </div>
       <button class="btn-close" onclick="closeModal('modal-prediction')">✕</button>
     </div>
-    <div class="modal-body">
-      <!-- Teams display -->
-      <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:1rem;margin-bottom:1.5rem;text-align:center">
+    <div class="modal-body" style="padding: 1rem 0">
+      <div class="fc-body">
         <div class="fc-team-home">
-          <div class="fc-code" id="modal-code-a">BR</div>
+          <div class="fc-code" id="modal-code-a">LOC</div>
           <div class="fc-flag-sm" id="modal-flag-a"></div>
-          <div class="fc-name" id="modal-name-a">Brasil</div>
-        </div>
-        <div style="font-size:.8rem;font-weight:700;color:var(--text-muted)">VS</div>
-        <div class="fc-team-away">
-          <div class="fc-code" id="modal-code-b">FR</div>
-          <div class="fc-flag-sm" id="modal-flag-b"></div>
-          <div class="fc-name" id="modal-name-b">Francia</div>
-        </div>
-      </div>
-
-      <!-- Score steppers -->
-      <div class="score-stepper-row">
-        <div class="score-stepper">
-          <div class="score-stepper-label" id="stepper-label-a">Local</div>
-          <div class="stepper-controls">
+          <div class="fc-name" id="modal-name-a">Local</div>
+          <div class="stepper-controls" style="margin-top:.75rem">
             <button class="stepper-btn" onclick="adjustScore('a',-1)">−</button>
             <div class="stepper-val" id="val-a">0</div>
             <button class="stepper-btn" onclick="adjustScore('a',1)">+</button>
           </div>
         </div>
-        <div class="score-sep">—</div>
-        <div class="score-stepper">
-          <div class="score-stepper-label" id="stepper-label-b">Visitante</div>
-          <div class="stepper-controls">
+        <div class="fc-vs-block">
+          <div class="fc-vs" style="font-size:1.2rem">—</div>
+        </div>
+        <div class="fc-team-away">
+          <div class="fc-code" id="modal-code-b">VIS</div>
+          <div class="fc-flag-sm" id="modal-flag-b"></div>
+          <div class="fc-name" id="modal-name-b">Visitante</div>
+          <div class="stepper-controls" style="margin-top:.75rem">
             <button class="stepper-btn" onclick="adjustScore('b',-1)">−</button>
             <div class="stepper-val" id="val-b">0</div>
             <button class="stepper-btn" onclick="adjustScore('b',1)">+</button>
@@ -131,14 +121,15 @@
       <input type="hidden" id="pred-match-id">
       <input type="hidden" id="pred-id">
     </div>
-    <div class="modal-footer">
+    <div class="modal-footer" style="display:flex;gap:.5rem;flex-wrap:wrap">
       <button class="btn btn-secondary" onclick="closeModal('modal-prediction')">Cancelar</button>
+      <button class="btn btn-sm" style="background:rgba(239,68,68,.1);color:var(--red);margin-right:auto" onclick="deletePrediction()" id="btn-del-pred" style="display:none">Borrar Pronóstico</button>
       <button class="btn btn-primary" onclick="savePrediction()" id="btn-save-pred">Confirmar</button>
     </div>
   </div>
 </div>
 
-<script src="/js/api.js?v=1.4.3"></script>
+<script src="/js/api.js?v=1.4.4"></script>
 <script>
 Auth.require();
 const user = Auth.getUser();
@@ -292,8 +283,6 @@ function openPrediction(matchId) {
   document.getElementById('modal-code-b').textContent = codeB;
   document.getElementById('modal-name-a').textContent = m.teamAName;
   document.getElementById('modal-name-b').textContent = m.teamBName;
-  document.getElementById('stepper-label-a').textContent = m.teamAName;
-  document.getElementById('stepper-label-b').textContent = m.teamBName;
   document.getElementById('pred-match-id').value = matchId;
   document.getElementById('pred-id').value = pred?.id || '';
 
@@ -301,6 +290,7 @@ function openPrediction(matchId) {
   scoreB = pred?.scoreB ?? 0;
   document.getElementById('val-a').textContent = scoreA;
   document.getElementById('val-b').textContent = scoreB;
+  document.getElementById('btn-del-pred').style.display = pred ? 'block' : 'none';
 
   openModal('modal-prediction');
 }
@@ -321,6 +311,22 @@ function doToggleNotify(matchId) {
   const btn = document.getElementById(`bell-${matchId}`);
   if (btn) { btn.textContent = on ? '🔔' : '🔕'; btn.classList.toggle('active', on); }
   Toast.show(on ? 'Alerta activada 🔔' : 'Alerta desactivada', null, on ? 'success' : 'info', 2000);
+}
+
+async function deletePrediction() {
+  const predId  = document.getElementById('pred-id').value;
+  const matchId = document.getElementById('pred-match-id').value;
+  if(!predId) return;
+  const btn = document.getElementById('btn-del-pred');
+  btn.disabled = true; btn.textContent = 'Borrando...';
+  try {
+    await api.predictions.delete(predId);
+    delete myPredictions[matchId];
+    Toast.success('¡Pronóstico borrado!');
+    closeModal('modal-prediction');
+    renderMatches();
+  } catch (err) { Toast.error('Error', err.message); }
+  finally { btn.disabled = false; btn.textContent = 'Borrar Pronóstico'; }
 }
 
 async function savePrediction() {

@@ -41,6 +41,7 @@ const api = {
     pending: ()        => api.get('/predictions/pending'),
     create:  (b)       => api.post('/predictions', b),
     update:  (id, b)   => api.put(`/predictions/${id}`, b),
+    delete:  (id)      => api._req('DELETE', `/predictions/${id}`),
   },
   // Rankings
   rankings: {
@@ -391,7 +392,7 @@ if (window.location.pathname !== '/login' && Auth.isLogged()) {
 
 // ── VERSION FOOTER & TURNSTILE CENTERING ─────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  const version = 'v1.4.3';
+  const version = 'v1.4.4';
   
   // 1. Center Turnstile containers programmatically
   const tsContainers = document.querySelectorAll('#ts-login, #ts-register');

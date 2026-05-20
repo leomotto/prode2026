@@ -122,29 +122,21 @@
     <div class="modal-body">
       <input type="hidden" id="result-match-id">
 
-      <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:1rem;margin-bottom:1.5rem;text-align:center">
+      <div class="fc-body">
         <div class="fc-team-home">
           <div class="fc-code" id="res-code-a">LOC</div>
           <div class="fc-flag-sm" id="res-flag-a"></div>
           <div class="fc-name" id="res-name-a">Local</div>
+          <input class="result-input" id="res-a" type="number" min="0" max="20" value="0" style="margin-top:.75rem">
         </div>
-        <div style="font-size:.85rem;font-weight:700;color:var(--text-muted)">VS</div>
+        <div class="fc-vs-block">
+          <div class="fc-vs" style="font-size:1.2rem">—</div>
+        </div>
         <div class="fc-team-away">
           <div class="fc-code" id="res-code-b">VIS</div>
           <div class="fc-flag-sm" id="res-flag-b"></div>
           <div class="fc-name" id="res-name-b">Visitante</div>
-        </div>
-      </div>
-
-      <div class="score-input-group">
-        <div>
-          <input class="score-input" id="res-a" type="number" min="0" max="20" value="0">
-          <div class="score-team-name" id="res-team-a">Local</div>
-        </div>
-        <div class="score-separator">—</div>
-        <div>
-          <input class="score-input" id="res-b" type="number" min="0" max="20" value="0">
-          <div class="score-team-name" id="res-team-b">Visitante</div>
+          <input class="result-input" id="res-b" type="number" min="0" max="20" value="0" style="margin-top:.75rem">
         </div>
       </div>
 
@@ -204,7 +196,7 @@
   </div>
 </div>
 
-<script src="/js/api.js?v=1.4.3"></script>
+<script src="/js/api.js?v=1.4.4"></script>
 <script>
 Auth.require();
 const user = Auth.getUser();
@@ -505,8 +497,6 @@ function openResult(matchId) {
   if(document.getElementById('res-flag-b')) { document.getElementById('res-flag-b').textContent = m.teamBFlag; renderEmojis(document.getElementById('res-flag-b')); }
   document.getElementById('res-name-a').textContent = m.teamAName;
   document.getElementById('res-name-b').textContent = m.teamBName;
-  document.getElementById('res-team-a').textContent = m.teamAName;
-  document.getElementById('res-team-b').textContent = m.teamBName;
   document.getElementById('res-a').value = m.resultA ?? 0;
   document.getElementById('res-b').value = m.resultB ?? 0;
   openModal('modal-result');
@@ -571,7 +561,7 @@ async function viewUserPredictions(userId) {
             <div style="color:var(--text-dim);font-size:.75rem;margin-top:.15rem">Pronosticó: <strong style="color:var(--text)">${p.scoreA} - ${p.scoreB}</strong></div>
           </div>
           <div style="font-size:.7rem;text-align:right">
-            ${p.pointsTotal !== null ? \`<span class="badge badge-finished">\${p.pointsTotal} pts</span>\` : '<span class="badge">Pendiente</span>'}
+            ${p.pointsTotal !== null ? '<span class="badge badge-finished">' + p.pointsTotal + ' pts</span>' : '<span class="badge">Pendiente</span>'}
           </div>
         </div>
       `).join('');
