@@ -8,11 +8,11 @@ fi
 
 echo "🧹 Limpiando cambios locales en el servidor..."
 git config core.autocrlf input
-git reset --hard HEAD
+git reset -q --hard HEAD
 
 echo "📥 Descargando últimos cambios..."
-git fetch origin main
-git reset --hard origin/main
+git fetch -q origin main
+git reset -q --hard origin/main
 
 echo "📦 Instalando dependencias..."
 npm ci --omit=dev

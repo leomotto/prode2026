@@ -431,3 +431,10 @@ input,select,textarea{font-family:inherit}
   color: var(--text-dim) !important;
 }
 
+/* ── FLAG ALIGNMENT AND CENTERING ── */
+.fc-flag-sm img {
+  vertical-align: middle !important;
+  display: inline-block;
+}
+
+

@@ -35,9 +35,9 @@ jobs:
             set -e
             cd $HOME/prode2026
             git config core.autocrlf input
-            git reset --hard HEAD
-            git fetch origin main
-            git reset --hard origin/main
+            git reset -q --hard HEAD
+            git fetch -q origin main
+            git reset -q --hard origin/main
             chmod +x deploy.sh
             ./deploy.sh
         env:

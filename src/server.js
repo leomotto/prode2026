@@ -197,8 +197,8 @@ async function bootstrap() {
         // Is it finished?
         const isFinished = ['FT', 'AET', 'PEN'].includes(statusShort);
 
-        // Update if it's currently LIVE locally, OR if it just finished
-        if (localMatch.status === 'LIVE' || isFinished) {
+        // Sincronizar ÚNICAMENTE si el partido está actualmente EN VIVO en nuestra base de datos
+        if (localMatch.status === 'LIVE') {
           if (goalsHome !== null && goalsAway !== null) {
             await fastify.db.match.update({
               where: { id: localMatch.id },

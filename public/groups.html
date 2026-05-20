@@ -233,7 +233,7 @@
   </div>
 </div>
 
-<script src="/js/api.js?v=1.4.2"></script>
+<script src="/js/api.js?v=1.4.3"></script>
 <script>
 Auth.require();
 const user = Auth.getUser();
@@ -302,6 +302,13 @@ async function selectGroup(id) {
         <div class="rank-dname">${r.displayName}${r.isOwner?' <span style="font-size:.7rem;color:var(--gold)">👑</span>':''}${r.userId===myId?' <span style="font-size:.7rem;color:var(--text-dim)">(vos)</span>':''}</div>
         <div class="rank-pts">${r.totalPoints}</div>
       </div>`).join('') || '<div style="text-align:center;padding:2rem;color:var(--text-dim)">Sin pronósticos aún</div>';
+
+    // Recargar chat o premios inmediatamente si esa pestaña está abierta para evitar retrasos
+    if (document.getElementById('gtab-chat').style.display === 'block') {
+      loadChat();
+    } else if (document.getElementById('gtab-premios').style.display === 'block') {
+      loadPrizes();
+    }
   } catch(e) {
     document.getElementById('gd-ranking').innerHTML = `<div style="color:var(--red);padding:1rem;text-align:center">${e.message}</div>`;
   }
@@ -462,15 +469,23 @@ async function sendChatMessage() {
   if (!txt || !currentGroup) return;
   
   // Optimistic UI update
-  const cEl = document.getElementById('chat-messages');
-  const user = Auth.getUser();
-  const time = Fmt.time(new Date());
-  const name = user?.displayName?.split(' ')[0] || 'Yo';
-  const fakeDiv = document.createElement('div');
-  fakeDiv.className = 'chat-msg';
-  fakeDiv.innerHTML = `<div class="msg-meta"><span class="msg-author">${name}</span><span class="msg-time">${time}</span></div><div class="msg-text" style="opacity:0.7">${txt}</div>`;
-  cEl.appendChild(fakeDiv);
-  cEl.scrollTop = cEl.scrollHeight;
+  const cEl = document.getElementById('chat-box');
+  let fakeDiv = null;
+  if (cEl) {
+    const user = Auth.getUser();
+    const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    fakeDiv = document.createElement('div');
+    fakeDiv.className = 'chat-msg mine';
+    fakeDiv.innerHTML = `
+      <div class="chat-info">
+        <span style="font-size:.65rem;opacity:.7">${time}</span>
+        <strong>Vos</strong> <span>${user?.avatar || '⚽'}</span>
+      </div>
+      <div class="chat-bubble" style="opacity:0.7">${txt}</div>
+    `;
+    cEl.appendChild(fakeDiv);
+    cEl.scrollTop = cEl.scrollHeight;
+  }
 
   input.value = '';
   input.disabled = true;
@@ -479,7 +494,7 @@ async function sendChatMessage() {
     await loadChat();
   } catch(e) { 
     Toast.error('Error enviando mensaje', e.message); 
-    fakeDiv.remove();
+    if (fakeDiv) fakeDiv.remove();
   }
   finally { input.disabled = false; input.focus(); }
 }

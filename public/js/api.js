@@ -178,7 +178,7 @@ const Notify = {
 function renderEmojis(el) {
   if (window.twemoji && el) {
     twemoji.parse(el, {
-      base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/',
+      base: 'https://cdn.jsdelivr.net/gh/jdecked/twemoji@14.1.2/assets/',
       folder: 'svg', ext: '.svg',
       attributes: () => ({ style: 'width:1.4em;height:1.4em;vertical-align:-.2em' })
     });
@@ -275,21 +275,16 @@ function setActiveNav() {
   const params = new URLSearchParams(window.location.search);
   const token = params.get('token');
   if (token) {
+    document.documentElement.style.display = 'none';
     localStorage.setItem('prode_token', token);
     // Cargar datos del usuario
     api.auth.me().then(user => {
       Auth.save(token, user);
-      window.history.replaceState({}, '', '/');
-      Toast.success('¡Bienvenido!', `Sesión iniciada con Google`);
-      if (document.getElementById('nav-avatar')) document.getElementById('nav-avatar').textContent = user.avatar || '⚽';
-      if (document.getElementById('nav-username')) document.getElementById('nav-username').textContent = user.displayName?.split(' ')[0] || '';
-      if (document.getElementById('hero-name')) document.getElementById('hero-name').textContent = user.displayName?.split(' ')[0] || 'jugador';
-      if (document.getElementById('dash-avatar')) document.getElementById('dash-avatar').textContent = user.avatar || '⚽';
-      if (user.isAdmin) {
-        if (document.getElementById('nav-admin')) document.getElementById('nav-admin').style.display = '';
-        if (document.getElementById('mobile-nav-admin')) document.getElementById('mobile-nav-admin').style.display = '';
-      }
-    }).catch(() => {});
+      window.location.href = '/';
+    }).catch(() => {
+      localStorage.removeItem('prode_token');
+      window.location.href = '/login';
+    });
   }
 })();
 
@@ -394,7 +389,7 @@ if (window.location.pathname !== '/login' && Auth.isLogged()) {
 
 // ── VERSION FOOTER & TURNSTILE CENTERING ─────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  const version = 'v1.4.2';
+  const version = 'v1.4.3';
   
   // 1. Center Turnstile containers programmatically
   const tsContainers = document.querySelectorAll('#ts-login, #ts-register');
