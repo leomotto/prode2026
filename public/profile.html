@@ -123,6 +123,11 @@
           </div>
         </div>
 
+        <div class="card" style="padding:1.5rem;margin-bottom:1rem">
+          <h3 style="font-size:1rem;font-weight:700;margin-bottom:1.25rem;color:var(--navy)">❓ Mis Tickets de Soporte</h3>
+          <div id="profile-tickets"><div class="spinner"></div></div>
+        </div>
+
         <div class="card" style="padding:1.5rem" id="danger-zone">
           <h3 style="font-size:1rem;font-weight:700;margin-bottom:.75rem;color:var(--red)">⚠️ Zona Peligrosa</h3>
           <button class="btn btn-sm" style="background:var(--red);color:#fff" onclick="confirmLogout()">Cerrar sesión en todos los dispositivos</button>
@@ -132,7 +137,7 @@
   </div>
 </div>
 
-<script src="/js/api.js?v=1.4.4"></script>
+<script src="/js/api.js?v=1.4.5"></script>
 <script>
 Auth.require();
 const user = Auth.getUser();
@@ -185,6 +190,32 @@ Promise.all([api.rankings.me(), api.rankings.all()]).then(([me, all]) => {
     winRate: me.winRate ?? 0
   };
 }).catch(() => {});
+
+async function loadTickets() {
+  try {
+    const tickets = await api.help.mine();
+    const el = document.getElementById('profile-tickets');
+    if (!tickets.length) {
+      el.innerHTML = '<div class="empty-state" style="padding:1rem"><p>No tenés tickets de soporte.</p></div>';
+      return;
+    }
+    el.innerHTML = tickets.map(t => `
+      <div style="border:1px solid var(--border);border-radius:var(--radius);padding:1rem;margin-bottom:.75rem;background:var(--surface)">
+        <div style="display:flex;justify-content:space-between;margin-bottom:.5rem">
+          <div style="font-weight:700;color:var(--navy)">${t.subject}</div>
+          <span class="badge ${t.status==='OPEN'?'badge-live':'badge-finished'}">${t.status}</span>
+        </div>
+        <div style="font-size:.85rem;color:var(--text);margin-bottom:.75rem">${t.message}</div>
+        ${t.adminNote ? `<div style="font-size:.8rem;background:var(--surface-2);padding:.5rem;border-radius:var(--radius);border-left:3px solid var(--blue)"><strong>Respuesta Admin:</strong><br>${t.adminNote.replace(/\\n/g, '<br>')}</div>` : ''}
+        <div style="font-size:.7rem;color:var(--text-dim);margin-top:.5rem;text-align:right">${new Date(t.createdAt).toLocaleString('es-AR')}</div>
+      </div>
+    `).join('');
+  } catch(e) {
+    document.getElementById('profile-tickets').innerHTML = '<div class="empty-state"><p>Error cargando tickets</p></div>';
+  }
+}
+
+loadTickets();
 
 async function shareStats() {
   const text = \`🏆 Mis Stats en Prode Mundial 2026: Posición \${myStatsForShare.rank} | \${myStatsForShare.pts} Puntos | Efectividad: \${myStatsForShare.winRate}%. ¡Sumate!\`;

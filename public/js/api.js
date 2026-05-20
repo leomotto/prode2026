@@ -81,9 +81,10 @@ const api = {
   // Soporte / Ayuda
   help: {
     create:        (b)          => api.post('/help', b),
+    mine:          ()           => api.get('/help/mine'),
     adminAll:      ()           => api.get('/help/admin'),
     adminUpdate:   (id, b)      => api._req('PUT', `/help/admin/${id}`, b),
-  }
+  },
 };
 
 

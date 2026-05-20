@@ -26,6 +26,15 @@ async function helpRoutes(fastify) {
     return reply.status(201).send(req);
   });
 
+  // GET /api/help/mine — listar mis solicitudes (usuario)
+  fastify.get('/mine', { preHandler: fastify.authenticate }, async (request, reply) => {
+    const requests = await fastify.db.helpRequest.findMany({
+      where: { userId: request.user.id },
+      orderBy: { createdAt: 'desc' },
+    });
+    return requests;
+  });
+
   // GET /api/help/admin — listar solicitudes (admin)
   fastify.get('/admin', { preHandler: fastify.authenticate }, async (request, reply) => {
     if (!request.user.isAdmin) return reply.status(403).send({ error: 'Sin acceso' });
@@ -54,9 +63,17 @@ async function helpRoutes(fastify) {
     const { id } = request.params;
     const { status, adminNote } = request.body;
     
+    const existing = await fastify.db.helpRequest.findUnique({ where: { id } });
+    if (!existing) return reply.status(404).send({ error: 'Ticket no encontrado' });
+
+    let newNote = existing.adminNote || '';
+    if (adminNote && adminNote.trim()) {
+      newNote = newNote ? newNote + '\n\n---\n' + adminNote.trim() : adminNote.trim();
+    }
+
     const req = await fastify.db.helpRequest.update({
       where: { id },
-      data: { status, adminNote: adminNote?.trim() },
+      data: { status, adminNote: newNote },
     });
     return req;
   });

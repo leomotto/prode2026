@@ -12,10 +12,10 @@ async function rankingsRoutes(fastify) {
       select: { id: true, displayName: true, avatar: true },
     });
 
-    // Traer predicciones calculadas
-    const predWhere = { pointsTotal: { not: null } };
+    // Traer predicciones calculadas solo para partidos finalizados
+    const predWhere = { match: { status: 'FINISHED' } };
     if (phase) {
-      predWhere.match = { phase: phase.toUpperCase() };
+      predWhere.match.phase = phase.toUpperCase();
     }
 
     const predictions = await fastify.db.prediction.findMany({
@@ -52,8 +52,8 @@ async function rankingsRoutes(fastify) {
       s.totalPoints  += p.pointsTotal || 0;
       s.bonusTotal   += p.pointsBonus || 0;
       s.partidos     += 1;
-      if (p.pointsBase === 10) s.exactos++;
-      if (p.pointsBase >= 3)  s.ganadores++;
+      if (p.pointsBase === 3) s.exactos++;
+      if (p.pointsBase > 0)  s.ganadores++;
     }
 
     const ranking = Object.values(statsMap)
@@ -69,15 +69,14 @@ async function rankingsRoutes(fastify) {
 
   // GET /api/rankings/me — mi posición
   fastify.get('/me', { preHandler: fastify.authenticate }, async (request) => {
-    const all = await fastify.rankingsRoutes?.handler?.() || [];
-    // Simplificado: traer mis stats directamente
+    // Traer mis stats directamente solo de partidos finalizados
     const preds = await fastify.db.prediction.findMany({
-      where: { userId: request.user.id, pointsTotal: { not: null } },
+      where: { userId: request.user.id, match: { status: 'FINISHED' } },
       select: { pointsBase: true, pointsBonus: true, pointsTotal: true },
     });
     const totalPoints = preds.reduce((s, p) => s + (p.pointsTotal || 0), 0);
-    const exactos     = preds.filter(p => p.pointsBase === 10).length;
-    const ganadores   = preds.filter(p => p.pointsBase >= 3).length;
+    const exactos     = preds.filter(p => p.pointsBase === 3).length;
+    const ganadores   = preds.filter(p => p.pointsBase > 0).length;
     const bonusTotal  = preds.reduce((s, p) => s + (p.pointsBonus || 0), 0);
     const partidos    = preds.length;
     const winRate     = partidos > 0 ? Math.round((ganadores / partidos) * 100) : 0;

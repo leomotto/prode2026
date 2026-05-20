@@ -127,7 +127,11 @@
           <div class="fc-code" id="res-code-a">LOC</div>
           <div class="fc-flag-sm" id="res-flag-a"></div>
           <div class="fc-name" id="res-name-a">Local</div>
-          <input class="result-input" id="res-a" type="number" min="0" max="20" value="0" style="margin-top:.75rem">
+          <div class="stepper-controls" style="margin-top:.75rem">
+            <button class="stepper-btn" onclick="adjustResultScore('a',-1)">−</button>
+            <div class="stepper-val" id="res-a">0</div>
+            <button class="stepper-btn" onclick="adjustResultScore('a',1)">+</button>
+          </div>
         </div>
         <div class="fc-vs-block">
           <div class="fc-vs" style="font-size:1.2rem">—</div>
@@ -136,7 +140,11 @@
           <div class="fc-code" id="res-code-b">VIS</div>
           <div class="fc-flag-sm" id="res-flag-b"></div>
           <div class="fc-name" id="res-name-b">Visitante</div>
-          <input class="result-input" id="res-b" type="number" min="0" max="20" value="0" style="margin-top:.75rem">
+          <div class="stepper-controls" style="margin-top:.75rem">
+            <button class="stepper-btn" onclick="adjustResultScore('b',-1)">−</button>
+            <div class="stepper-val" id="res-b">0</div>
+            <button class="stepper-btn" onclick="adjustResultScore('b',1)">+</button>
+          </div>
         </div>
       </div>
 
@@ -196,7 +204,7 @@
   </div>
 </div>
 
-<script src="/js/api.js?v=1.4.4"></script>
+<script src="/js/api.js?v=1.4.5"></script>
 <script>
 Auth.require();
 const user = Auth.getUser();
@@ -212,6 +220,14 @@ let allAdminMatches = [], allAdminUsers = [], allAdminGroups = [], adminFilter =
 
 const STATUS_LABEL = { UPCOMING:'Próximo', LIVE:'EN VIVO', FINISHED:'Finalizado' };
 const STATUS_BADGE = { UPCOMING:'badge-upcoming', LIVE:'badge-live', FINISHED:'badge-finished' };
+const PHASE_LABEL = { GRUPOS:'Fase de Grupos', DIECISEISAVOS:'1/32 de Final', OCTAVOS:'Octavos', CUARTOS:'Cuartos de Final', SEMIFINAL:'Semifinal', TERCER_PUESTO:'3er Puesto', FINAL:'Final' };
+
+let resultScoreA = 0, resultScoreB = 0;
+
+function adjustResultScore(side, delta) {
+  if (side === 'a') { resultScoreA = Math.max(0, resultScoreA + delta); document.getElementById('res-a').textContent = resultScoreA; }
+  else              { resultScoreB = Math.max(0, resultScoreB + delta); document.getElementById('res-b').textContent = resultScoreB; }
+}
 
 async function loadAdminData() {
   try {
@@ -272,26 +288,50 @@ function renderAdminMatches(customMatches = null) {
   const filtered = customMatches ? customMatches : (adminFilter ? allAdminMatches.filter(m => m.status === adminFilter) : allAdminMatches);
   const el = document.getElementById('admin-matches');
   if (!filtered.length) { el.innerHTML = '<div class="empty-state"><p>Sin partidos</p></div>'; return; }
-  el.innerHTML = filtered.sort((a,b) => new Date(a.date)-new Date(b.date)).map(m => `
-    <div class="admin-row">
-      <div class="admin-row-left">
-        <div class="admin-row-teams">${teamCode(m.teamAFlag)} ${m.teamAName} <span style="color:var(--text-muted)">vs</span> ${m.teamBName} ${teamCode(m.teamBFlag)}</div>
-        <div class="admin-row-date">🕐 ${Fmt.datetime(m.date)} · 📍 ${m.city}</div>
+  el.innerHTML = '<div class="matches-grid">' + filtered.sort((a,b) => new Date(a.date)-new Date(b.date)).map(m => `
+    <div class="fixture-card ${m.argentina?'argentina':''} ${m.featured?'featured':''} ${m.status==='LIVE'?'live-match':''}">
+      <div class="fc-head">
+        <div class="fc-badges">
+          <span class="badge badge-phase">${PHASE_LABEL[m.phase]||m.phase}</span>
+          ${m.groupName ? `<span class="badge badge-group">Grupo ${m.groupName}</span>` : ''}
+          ${m.featured  ? '<span class="badge badge-featured">Destacado</span>' : ''}
+          <span class="badge ${STATUS_BADGE[m.status]}">${STATUS_LABEL[m.status]}</span>
+        </div>
+        <div>
+          <button onclick="toggleFeatured('${m.id}', ${!m.featured})" class="btn btn-secondary btn-sm" style="padding:.2rem .4rem" title="Destacar">
+            ${m.featured ? '⭐' : '☆'}
+          </button>
+        </div>
       </div>
-      <div class="admin-row-actions">
-        ${m.resultA !== null ? `<span class="badge badge-featured">${m.resultA}–${m.resultB}</span>` : ''}
-        <span class="badge ${STATUS_BADGE[m.status]}">${STATUS_LABEL[m.status]}</span>
+      <div class="fc-body">
+        <div class="fc-team-home">
+          <div class="fc-code">${teamCode(m.teamAFlag)}</div>
+          <div class="fc-flag-sm">${m.teamAFlag}</div>
+          <div class="fc-name">${m.teamAName}</div>
+        </div>
+        <div class="fc-vs-block">
+          ${(m.status === 'FINISHED' || m.status === 'LIVE') && m.resultA !== null
+            ? `<div class="fc-score-disp">${m.resultA} - ${m.resultB}</div>`
+            : m.status === 'LIVE'
+              ? `<div style="font-size:.75rem;font-weight:700;color:var(--red)">🔴 EN VIVO</div>`
+              : `<div class="fc-vs">vs</div><div class="fc-time-disp">${Fmt.time(m.date)}</div>`}
+          <div style="font-size:.68rem;color:var(--text-muted)">${Fmt.date(m.date)}</div>
+        </div>
+        <div class="fc-team-away">
+          <div class="fc-code">${teamCode(m.teamBFlag)}</div>
+          <div class="fc-flag-sm">${m.teamBFlag}</div>
+          <div class="fc-name">${m.teamBName}</div>
+        </div>
+      </div>
+      <div class="fc-foot" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;border-top:1px dashed var(--border);padding-top:.75rem;margin-top:.75rem">
         <select class="status-select" onchange="changeStatus('${m.id}', this.value)">
           <option value="UPCOMING" ${m.status==='UPCOMING'?'selected':''}>Próximo</option>
           <option value="LIVE"     ${m.status==='LIVE'?'selected':''}>En Vivo</option>
           <option value="FINISHED" ${m.status==='FINISHED'?'selected':''}>Finalizado</option>
         </select>
-        <button onclick="toggleFeatured('${m.id}', ${!m.featured})" class="btn btn-secondary btn-sm" title="${m.featured?'Quitar destacado':'Destacar'}">
-          ${m.featured ? '⭐' : '☆'}
-        </button>
         <button onclick="openResult('${m.id}')" class="btn btn-primary btn-sm">Resultado</button>
       </div>
-    </div>`).join('');
+    </div>`).join('') + '</div>';
 }
 
 function renderAdminUsers(users) {
@@ -497,8 +537,12 @@ function openResult(matchId) {
   if(document.getElementById('res-flag-b')) { document.getElementById('res-flag-b').textContent = m.teamBFlag; renderEmojis(document.getElementById('res-flag-b')); }
   document.getElementById('res-name-a').textContent = m.teamAName;
   document.getElementById('res-name-b').textContent = m.teamBName;
-  document.getElementById('res-a').value = m.resultA ?? 0;
-  document.getElementById('res-b').value = m.resultB ?? 0;
+  
+  resultScoreA = m.resultA ?? 0;
+  resultScoreB = m.resultB ?? 0;
+  document.getElementById('res-a').textContent = resultScoreA;
+  document.getElementById('res-b').textContent = resultScoreB;
+  
   openModal('modal-result');
 }
 
@@ -518,8 +562,8 @@ async function resetMatch() {
 async function saveResult() {
   const id = document.getElementById('result-match-id').value;
   const body = {
-    resultA: parseInt(document.getElementById('res-a').value)||0,
-    resultB: parseInt(document.getElementById('res-b').value)||0,
+    resultA: resultScoreA,
+    resultB: resultScoreB,
     realFirstScorer: null,
     realMvp: null,
     realCardsCount: null,
