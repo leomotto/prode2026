@@ -103,7 +103,11 @@ const Auth = {
   },
   isLogged() { return !!localStorage.getItem('prode_token'); },
   isAdmin()  { return this.getUser()?.isAdmin === true; },
-  require()  { if (!this.isLogged() || !this.getUser()) { this.clear(); window.location.href = '/login'; return false; } return true; },
+  require()  {
+    if (!this.isLogged()) { this.clear(); window.location.href = '/login'; return false; }
+    // Token exists — si no hay user en localStorage, el fetch de api.auth.me() lo recuperará
+    return true;
+  },
 };
 
 /* ── TOAST ───────────────────────────────────────────────── */
@@ -393,7 +397,7 @@ if (window.location.pathname !== '/login' && Auth.isLogged()) {
 
 // ── VERSION FOOTER & TURNSTILE CENTERING ─────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  const version = 'v1.4.7';
+  const version = 'v1.4.8';
   
   // 1. Center Turnstile containers programmatically
   const tsContainers = document.querySelectorAll('#ts-login, #ts-register');

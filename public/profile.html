@@ -139,38 +139,65 @@
   </div>
 </div>
 
-<script src="/js/api.js?v=1.4.7"></script>
+<script src="/js/api.js?v=1.4.8"></script>
 <script>
 Auth.require();
 let user = Auth.getUser();
 
-// Populate nav & form from localStorage immediately (fast)
+// Populate nav & form with user data
 function applyUserToUI(u) {
   if (!u) return;
-  const nav = document.getElementById('nav-avatar');
-  if (nav) nav.textContent = u.avatar || '⚽';
-  const navName = document.getElementById('nav-username');
-  if (navName) navName.textContent = (u.displayName || '').split(' ')[0];
+  // Nav
+  const navAv = document.getElementById('nav-avatar'); if (navAv) navAv.textContent = u.avatar || '⚽';
+  const navNm = document.getElementById('nav-username'); if (navNm) navNm.textContent = (u.displayName || u.email || '').split(' ')[0];
   if (u.isAdmin) {
-    const a = document.getElementById('nav-admin'); if (a) a.style.display='';
-    const m = document.getElementById('mobile-nav-admin'); if (m) m.style.display='';
+    const a = document.getElementById('nav-admin'); if(a) a.style.display='';
+    const m = document.getElementById('mobile-nav-admin'); if(m) m.style.display='';
   }
-  document.getElementById('edit-name').value = u.displayName || '';
-  document.getElementById('edit-avatar-input').value = u.avatar || '';
-  document.getElementById('avatar-preview').textContent = u.avatar || '⚽';
-  document.getElementById('profile-avatar-display').textContent = u.avatar || '⚽';
-  document.getElementById('profile-name-display').textContent = u.displayName || u.email || 'Usuario';
-  document.getElementById('profile-email-display').textContent = u.email || '';
-  if (!u.googleId) document.getElementById('password-section').style.display = '';
+  // Profile card
+  const bigAv = document.getElementById('profile-avatar-display');
+  if (bigAv) bigAv.textContent = u.avatar || '⚽';
+  const nameEl = document.getElementById('profile-name-display');
+  if (nameEl) nameEl.textContent = u.displayName || u.email?.split('@')[0] || 'Usuario';
+  const emailEl = document.getElementById('profile-email-display');
+  if (emailEl) emailEl.textContent = u.email || '';
+  // Form
+  const editName = document.getElementById('edit-name');
+  if (editName) editName.value = u.displayName || '';
+  const editAv = document.getElementById('edit-avatar-input');
+  if (editAv) editAv.value = u.avatar || '';
+  const prevAv = document.getElementById('avatar-preview');
+  if (prevAv) prevAv.textContent = u.avatar || '⚽';
+  // Mostrar campo password solo si NO es usuario Google
+  const pwSection = document.getElementById('password-section');
+  if (pwSection && !u.googleId) pwSection.style.display = '';
 }
-applyUserToUI(user);
 
-// Then refresh from server to get up-to-date data
-api.auth.me().then(fresh => {
-  Auth.save(localStorage.getItem('prode_token'), fresh); // update localStorage
-  user = fresh;
-  applyUserToUI(fresh);
-}).catch(() => { /* usar datos del localStorage ya aplicados */ });
+// Aplicar datos de localStorage inmediatamente (sin esperar)
+if (user) applyUserToUI(user);
+
+// Siempre refrescar desde el servidor para tener datos actualizados
+api.auth.me()
+  .then(fresh => {
+    // Guardar en localStorage
+    localStorage.setItem('prode_user', JSON.stringify(fresh));
+    user = fresh;
+    applyUserToUI(fresh);
+  })
+  .catch(err => {
+    // Token vencido u otro error de autenticacion
+    if (err && err.status === 401) {
+      // Sesion expirada - forzar re-login
+      Auth.clear();
+      window.location.href = '/login';
+      return;
+    }
+    // Otro error (red, etc) - si ya tenemos datos de localStorage los usamos
+    if (!user) {
+      const nameEl = document.getElementById('profile-name-display');
+      if (nameEl) nameEl.textContent = 'Error al cargar';
+    }
+  });
 
 document.getElementById('btn-theme').textContent = Theme.isDark() ? '☀️' : '🌙';
 
