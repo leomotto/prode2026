@@ -19,11 +19,13 @@
 .profile-big-avatar{font-size:5rem;line-height:1;margin-bottom:.75rem}
 .profile-display-name{font-size:1.3rem;font-weight:800;color:var(--navy)}
 .profile-email{font-size:.85rem;color:var(--text-dim);margin-bottom:1rem}
-.stat-bar{display:grid;grid-template-columns:repeat(5, 1fr);gap:.5rem;margin-top:1rem}
-@media(max-width:600px){.stat-bar{grid-template-columns:repeat(3, 1fr)}}
-.stat-bar-item{background:var(--surface-2);border-radius:var(--radius);padding:.6rem;text-align:center;border:1px solid var(--border)}
-.stat-bar-val{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:var(--navy)}
-.stat-bar-label{font-size:.7rem;color:var(--text-dim)}
+.stat-bar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.5rem;margin-top:1rem;width:100%;min-width:0}
+@media(max-width:900px){.stat-bar{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@media(max-width:520px){.stat-bar{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:360px){.stat-bar{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stat-bar-item{background:var(--surface-2);border-radius:var(--radius);padding:.5rem .35rem;text-align:center;border:1px solid var(--border);min-width:0}
+.stat-bar-val{font-family:'Bebas Neue',sans-serif;font-size:1.35rem;color:var(--navy);line-height:1.1}
+.stat-bar-label{font-size:.65rem;color:var(--text-dim);line-height:1.2;word-break:break-word}
 [data-theme="dark"] .profile-display-name{color:#93c5fd}
 [data-theme="dark"] .stat-bar-val{color:#93c5fd}
 [data-theme="dark"] .stat-bar-item{background:var(--surface-2);border-color:rgba(255,255,255,.08)}
