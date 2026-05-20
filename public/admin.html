@@ -250,7 +250,14 @@ async function loadAdminData() {
     renderAdminUsers(users);
     renderAdminGroups(groups);
     renderAdminHelp(tickets);
-  } catch (err) { Toast.error('Error cargando data', err.message); }
+  } catch (err) {
+    Toast.error('Error cargando data', err.message);
+    const errHtml = '<div class="empty-state"><p>Error al cargar. Recargá la página.</p></div>';
+    ['admin-matches', 'admin-users', 'admin-groups', 'admin-help'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = errHtml;
+    });
+  }
 }
 
 function switchAdminTab(tabId, btn) {
@@ -607,7 +614,7 @@ async function saveResult() {
 }
 
 async function resetAllMatches() {
-  if (!confirm('⚠️ ¿Estás COMPLETAMENTE seguro de que querés resetear TODOS los partidos?\\nEsto borrará todos los resultados reales (0-0) y pondrá los partidos en estado PRÓXIMO.\\n\\nLos pronósticos de los usuarios se mantendrán, pero sus puntos se limpiarán para que puedan recalcularse luego.')) return;
+  if (!confirm('⚠️ ¿Estás COMPLETAMENTE seguro de que querés resetear TODOS los partidos?\nEsto borrará todos los resultados reales (0-0) y pondrá los partidos en estado PRÓXIMO.\n\nLos pronósticos de los usuarios se mantendrán, pero sus puntos se limpiarán para que puedan recalcularse luego.')) return;
   
   try {
     const res = await api.admin.resetAllMatches();
