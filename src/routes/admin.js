@@ -34,14 +34,12 @@ async function adminRoutes(fastify) {
       data: updateData,
     });
 
-    // Si pasa a LIVE o FINISHED → bloquear predicciones
     if (status === 'LIVE' || status === 'FINISHED') {
       await fastify.db.prediction.updateMany({
         where: { matchId: request.params.id },
         data: { locked: true },
       });
     } else if (status === 'UPCOMING') {
-      // Si vuelve a UPCOMING → desbloquear predicciones y resetear puntos calculados
       await fastify.db.prediction.updateMany({
         where: { matchId: request.params.id },
         data: {
@@ -62,19 +60,18 @@ async function adminRoutes(fastify) {
     const current = await fastify.db.match.findUnique({ where: { id } });
     if (!current) return reply.status(404).send({ error: 'Partido no encontrado' });
 
-    // Si la fecha ya pasó o pasa pronto, la movemos a mañana para que el cron auto-live no lo vuelva a bloquear
     let newDate = current.date;
     if (newDate <= new Date(Date.now() + 2 * 60 * 60 * 1000)) {
       newDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
     }
-    
+
     const match = await fastify.db.match.update({
       where: { id },
-      data: { 
-        resultA: null, 
-        resultB: null, 
+      data: {
+        resultA: null,
+        resultB: null,
         status: 'UPCOMING',
-        date: newDate 
+        date: newDate
       },
     });
 
@@ -101,6 +98,13 @@ async function adminRoutes(fastify) {
     });
   });
 
+  // POST /api/admin/advance — recalcular y propagar clasificados a todas las fases
+  fastify.post('/advance', { preHandler: fastify.adminOnly }, async () => {
+    const { runFullAdvancement } = require('../services/AdvancementService');
+    const result = await runFullAdvancement(fastify.db);
+    return { success: true, ...result };
+  });
+
   // POST /api/admin/matches/:id/result — cargar resultado y calcular puntos
   fastify.post('/matches/:id/result', {
     preHandler: fastify.adminOnly,
@@ -122,7 +126,6 @@ async function adminRoutes(fastify) {
     const { id } = request.params;
     const { resultA, resultB, realFirstScorer, realCardsCount, realCornersCount, realMvp } = request.body;
 
-    // Actualizar partido a FINISHED con resultado
     const match = await fastify.db.match.update({
       where: { id },
       data: { resultA, resultB, status: 'FINISHED' },
@@ -133,7 +136,18 @@ async function adminRoutes(fastify) {
       realFirstScorer, realCardsCount, realCornersCount, realMvp
     });
 
-    // Enviar emails de resultado (async, sin bloquear la respuesta)
+    // Auto-advance bracket after every result
+    try {
+      const { advanceGroupsToR32, advanceKnockoutMatch } = require('../services/AdvancementService');
+      if (match.phase === 'GRUPOS') {
+        await advanceGroupsToR32(fastify.db);
+      } else {
+        await advanceKnockoutMatch(fastify.db, id);
+      }
+    } catch (advErr) {
+      fastify.log.warn('Advancement error (non-fatal): ' + advErr.message);
+    }
+
     const updatedPreds = await fastify.db.prediction.findMany({
       where: { matchId: id },
       select: { userId: true, scoreA: true, scoreB: true, pointsTotal: true },
@@ -148,21 +162,18 @@ async function adminRoutes(fastify) {
     );
 
     return { updated: updatedPreds.length, message: 'Resultados procesados correctamente' };
-
   });
 
   // POST /api/admin/matches/reset-all — limpiar TODOS los partidos y resultados
   fastify.post('/matches/reset-all', { preHandler: fastify.adminOnly }, async (request, reply) => {
-    // Todos a estado UPCOMING, sin resultados
     await fastify.db.match.updateMany({
-      data: { 
-        resultA: null, 
-        resultB: null, 
+      data: {
+        resultA: null,
+        resultB: null,
         status: 'UPCOMING'
       },
     });
 
-    // Desbloquear y limpiar puntos de TODAS las predicciones
     await fastify.db.prediction.updateMany({
       data: {
         locked: false,
