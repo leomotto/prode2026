@@ -27,6 +27,7 @@
 [data-theme="dark"] .st-pts{color:#93c5fd}
 .st-qual-1{background:rgba(34,197,94,.08);border-left:3px solid #22c55e}
 .st-qual-2{background:rgba(59,130,246,.06);border-left:3px solid #3b82f6}
+.st-qual-3{background:rgba(234,179,8,.08);border-left:3px solid #eab308}
 .st-empty{padding:3rem;text-align:center;color:var(--text-dim);font-size:.9rem}
 .phase-tabs{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.5rem}
 .phase-tab{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:.4rem .9rem;font-size:.8rem;font-weight:600;cursor:pointer;color:var(--text-dim);transition:var(--transition)}
@@ -91,6 +92,7 @@
     <div class="legend">
       <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div><span>Clasificado directo (1°)</span></div>
       <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div><span>Clasificado (2°)</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#eab308"></div><span>Mejor tercero (8 clasifican)</span></div>
     </div>
 
     <div id="standings-container"><div class="spinner" style="margin:3rem auto"></div></div>
@@ -120,6 +122,18 @@ function setPhase(phase, btn) {
   loadStandings(phase);
 }
 
+function getBestThirds(groups) {
+  const thirds = groups
+    .filter(g => g.teams.length >= 3 && g.teams[2].pj > 0)
+    .map(g => ({ ...g.teams[2], group: g.group }));
+
+  thirds.sort((a, b) =>
+    b.pts - a.pts || b.gd - a.gd || b.gf - a.gf || a.name.localeCompare(b.name)
+  );
+
+  return new Set(thirds.slice(0, 8).map(t => t.group + '|' + t.name));
+}
+
 async function loadStandings(phase = 'GRUPOS') {
   const el = document.getElementById('standings-container');
   el.innerHTML = '<div class="spinner" style="margin:3rem auto"></div>';
@@ -133,14 +147,15 @@ async function loadStandings(phase = 'GRUPOS') {
       </div>`;
       return;
     }
-    el.innerHTML = '<div class="st-grid">' + groups.map(g => renderGroup(g)).join('') + '</div>';
+    const bestThirds = phase === 'GRUPOS' ? getBestThirds(groups) : new Set();
+    el.innerHTML = '<div class="st-grid">' + groups.map(g => renderGroup(g, bestThirds)).join('') + '</div>';
     renderEmojis(el);
   } catch(e) {
     el.innerHTML = `<div class="st-empty">Error cargando posiciones: ${e.message}</div>`;
   }
 }
 
-function renderGroup({ group, teams }) {
+function renderGroup({ group, teams }, bestThirds = new Set()) {
   return `
     <div class="st-group">
       <div class="st-group-header">⚽ ${currentPhase === 'GRUPOS' ? 'Grupo ' + group : group}</div>
@@ -159,8 +174,13 @@ function renderGroup({ group, teams }) {
           </tr>
         </thead>
         <tbody>
-          ${teams.map((t, i) => `
-            <tr class="${i===0?'st-qual-1':i===1?'st-qual-2':''}">
+          ${teams.map((t, i) => {
+            let rowClass = '';
+            if (i === 0) rowClass = 'st-qual-1';
+            else if (i === 1) rowClass = 'st-qual-2';
+            else if (i === 2 && bestThirds.has(group + '|' + t.name)) rowClass = 'st-qual-3';
+            return `
+            <tr class="${rowClass}">
               <td>
                 <div class="st-team-cell">
                   <span class="st-flag">${t.flag}</span>
@@ -175,8 +195,8 @@ function renderGroup({ group, teams }) {
               <td>${t.gc}</td>
               <td style="color:${t.gd>0?'var(--green)':t.gd<0?'var(--red)':'var(--text-dim)'}">${t.gd>0?'+':''}${t.gd}</td>
               <td class="st-pts">${t.pts}</td>
-            </tr>
-          `).join('')}
+            </tr>`;
+          }).join('')}
         </tbody>
       </table>
     </div>`;
