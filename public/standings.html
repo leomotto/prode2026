@@ -36,6 +36,21 @@
 .legend{display:flex;gap:1rem;flex-wrap:wrap;font-size:.72rem;color:var(--text-dim);margin-top:.5rem;padding:.5rem 0}
 .legend-item{display:flex;align-items:center;gap:.3rem}
 .legend-dot{width:10px;height:10px;border-radius:50%}
+.ko-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem;margin-top:1.25rem}
+.ko-match{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow)}
+.ko-match-header{background:linear-gradient(135deg,var(--navy) 0%,#1a3a6e 100%);color:#fff;padding:.5rem .9rem;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center}
+[data-theme="dark"] .ko-match-header{background:linear-gradient(135deg,#1e2a4a 0%,#0f1729 100%)}
+.ko-match-body{padding:.75rem 1rem}
+.ko-team{display:flex;align-items:center;gap:.6rem;padding:.35rem 0}
+.ko-team+.ko-team{border-top:1px solid var(--border)}
+.ko-team-flag{font-size:1.3rem;line-height:1;flex-shrink:0;width:1.6rem;text-align:center}
+.ko-team-name{font-weight:600;font-size:.85rem;flex:1;color:var(--text)}
+.ko-team-score{font-size:1.1rem;font-weight:800;color:var(--navy);min-width:1.4rem;text-align:center}
+[data-theme="dark"] .ko-team-score{color:#93c5fd}
+.ko-team-name.tbd{color:var(--text-dim);font-style:italic;font-weight:400}
+.ko-winner .ko-team-name{color:#22c55e}
+.ko-winner .ko-team-score{color:#22c55e}
+.ko-match-meta{font-size:.7rem;color:var(--text-dim);padding:.4rem 1rem .6rem;border-top:1px solid var(--border)}
 </style>
 </head>
 <body>
@@ -86,10 +101,16 @@
     </div>
 
     <div class="phase-tabs" id="phase-tabs">
-      <button class="phase-tab active" onclick="setPhase('GRUPOS',this)">📅 Fase de Grupos</button>
+      <button class="phase-tab active" onclick="setPhase('GRUPOS',this)">📅 Grupos</button>
+      <button class="phase-tab" onclick="setPhase('DIECISEISAVOS',this)">32avos</button>
+      <button class="phase-tab" onclick="setPhase('OCTAVOS',this)">16avos</button>
+      <button class="phase-tab" onclick="setPhase('CUARTOS',this)">Cuartos</button>
+      <button class="phase-tab" onclick="setPhase('SEMIFINAL',this)">Semis</button>
+      <button class="phase-tab" onclick="setPhase('TERCER_PUESTO',this)">3° Puesto</button>
+      <button class="phase-tab" onclick="setPhase('FINAL',this)">🏆 Final</button>
     </div>
 
-    <div class="legend">
+    <div class="legend" id="legend-groups">
       <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div><span>Clasificado directo (1°)</span></div>
       <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div><span>Clasificado (2°)</span></div>
       <div class="legend-item"><div class="legend-dot" style="background:#eab308"></div><span>Mejor tercero (8 clasifican)</span></div>
@@ -115,50 +136,100 @@ document.getElementById('btn-theme').textContent = Theme.isDark() ? '☀️' : '
 
 let currentPhase = 'GRUPOS';
 
+const PHASE_LABELS = {
+  GRUPOS: 'Fase de Grupos',
+  DIECISEISAVOS: 'Ronda de 32',
+  OCTAVOS: 'Ronda de 16',
+  CUARTOS: 'Cuartos de Final',
+  SEMIFINAL: 'Semifinales',
+  TERCER_PUESTO: 'Tercer Puesto',
+  FINAL: 'Final',
+};
+
 function setPhase(phase, btn) {
   document.querySelectorAll('.phase-tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   currentPhase = phase;
-  loadStandings(phase);
+  document.getElementById('legend-groups').style.display = phase === 'GRUPOS' ? '' : 'none';
+  loadPhase(phase);
 }
 
 function getBestThirds(groups) {
   const thirds = groups
     .filter(g => g.teams.length >= 3 && g.teams[2].pj > 0)
     .map(g => ({ ...g.teams[2], group: g.group }));
-
-  thirds.sort((a, b) =>
-    b.pts - a.pts || b.gd - a.gd || b.gf - a.gf || a.name.localeCompare(b.name)
-  );
-
+  thirds.sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf || a.name.localeCompare(b.name));
   return new Set(thirds.slice(0, 8).map(t => t.group + '|' + t.name));
 }
 
-async function loadStandings(phase = 'GRUPOS') {
+async function loadPhase(phase) {
   const el = document.getElementById('standings-container');
   el.innerHTML = '<div class="spinner" style="margin:3rem auto"></div>';
   try {
-    const groups = await api.get(`/standings?phase=${phase}`);
-    if (!groups.length) {
-      el.innerHTML = `<div class="st-empty">
-        <div style="font-size:3rem;margin-bottom:1rem">⏳</div>
-        <div style="font-weight:700;margin-bottom:.5rem">Sin resultados aún</div>
-        <div>La tabla se actualizará cuando finalicen los primeros partidos.</div>
-      </div>`;
-      return;
+    if (phase === 'GRUPOS') {
+      const groups = await api.get('/standings?phase=GRUPOS');
+      if (!groups.length) { showEmpty(el); return; }
+      const bestThirds = getBestThirds(groups);
+      el.innerHTML = '<div class="st-grid">' + groups.map(g => renderGroup(g, bestThirds)).join('') + '</div>';
+    } else {
+      const matches = await api.get(`/matches?phase=${phase}`);
+      if (!matches.length) { showEmpty(el); return; }
+      el.innerHTML = '<div class="ko-grid">' + matches.map(renderKoMatch).join('') + '</div>';
     }
-    const bestThirds = phase === 'GRUPOS' ? getBestThirds(groups) : new Set();
-    el.innerHTML = '<div class="st-grid">' + groups.map(g => renderGroup(g, bestThirds)).join('') + '</div>';
     renderEmojis(el);
   } catch(e) {
     el.innerHTML = `<div class="st-empty">Error cargando posiciones: ${e.message}</div>`;
   }
 }
 
+function showEmpty(el) {
+  el.innerHTML = `<div class="st-empty">
+    <div style="font-size:3rem;margin-bottom:1rem">⏳</div>
+    <div style="font-weight:700;margin-bottom:.5rem">Sin datos aún</div>
+    <div>Esta fase se mostrará una vez que avancen los equipos clasificados.</div>
+  </div>`;
+}
+
+function isTbd(name) {
+  return !name || name.startsWith('Clasificado') || name.startsWith('Ganador') || name.startsWith('Perdedor');
+}
+
+function renderKoMatch(m) {
+  const finished = m.status === 'FINISHED';
+  const live = m.status === 'LIVE';
+  const tbdA = isTbd(m.teamAName);
+  const tbdB = isTbd(m.teamBName);
+  const winA = finished && m.resultA > m.resultB;
+  const winB = finished && m.resultB > m.resultA;
+  const date = new Date(m.date);
+  const dateStr = date.toLocaleDateString('es-AR', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+  const statusLabel = finished ? 'Finalizado' : live ? '🔴 En vivo' : dateStr;
+
+  return `<div class="ko-match">
+    <div class="ko-match-header">
+      <span>${m.id}</span>
+      <span style="opacity:.75;font-size:.65rem">${statusLabel}</span>
+    </div>
+    <div class="ko-match-body">
+      <div class="ko-team${winA ? ' ko-winner' : ''}">
+        <span class="ko-team-flag">${m.teamAFlag || '🏳️'}</span>
+        <span class="ko-team-name${tbdA ? ' tbd' : ''}">${tbdA ? 'Por definir' : m.teamAName}</span>
+        <span class="ko-team-score">${finished ? m.resultA : ''}</span>
+      </div>
+      <div class="ko-team${winB ? ' ko-winner' : ''}">
+        <span class="ko-team-flag">${m.teamBFlag || '🏳️'}</span>
+        <span class="ko-team-name${tbdB ? ' tbd' : ''}">${tbdB ? 'Por definir' : m.teamBName}</span>
+        <span class="ko-team-score">${finished ? m.resultB : ''}</span>
+      </div>
+    </div>
+    <div class="ko-match-meta">📍 ${m.city || m.venue}</div>
+  </div>`;
+}
+
 function renderGroup({ group, teams }, bestThirds = new Set()) {
   return `
     <div class="st-group">
-      <div class="st-group-header">⚽ ${currentPhase === 'GRUPOS' ? 'Grupo ' + group : group}</div>
+      <div class="st-group-header">⚽ Grupo ${group}</div>
       <table class="st-table">
         <thead>
           <tr>
@@ -202,7 +273,7 @@ function renderGroup({ group, teams }, bestThirds = new Set()) {
     </div>`;
 }
 
-loadStandings('GRUPOS');
+loadPhase('GRUPOS');
 </script>
 </body>
 </html>
