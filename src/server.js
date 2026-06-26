@@ -238,7 +238,7 @@ async function bootstrap() {
     } catch (e) {
       fastify.log.warn('Auto-sync error: ' + e.message);
     }
-  }, 10 * 60_000); // cada 10 minutos (plan Free: 100 req/día; solo corre con partidos LIVE)
+  }, 15 * 60_000); // cada 15 minutos (3 checks por tiempo; plan Free: 100 req/día; solo corre con partidos LIVE)
 
 
 }
