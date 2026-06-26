@@ -71,11 +71,11 @@ model Match {
   id          String      @id // e.g. "ARG-ALG-GJ1"
   phase       MatchPhase
   groupName   String?     // "A"..."L" o null para eliminatorias
-  teamAName   String
-  teamAFlag   String
+  teamAName   String?
+  teamAFlag   String?
   teamACode   String
-  teamBName   String
-  teamBFlag   String
+  teamBName   String?
+  teamBFlag   String?
   teamBCode   String
   date        DateTime
   venue       String

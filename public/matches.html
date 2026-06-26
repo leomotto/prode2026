@@ -171,7 +171,7 @@ function renderMatches() {
   else if (['UPCOMING','LIVE','FINISHED'].includes(currentFilter)) filtered = allMatches.filter(m => m.status === currentFilter);
   else if (currentFilter) filtered = allMatches.filter(m => m.phase === currentFilter);
 
-  if (q) filtered = filtered.filter(m => m.teamAName.toLowerCase().includes(q) || m.teamBName.toLowerCase().includes(q));
+  if (q) filtered = filtered.filter(m => (m.teamAName||'').toLowerCase().includes(q) || (m.teamBName||'').toLowerCase().includes(q));
 
   const el = document.getElementById('matches-list');
   if (!filtered.length) { el.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>No hay partidos en esta categoría</p></div>'; return; }
@@ -234,8 +234,8 @@ function renderCard(m) {
     <div class="fc-body">
       <div class="fc-team-home">
         <div class="fc-code">${codeA}</div>
-        <div class="fc-flag-sm">${m.teamAFlag}</div>
-        <div class="fc-name">${m.teamAName}</div>
+        <div class="fc-flag-sm">${m.teamAFlag || ''}</div>
+        <div class="fc-name">${m.teamAName || 'Por definir'}</div>
       </div>
       <div class="fc-vs-block">
         ${hasResult
@@ -247,8 +247,8 @@ function renderCard(m) {
       </div>
       <div class="fc-team-away">
         <div class="fc-code">${codeB}</div>
-        <div class="fc-flag-sm">${m.teamBFlag}</div>
-        <div class="fc-name">${m.teamBName}</div>
+        <div class="fc-flag-sm">${m.teamBFlag || ''}</div>
+        <div class="fc-name">${m.teamBName || 'Por definir'}</div>
       </div>
     </div>
 

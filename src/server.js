@@ -184,14 +184,31 @@ async function bootstrap() {
 
       const MatchService = require('./services/MatchService');
 
+      // Mapa ES→EN para matching contra api-football (usa nombres en inglés)
+      const TEAM_EN = {
+        'ALEMANIA':'GERMANY','ARABIA SAUDITA':'SAUDI ARABIA','ARGELIA':'ALGERIA',
+        'BÉLGICA':'BELGIUM','BOSNIA':'BOSNIA','BRASIL':'BRAZIL',
+        'CABO VERDE':'CAPE VERDE','CANADÁ':'CANADA','CHEQUIA':'CZECH REPUBLIC',
+        'COREA DEL SUR':'SOUTH KOREA','COSTA DE MARFIL':'IVORY COAST',
+        'CURAZAO':'CURAÇAO','EGIPTO':'EGYPT','EE.UU.':'USA',
+        'ESCOCIA':'SCOTLAND','ESPAÑA':'SPAIN','FRANCIA':'FRANCE',
+        'HAITÍ':'HAITI','INGLATERRA':'ENGLAND','IRÁN':'IRAN',
+        'JAPÓN':'JAPAN','JORDANIA':'JORDAN','MARRUECOS':'MOROCCO',
+        'MÉXICO':'MEXICO','NORUEGA':'NORWAY','NUEVA ZELANDA':'NEW ZEALAND',
+        'PAÍSES BAJOS':'NETHERLANDS','POLONIA':'POLAND',
+        'R.D. CONGO':'DR CONGO','SUECIA':'SWEDEN','SUIZA':'SWITZERLAND',
+        'SUDÁFRICA':'SOUTH AFRICA','TÚNEZ':'TUNISIA','TURQUÍA':'TÜRKIYE',
+      };
+      const toEN = (name) => TEAM_EN[name.toUpperCase()] || name.toUpperCase();
+
       for (const localMatch of activeMatches) {
-        // Find matching fixture in API response (rough matching by team code/name)
-        // Note: FIFA codes might not exactly match API's 3-letter codes, so we check substring of names or codes
+        const nameA = toEN(localMatch.teamAName || '');
+        const nameB = toEN(localMatch.teamBName || '');
         const apiFixture = data.response.find(f => {
           const home = f.teams.home.name.toUpperCase();
           const away = f.teams.away.name.toUpperCase();
-          return (home.includes(localMatch.teamAName.toUpperCase()) || localMatch.teamAName.toUpperCase().includes(home) || home === localMatch.teamACode) &&
-                 (away.includes(localMatch.teamBName.toUpperCase()) || localMatch.teamBName.toUpperCase().includes(away) || away === localMatch.teamBCode);
+          return (home.includes(nameA) || nameA.includes(home)) &&
+                 (away.includes(nameB) || nameB.includes(away));
         });
 
         if (!apiFixture) continue;
