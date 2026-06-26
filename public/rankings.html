@@ -121,9 +121,9 @@ function renderRanking(ranking, title = '', isGroup = false) {
   if (!isGroup && ranking.length >= 3) {
     const [first, second, third] = ranking;
     podiumEl.innerHTML = `<div class="podium mb-3">
-      <div class="podium-item podium-2"><div class="podium-crown">🥈</div><div class="podium-avatar">${second.avatar}</div><div class="podium-name">${second.displayName}</div><div class="podium-pts">${second.totalPoints}</div></div>
-      <div class="podium-item podium-1"><div class="podium-crown">🥇</div><div class="podium-avatar" style="font-size:2.5rem">${first.avatar}</div><div class="podium-name">${first.displayName}</div><div class="podium-pts" style="font-size:1.6rem">${first.totalPoints}</div></div>
-      <div class="podium-item podium-3"><div class="podium-crown">🥉</div><div class="podium-avatar">${third.avatar}</div><div class="podium-name">${third.displayName}</div><div class="podium-pts">${third.totalPoints}</div></div>
+      <div class="podium-item podium-2"><div class="podium-crown">🥈</div><div class="podium-avatar">${second.avatar}</div><div class="podium-name podium-name-clip">${second.displayName}</div><div class="podium-pts">${second.totalPoints}</div></div>
+      <div class="podium-item podium-1"><div class="podium-crown">🥇</div><div class="podium-avatar podium-avatar-lg">${first.avatar}</div><div class="podium-name podium-name-clip">${first.displayName}</div><div class="podium-pts podium-pts-lg">${first.totalPoints}</div></div>
+      <div class="podium-item podium-3"><div class="podium-crown">🥉</div><div class="podium-avatar">${third.avatar}</div><div class="podium-name podium-name-clip">${third.displayName}</div><div class="podium-pts">${third.totalPoints}</div></div>
     </div>`;
   } else { podiumEl.innerHTML = ''; }
 
