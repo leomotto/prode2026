@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  db_local:
+    image: postgres:16-alpine
+    container_name: prode2026_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: prode2026_local
+      POSTGRES_USER: leo_developer
+      POSTGRES_PASSWORD: dev_password_secure
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_prode_storage:/var/lib/postgresql/data
+    networks:
+      - prode_net
+
+volumes:
+  postgres_prode_storage:
+    driver: local
+
+networks:
+  prode_net:
+    driver: bridge

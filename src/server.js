@@ -161,21 +161,21 @@ async function bootstrap() {
   setInterval(async () => {
     if (!config.API_FOOTBALL_KEY) return;
     try {
-      // 1. Buscar partidos EN VIVO o que deberían haber empezado hoy
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      // 1. Buscar partidos EN VIVO o que deberían haber empezado hoy (en zona horaria Argentina)
+      const dateStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).format(new Date());
+      const todayArg = new Date(`${dateStr}T00:00:00-03:00`);
+      const tomorrowArg = new Date(todayArg.getTime() + 24 * 60 * 60 * 1000);
       const activeMatches = await fastify.db.match.findMany({
         where: {
           OR: [
             { status: 'LIVE' },
-            { date: { gte: today, lte: new Date(today.getTime() + 24 * 60 * 60 * 1000) } }
+            { date: { gte: todayArg, lt: tomorrowArg } }
           ]
         }
       });
       if (!activeMatches.length) return;
 
       // 2. Fetch fixtures from api-football for today
-      const dateStr = today.toISOString().split('T')[0];
       const response = await fetch(`https://v3.football.api-sports.io/fixtures?date=${dateStr}`, {
         headers: {
           'x-rapidapi-host': 'v3.football.api-sports.io',

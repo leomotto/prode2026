@@ -261,7 +261,7 @@ async function loadTickets() {
         </div>
         <div style="font-size:.85rem;color:var(--text);margin-bottom:.75rem">${t.message}</div>
         ${t.adminNote ? `<div style="font-size:.8rem;background:var(--surface-2);padding:.5rem;border-radius:var(--radius);border-left:3px solid var(--blue)"><strong>Respuesta Admin:</strong><br>${t.adminNote.replace(/\n/g, '<br>')}</div>` : ''}
-        <div style="font-size:.7rem;color:var(--text-dim);margin-top:.5rem;text-align:right">${new Date(t.createdAt).toLocaleString('es-AR')}</div>
+        <div style="font-size:.7rem;color:var(--text-dim);margin-top:.5rem;text-align:right">${Fmt.datetime(t.createdAt)}</div>
       </div>
     `).join('');
   } catch(e) {

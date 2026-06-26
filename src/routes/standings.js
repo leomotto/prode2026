@@ -1,6 +1,76 @@
 'use strict';
+const { R32_BRACKET, computeGroupStandings, computeBestThirds } = require('../services/AdvancementService');
 
 async function standingsRoutes(fastify) {
+
+  // GET /api/standings/bracket — bracket proyectado del R32 con nivel de confianza por slot
+  fastify.get('/bracket', async () => {
+    const groupStandings = await computeGroupStandings(fastify.db);
+    const bestThirds = computeBestThirds(groupStandings);
+
+    // Contar partidos totales vs terminados por grupo para determinar completitud
+    const allGroupMatches = await fastify.db.match.findMany({
+      where: { phase: 'GRUPOS' },
+      select: { groupName: true, status: true },
+    });
+
+    const groupCounts = {};
+    for (const m of allGroupMatches) {
+      const g = m.groupName;
+      if (!groupCounts[g]) groupCounts[g] = { total: 0, finished: 0 };
+      groupCounts[g].total++;
+      if (m.status === 'FINISHED') groupCounts[g].finished++;
+    }
+
+    const isGroupComplete = (g) => {
+      const c = groupCounts[g];
+      return c && c.total > 0 && c.total === c.finished;
+    };
+    const allGroupsComplete = Object.values(groupCounts).every(c => c.total === c.finished);
+
+    const resolveTeam = (slot) => {
+      if (slot.type === 'winner') return (groupStandings[slot.group] || [])[0] || null;
+      if (slot.type === 'runner') return (groupStandings[slot.group] || [])[1] || null;
+      if (slot.type === 'third')  return bestThirds[slot.rank - 1] || null;
+      return null;
+    };
+
+    const getConfidence = (slot) => {
+      if (slot.type === 'winner' || slot.type === 'runner') {
+        const c = groupCounts[slot.group];
+        if (!c || c.finished === 0) return 'PENDING';
+        return isGroupComplete(slot.group) ? 'CONFIRMED' : 'TENTATIVE';
+      }
+      if (slot.type === 'third') {
+        if (!bestThirds[slot.rank - 1]) return 'PENDING';
+        return allGroupsComplete ? 'CONFIRMED' : 'TENTATIVE';
+      }
+      return 'PENDING';
+    };
+
+    const slotLabel = (slot) => {
+      if (slot.type === 'winner') return `1° Grupo ${slot.group}`;
+      if (slot.type === 'runner') return `2° Grupo ${slot.group}`;
+      if (slot.type === 'third')  return `Mejor 3° #${slot.rank}`;
+      return 'Por definir';
+    };
+
+    return R32_BRACKET.map(bracket => {
+      const teamA = resolveTeam(bracket.sideA);
+      const teamB = resolveTeam(bracket.sideB);
+      return {
+        id:              bracket.id,
+        slotLabelA:      slotLabel(bracket.sideA),
+        slotLabelB:      slotLabel(bracket.sideB),
+        teamAName:       teamA?.name  || null,
+        teamAFlag:       teamA?.flag  || null,
+        teamBName:       teamB?.name  || null,
+        teamBFlag:       teamB?.flag  || null,
+        teamAConfidence: getConfidence(bracket.sideA),
+        teamBConfidence: getConfidence(bracket.sideB),
+      };
+    });
+  });
 
   // GET /api/standings?phase=GRUPOS — tabla de posiciones de selecciones
   fastify.get('/', async (request) => {

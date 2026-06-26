@@ -51,6 +51,12 @@
 .ko-winner .ko-team-name{color:#22c55e}
 .ko-winner .ko-team-score{color:#22c55e}
 .ko-match-meta{font-size:.7rem;color:var(--text-dim);padding:.4rem 1rem .6rem;border-top:1px solid var(--border)}
+.badge-confirmed{background:rgba(34,197,94,.12);color:#15803d;border:1px solid rgba(34,197,94,.3);font-size:.62rem;font-weight:700;padding:.15rem .45rem;border-radius:9999px;letter-spacing:.03em}
+.badge-tentative{background:rgba(234,179,8,.12);color:#92400e;border:1px solid rgba(234,179,8,.3);font-size:.62rem;font-weight:700;padding:.15rem .45rem;border-radius:9999px;letter-spacing:.03em}
+[data-theme="dark"] .badge-confirmed{color:#86efac;border-color:rgba(34,197,94,.4)}
+[data-theme="dark"] .badge-tentative{color:#fde68a;border-color:rgba(234,179,8,.4)}
+.ko-slot-label{font-size:.65rem;color:var(--text-dim);font-style:italic;line-height:1.2;margin-top:.1rem}
+.bracket-note{background:rgba(234,179,8,.08);border:1px solid rgba(234,179,8,.25);border-radius:var(--radius);padding:.6rem 1rem;font-size:.78rem;color:var(--text-dim);margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
 </style>
 </head>
 <body>
@@ -171,6 +177,17 @@ async function loadPhase(phase) {
       if (!groups.length) { showEmpty(el); return; }
       const bestThirds = getBestThirds(groups);
       el.innerHTML = '<div class="st-grid">' + groups.map(g => renderGroup(g, bestThirds)).join('') + '</div>';
+    } else if (phase === 'DIECISEISAVOS') {
+      const [bracket, matches] = await Promise.all([
+        api.get('/standings/bracket'),
+        api.get('/matches?phase=DIECISEISAVOS'),
+      ]);
+      const matchById = Object.fromEntries(matches.map(m => [m.id, m]));
+      const anyTentative = bracket.some(b => b.teamAConfidence === 'TENTATIVE' || b.teamBConfidence === 'TENTATIVE');
+      const note = anyTentative
+        ? `<div class="bracket-note">⚠️ Las posiciones marcadas como <strong>Tentativo</strong> pueden cambiar según los resultados pendientes de la fase de grupos.</div>`
+        : '';
+      el.innerHTML = note + '<div class="ko-grid">' + bracket.map(b => renderBracketSlot(b, matchById[b.id])).join('') + '</div>';
     } else {
       const matches = await api.get(`/matches?phase=${phase}`);
       if (!matches.length) { showEmpty(el); return; }
@@ -194,6 +211,48 @@ function isTbd(name) {
   return !name || name.startsWith('Clasificado') || name.startsWith('Ganador') || name.startsWith('Perdedor');
 }
 
+function renderBracketSlot(slot, dbMatch) {
+  const finished = dbMatch?.status === 'FINISHED';
+  const live = dbMatch?.status === 'LIVE';
+
+  const winA = finished && dbMatch.resultA > dbMatch.resultB;
+  const winB = finished && dbMatch.resultB > dbMatch.resultA;
+
+  const confBadge = (conf) => {
+    if (conf === 'CONFIRMED') return '<span class="badge-confirmed">✓ Confirmado</span>';
+    if (conf === 'TENTATIVE') return '<span class="badge-tentative">⚡ Tentativo</span>';
+    return '';
+  };
+
+  const renderTeam = (name, flag, conf, slotLabel, isWinner, score) => {
+    const hasTeam = name && !isTbd(name);
+    return `<div class="ko-team${isWinner ? ' ko-winner' : ''}">
+      <span class="ko-team-flag">${flag || '🏳️'}</span>
+      <div style="flex:1;min-width:0">
+        <div class="ko-team-name${hasTeam ? '' : ' tbd'}">${hasTeam ? name : 'Por definir'}</div>
+        <div class="ko-slot-label">${slotLabel}${hasTeam && conf !== 'PENDING' ? ' ' + confBadge(conf) : ''}</div>
+      </div>
+      <span class="ko-team-score">${finished && score !== undefined && score !== null ? score : ''}</span>
+    </div>`;
+  };
+
+  const date = dbMatch ? new Date(dbMatch.date) : null;
+  const dateStr = date ? Fmt.datetime(date) : '';
+  const statusLabel = finished ? 'Finalizado' : live ? '🔴 En vivo' : (dateStr || 'Fecha por confirmar');
+
+  return `<div class="ko-match">
+    <div class="ko-match-header">
+      <span>${slot.id}</span>
+      <span style="opacity:.75;font-size:.65rem">${statusLabel}</span>
+    </div>
+    <div class="ko-match-body">
+      ${renderTeam(slot.teamAName, slot.teamAFlag, slot.teamAConfidence, slot.slotLabelA, winA, dbMatch?.resultA)}
+      ${renderTeam(slot.teamBName, slot.teamBFlag, slot.teamBConfidence, slot.slotLabelB, winB, dbMatch?.resultB)}
+    </div>
+    ${dbMatch ? `<div class="ko-match-meta">📍 ${dbMatch.city || dbMatch.venue || ''}</div>` : ''}
+  </div>`;
+}
+
 function renderKoMatch(m) {
   const finished = m.status === 'FINISHED';
   const live = m.status === 'LIVE';
@@ -202,7 +261,7 @@ function renderKoMatch(m) {
   const winA = finished && m.resultA > m.resultB;
   const winB = finished && m.resultB > m.resultA;
   const date = new Date(m.date);
-  const dateStr = date.toLocaleDateString('es-AR', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+  const dateStr = Fmt.datetime(date);
   const statusLabel = finished ? 'Finalizado' : live ? '🔴 En vivo' : dateStr;
 
   return `<div class="ko-match">

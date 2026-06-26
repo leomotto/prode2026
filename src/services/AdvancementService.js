@@ -176,4 +176,4 @@ async function runFullAdvancement(db) {
   return { ...r32Result, cascadeUpdates: cascadeCount };
 }
 
-module.exports = { advanceGroupsToR32, advanceKnockoutMatch, runFullAdvancement, computeGroupStandings, computeBestThirds };
+module.exports = { R32_BRACKET, advanceGroupsToR32, advanceKnockoutMatch, runFullAdvancement, computeGroupStandings, computeBestThirds };
