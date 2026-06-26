@@ -96,44 +96,52 @@ async function groupRoutes(fastify) {
     return { groupId: group.id, groupName: group.name, code: group.code };
   });
 
-  // GET /api/groups/:id/ranking — ranking dentro del grupo
+  // GET /api/groups/:id/ranking?phase= — ranking dentro del grupo
   fastify.get('/:id/ranking', { preHandler: fastify.authenticate }, async (request, reply) => {
     const { id } = request.params;
+    const { phase } = request.query;
     const userId = request.user.id;
 
-    // Verificar que el usuario es miembro
     const membership = await fastify.db.groupMember.findUnique({
       where: { groupId_userId: { groupId: id, userId } },
     });
     if (!membership) return reply.status(403).send({ error: 'No sos miembro de este grupo' });
 
-    // Obtener todos los miembros con sus puntos
     const members = await fastify.db.groupMember.findMany({
       where: { groupId: id },
-      include: { user: { select: { id: true, displayName: true, avatar: true, email: true } } },
+      include: { user: { select: { id: true, displayName: true, avatar: true } } },
     });
 
     const rankings = await Promise.all(members.map(async m => {
-      const agg = await fastify.db.prediction.aggregate({
-        where: { userId: m.userId, pointsTotal: { not: null } },
-        _sum: { pointsTotal: true },
-        _count: { _all: true },
+      const predWhere = { userId: m.userId, match: { status: 'FINISHED' }, pointsTotal: { not: null } };
+      if (phase) predWhere.match.phase = phase.toUpperCase();
+
+      const predictions = await fastify.db.prediction.findMany({
+        where: predWhere,
+        select: { pointsBase: true, pointsBonus: true, pointsTotal: true },
       });
+
+      const totalPoints = predictions.reduce((s, p) => s + (p.pointsTotal || 0), 0);
+      const exactos     = predictions.filter(p => p.pointsBase === 3).length;
+      const ganadores   = predictions.filter(p => p.pointsBase > 0).length;
+      const bonusTotal  = predictions.reduce((s, p) => s + (p.pointsBonus || 0), 0);
+      const partidos    = predictions.length;
+      const winRate     = partidos > 0 ? Math.round((ganadores / partidos) * 100) : 0;
+
       return {
         userId:      m.user.id,
         displayName: m.user.displayName,
         avatar:      m.user.avatar,
         role:        m.role,
-        totalPoints: agg._sum.pointsTotal ?? 0,
-        partidos:    agg._count._all,
-        isOwner:     false, // se calcula abajo
+        totalPoints, exactos, ganadores, bonusTotal, partidos, winRate,
+        isOwner:     false,
         joinedAt:    m.joinedAt,
       };
     }));
 
     const group = await fastify.db.group.findUnique({ where: { id }, select: { ownerId: true, name: true, code: true } });
     rankings.forEach(r => { r.isOwner = r.userId === group.ownerId; });
-    rankings.sort((a, b) => b.totalPoints - a.totalPoints);
+    rankings.sort((a, b) => b.totalPoints - a.totalPoints || b.exactos - a.exactos);
     rankings.forEach((r, i) => { r.rank = i + 1; });
 
     return { group: { id, ...group }, ranking: rankings };

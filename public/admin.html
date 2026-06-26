@@ -70,17 +70,26 @@
 
     <!-- TAB: PARTIDOS -->
     <div id="tab-partidos">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:1rem">
-        <div class="tabs" style="background:none;padding:0;border:none">
-          <button class="tab-btn active" onclick="filterAdmin(this,'')">Todos</button>
-          <button class="tab-btn" onclick="filterAdmin(this,'UPCOMING')">⏱ Próximos</button>
-          <button class="tab-btn" onclick="filterAdmin(this,'LIVE')">🔴 En Vivo</button>
-          <button class="tab-btn" onclick="filterAdmin(this,'FINISHED')">✅ Finalizados</button>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:.5rem">
+        <div class="tabs" style="background:none;padding:0;border:none" id="admin-status-tabs">
+          <button class="tab-btn active" onclick="filterAdminStatus(this,'')">Todos</button>
+          <button class="tab-btn" onclick="filterAdminStatus(this,'UPCOMING')">⏱ Próximos</button>
+          <button class="tab-btn" onclick="filterAdminStatus(this,'LIVE')">🔴 En Vivo</button>
+          <button class="tab-btn" onclick="filterAdminStatus(this,'FINISHED')">✅ Finalizados</button>
         </div>
         <div style="display:flex;gap:.5rem">
           <button class="btn btn-sm" style="background:rgba(239,68,68,.1);color:var(--red)" onclick="resetAllMatches()">⚠️ Resetear Todos</button>
           <input type="text" class="form-input" id="admin-search" placeholder="Buscar equipo..." style="width:180px" oninput="filterBySearch(this.value)">
         </div>
+      </div>
+      <div class="tabs" style="background:none;padding:0;border:none;margin-bottom:1rem;flex-wrap:wrap" id="admin-phase-tabs">
+        <button class="tab-btn active" onclick="filterAdminPhase(this,'')">Todas las fases</button>
+        <button class="tab-btn" onclick="filterAdminPhase(this,'GRUPOS')">Grupos</button>
+        <button class="tab-btn" onclick="filterAdminPhase(this,'DIECISEISAVOS')">Dieciseisavos</button>
+        <button class="tab-btn" onclick="filterAdminPhase(this,'OCTAVOS')">Octavos</button>
+        <button class="tab-btn" onclick="filterAdminPhase(this,'CUARTOS')">Cuartos</button>
+        <button class="tab-btn" onclick="filterAdminPhase(this,'SEMIFINAL')">Semis</button>
+        <button class="tab-btn" onclick="filterAdminPhase(this,'FINAL')">Final</button>
       </div>
       <div id="admin-matches"><div class="spinner"></div></div>
     </div>
@@ -223,7 +232,7 @@ document.getElementById('nav-avatar').textContent = user?.avatar || '⚽';
 document.getElementById('nav-username').textContent = user?.displayName?.split(' ')[0] || '';
 document.getElementById('btn-theme').textContent = Theme.isDark() ? '☀️' : '🌙';
 
-let allAdminMatches = [], allAdminUsers = [], allAdminGroups = [], adminFilter = '';
+let allAdminMatches = [], allAdminUsers = [], allAdminGroups = [], adminStatusFilter = '', adminPhaseFilter = '';
 
 const STATUS_LABEL = { UPCOMING:'Próximo', LIVE:'EN VIVO', FINISHED:'Finalizado' };
 const STATUS_BADGE = { UPCOMING:'badge-upcoming', LIVE:'badge-live', FINISHED:'badge-finished' };
@@ -273,33 +282,43 @@ function switchAdminTab(tabId, btn) {
 
 function filterBySearch(q) {
   q = q.toLowerCase();
-  const filtered = allAdminMatches.filter(m => 
-    m.teamAName.toLowerCase().includes(q) || m.teamBName.toLowerCase().includes(q) ||
-    m.teamAFlag.toLowerCase().includes(q) || m.teamBFlag.toLowerCase().includes(q)
+  adminStatusFilter = '';
+  adminPhaseFilter = '';
+  document.querySelectorAll('#admin-status-tabs .tab-btn, #admin-phase-tabs .tab-btn').forEach((b, i) => b.classList.toggle('active', i === 0 || i === 4));
+  const filtered = allAdminMatches.filter(m =>
+    (m.teamAName||'').toLowerCase().includes(q) || (m.teamBName||'').toLowerCase().includes(q)
   );
-  adminFilter = ''; // reset phase filter
-  document.querySelectorAll('#tab-partidos .tabs .tab-btn').forEach(b => b.classList.remove('active'));
   renderAdminMatches(filtered);
 }
 
 function filterUsers(q) {
   q = q.toLowerCase();
-  const filtered = allAdminUsers.filter(u => 
+  const filtered = allAdminUsers.filter(u =>
     u.displayName.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
   );
   renderAdminUsers(filtered);
 }
 
-
-function filterAdmin(btn, status) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+function filterAdminStatus(btn, status) {
+  document.querySelectorAll('#admin-status-tabs .tab-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  adminFilter = status;
+  adminStatusFilter = status;
+  renderAdminMatches();
+}
+
+function filterAdminPhase(btn, phase) {
+  document.querySelectorAll('#admin-phase-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  adminPhaseFilter = phase;
   renderAdminMatches();
 }
 
 function renderAdminMatches(customMatches = null) {
-  const filtered = customMatches ? customMatches : (adminFilter ? allAdminMatches.filter(m => m.status === adminFilter) : allAdminMatches);
+  let filtered = customMatches ?? allAdminMatches;
+  if (!customMatches) {
+    if (adminStatusFilter) filtered = filtered.filter(m => m.status === adminStatusFilter);
+    if (adminPhaseFilter)  filtered = filtered.filter(m => m.phase  === adminPhaseFilter);
+  }
   const el = document.getElementById('admin-matches');
   if (!filtered.length) { el.innerHTML = '<div class="empty-state"><p>Sin partidos</p></div>'; return; }
   el.innerHTML = '<div class="matches-grid">' + filtered.sort((a,b) => new Date(a.date)-new Date(b.date)).map(m => `

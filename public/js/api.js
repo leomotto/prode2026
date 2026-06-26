@@ -66,7 +66,7 @@ const api = {
     mine:          ()           => api.get('/groups/mine'),
     create:        (b)          => api.post('/groups', b),
     join:          (code)       => api.post('/groups/join', { code }),
-    ranking:       (id)         => api.get(`/groups/${id}/ranking`),
+    ranking:       (id, phase)  => api.get(`/groups/${id}/ranking${phase ? '?phase=' + phase : ''}`),
     leave:         (id)         => api._req('DELETE', `/groups/${id}/leave`),
     delete:        (id)         => api._req('DELETE', `/groups/${id}`),
     // Admin

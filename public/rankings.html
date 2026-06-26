@@ -57,11 +57,25 @@
     <div class="tabs mb-3" id="ranking-tabs">
       <button class="tab-btn active" onclick="loadRanking(this,'')">🌐 General</button>
       <button class="tab-btn" onclick="loadRanking(this,'GRUPOS')">Grupos</button>
+      <button class="tab-btn" onclick="loadRanking(this,'DIECISEISAVOS')">Dieciseisavos</button>
       <button class="tab-btn" onclick="loadRanking(this,'OCTAVOS')">Octavos</button>
       <button class="tab-btn" onclick="loadRanking(this,'CUARTOS')">Cuartos</button>
       <button class="tab-btn" onclick="loadRanking(this,'SEMIFINAL')">Semis</button>
       <button class="tab-btn" onclick="loadRanking(this,'FINAL')">🏆 Final</button>
       <!-- Group tabs injected by JS -->
+    </div>
+
+    <!-- Sub-tabs de fase para grupos (oculto por defecto) -->
+    <div id="group-phase-tabs" style="display:none;margin-bottom:.75rem">
+      <div class="tabs" style="background:var(--surface-2);border:1px solid var(--border)">
+        <button class="tab-btn active" onclick="selectGroupPhase(this,'')">Todos</button>
+        <button class="tab-btn" onclick="selectGroupPhase(this,'GRUPOS')">Grupos</button>
+        <button class="tab-btn" onclick="selectGroupPhase(this,'DIECISEISAVOS')">Dieciseisavos</button>
+        <button class="tab-btn" onclick="selectGroupPhase(this,'OCTAVOS')">Octavos</button>
+        <button class="tab-btn" onclick="selectGroupPhase(this,'CUARTOS')">Cuartos</button>
+        <button class="tab-btn" onclick="selectGroupPhase(this,'SEMIFINAL')">Semis</button>
+        <button class="tab-btn" onclick="selectGroupPhase(this,'FINAL')">Final</button>
+      </div>
     </div>
 
     <div id="podium-section"></div>
@@ -83,42 +97,54 @@ if (user) {
 }
 document.getElementById('btn-theme').textContent = Theme.isDark() ? '☀️' : '🌙';
 
+const PHASE_LABEL = { GRUPOS:'Grupos', DIECISEISAVOS:'Dieciseisavos', OCTAVOS:'Octavos de Final', CUARTOS:'Cuartos de Final', SEMIFINAL:'Semifinal', FINAL:'Final' };
+
+let activeGroupId = null, activeGroupName = '';
+
 async function loadRanking(btn, phase) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  activeGroupId = null;
+  document.getElementById('group-phase-tabs').style.display = 'none';
+  document.querySelectorAll('#ranking-tabs .tab-btn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
   document.getElementById('ranking-table-container').innerHTML = '<div class="spinner"></div>';
   try {
     const ranking = await api.rankings.all(phase);
-    renderRanking(ranking, '🌐 Ranking General' + (phase ? ` — ${phase}` : ''));
+    renderRanking(ranking, phase ? PHASE_LABEL[phase] || phase : null);
   } catch {
     document.getElementById('ranking-table-container').innerHTML = '<div class="empty-state"><p>Error al cargar</p></div>';
   }
 }
 
-async function loadGroupRanking(btn, groupId, groupName) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+async function loadGroupRanking(btn, groupId, groupName, phase) {
+  activeGroupId = groupId;
+  activeGroupName = groupName;
+  document.getElementById('group-phase-tabs').style.display = '';
+  // Reset phase sub-tabs
+  if (!phase) {
+    document.querySelectorAll('#group-phase-tabs .tab-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+  }
+  document.querySelectorAll('#ranking-tabs .tab-btn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
   document.getElementById('ranking-table-container').innerHTML = '<div class="spinner"></div>';
-  document.getElementById('podium-section').innerHTML = '';
   try {
-    const { ranking } = await api.groups.ranking(groupId);
-    // Convert group ranking format to global ranking format
-    const normalized = ranking.map(r => ({
-      ...r,
-      totalPoints: r.totalPoints,
-      exactos: '—', ganadores: '—', bonusTotal: '—',
-    }));
-    renderRanking(normalized, `👥 ${groupName}`, true);
+    const { ranking } = await api.groups.ranking(groupId, phase || '');
+    renderRanking(ranking, null, groupName, phase ? PHASE_LABEL[phase] || phase : null);
   } catch(e) {
     document.getElementById('ranking-table-container').innerHTML = `<div class="empty-state"><p>${e.message}</p></div>`;
   }
 }
 
-function renderRanking(ranking, title = '', isGroup = false) {
+function selectGroupPhase(btn, phase) {
+  document.querySelectorAll('#group-phase-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  loadGroupRanking(document.querySelector('#ranking-tabs .tab-btn.active'), activeGroupId, activeGroupName, phase);
+}
+
+function renderRanking(ranking, phaseLabel = null, groupName = null, groupPhaseLabel = null) {
   const myId = Auth.getUser()?.id;
   const podiumEl = document.getElementById('podium-section');
 
-  if (!isGroup && ranking.length >= 3) {
+  if (ranking.length >= 3) {
     const [first, second, third] = ranking;
     podiumEl.innerHTML = `<div class="podium mb-3">
       <div class="podium-item podium-2"><div class="podium-crown">🥈</div><div class="podium-avatar">${second.avatar}</div><div class="podium-name podium-name-clip">${second.displayName}</div><div class="podium-pts">${second.totalPoints}</div></div>
@@ -129,19 +155,25 @@ function renderRanking(ranking, title = '', isGroup = false) {
 
   if (!ranking.length) {
     document.getElementById('ranking-table-container').innerHTML =
-      '<div class="empty-state" style="padding:3rem"><div class="icon">🏆</div><p>El ranking se actualizará cuando se carguen los primeros resultados</p></div>';
+      '<div class="empty-state" style="padding:3rem"><div class="icon">🏆</div><p>Sin resultados para esta fase todavía</p></div>';
     return;
   }
 
-  document.getElementById('ranking-table-container').innerHTML = `
+  const subtitle = groupName
+    ? `<div style="font-size:.78rem;color:var(--text-dim);padding:.6rem 1rem .25rem">${groupPhaseLabel ? `Fase: ${groupPhaseLabel}` : 'Todos los pronósticos'}</div>`
+    : (phaseLabel ? `<div style="font-size:.78rem;color:var(--text-dim);padding:.6rem 1rem .25rem">Fase: ${phaseLabel}</div>` : '');
+
+  document.getElementById('ranking-table-container').innerHTML = subtitle + `
     <table class="ranking-table">
       <thead>
         <tr>
-          <th style="width:50px">#</th>
+          <th style="width:44px">#</th>
           <th>Participante</th>
-          <th>Pts</th>
-          ${!isGroup ? '<th>Exactos</th><th>Ganador</th>' : ''}
-          <th>Partidos</th>
+          <th style="text-align:right">Pts</th>
+          <th style="text-align:center">Exactos</th>
+          <th style="text-align:center">Ganador</th>
+          <th style="text-align:center">% Acierto</th>
+          <th style="text-align:center">Partidos</th>
         </tr>
       </thead>
       <tbody>
@@ -152,11 +184,14 @@ function renderRanking(ranking, title = '', isGroup = false) {
               <div class="rank-avatar">${r.avatar||'⚽'}</div>
               <div>
                 <div class="rank-name">${r.displayName}${r.userId===myId?' <span style="font-size:.7rem;color:var(--gold)">(vos)</span>':''}</div>
+                ${r.isOwner ? '<div style="font-size:.68rem;color:var(--text-dim)">👑 Creador</div>' : ''}
               </div>
             </div></td>
             <td class="rank-points">${r.totalPoints}</td>
-            ${!isGroup ? `<td><span class="badge badge-featured">${r.exactos}</span></td><td style="color:var(--green);font-weight:700">${r.ganadores}</td>` : ''}
-            <td style="color:var(--text-dim)">${r.partidos}</td>
+            <td style="text-align:center"><span class="badge badge-featured">${r.exactos ?? '—'}</span></td>
+            <td style="text-align:center;color:var(--green);font-weight:700">${r.ganadores ?? '—'}</td>
+            <td style="text-align:center;color:var(--text-dim);font-size:.82rem">${r.winRate != null ? r.winRate + '%' : '—'}</td>
+            <td style="text-align:center;color:var(--text-dim)">${r.partidos}</td>
           </tr>`).join('')}
       </tbody>
     </table>`;
