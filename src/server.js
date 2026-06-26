@@ -158,22 +158,16 @@ async function bootstrap() {
   }, 60_000); // cada 60 segundos
 
   // ── Job: Sincronización automática de resultados (Fase 3) ──
+  // Intervalo de 10 min (plan Free: 100 req/día). Solo llama a la API externa si hay partidos LIVE.
   setInterval(async () => {
     if (!config.API_FOOTBALL_KEY) return;
     try {
-      // 1. Buscar partidos EN VIVO o que deberían haber empezado hoy (en zona horaria Argentina)
+      // 1. Solo proceder si hay al menos un partido LIVE en nuestra BD
+      const liveMatches = await fastify.db.match.findMany({ where: { status: 'LIVE' } });
+      if (!liveMatches.length) return;
+
       const dateStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).format(new Date());
-      const todayArg = new Date(`${dateStr}T00:00:00-03:00`);
-      const tomorrowArg = new Date(todayArg.getTime() + 24 * 60 * 60 * 1000);
-      const activeMatches = await fastify.db.match.findMany({
-        where: {
-          OR: [
-            { status: 'LIVE' },
-            { date: { gte: todayArg, lt: tomorrowArg } }
-          ]
-        }
-      });
-      if (!activeMatches.length) return;
+      const activeMatches = liveMatches;
 
       // 2. Fetch fixtures from api-football for today
       const response = await fetch(`https://v3.football.api-sports.io/fixtures?date=${dateStr}`, {
@@ -244,7 +238,7 @@ async function bootstrap() {
     } catch (e) {
       fastify.log.warn('Auto-sync error: ' + e.message);
     }
-  }, 5 * 60_000); // cada 5 minutos
+  }, 10 * 60_000); // cada 10 minutos (plan Free: 100 req/día; solo corre con partidos LIVE)
 
 
 }
