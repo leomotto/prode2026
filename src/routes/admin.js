@@ -51,6 +51,20 @@ async function adminRoutes(fastify) {
         },
       });
     }
+
+    if (status === 'FINISHED') {
+      try {
+        const { advanceGroupsToR32, advanceKnockoutMatch } = require('../services/AdvancementService');
+        if (match.phase === 'GRUPOS') {
+          await advanceGroupsToR32(fastify.db);
+        } else {
+          await advanceKnockoutMatch(fastify.db, match.id);
+        }
+      } catch (advErr) {
+        fastify.log.warn('Status-patch advancement error: ' + advErr.message);
+      }
+    }
+
     return match;
   });
 

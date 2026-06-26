@@ -222,8 +222,18 @@ async function bootstrap() {
             });
 
             if (isFinished && localMatch.status !== 'FINISHED') {
-              // Trigger scoring calculation!
               await MatchService.calculatePointsForMatch(fastify.db, localMatch.id);
+              // Propagate bracket advancement
+              try {
+                const { advanceGroupsToR32, advanceKnockoutMatch } = require('./services/AdvancementService');
+                if (localMatch.phase === 'GRUPOS') {
+                  await advanceGroupsToR32(fastify.db);
+                } else {
+                  await advanceKnockoutMatch(fastify.db, localMatch.id);
+                }
+              } catch (advErr) {
+                fastify.log.warn('Auto-sync advancement error: ' + advErr.message);
+              }
               fastify.log.info(`✅ Auto-Sync Finalizado: ${localMatch.teamAName} vs ${localMatch.teamBName} (${goalsHome}-${goalsAway})`);
             } else {
               fastify.log.info(`⚽ Auto-Sync En Vivo: ${localMatch.teamAName} vs ${localMatch.teamBName} (${goalsHome}-${goalsAway})`);
