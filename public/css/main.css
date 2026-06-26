@@ -337,6 +337,7 @@ input,select,textarea{font-family:inherit}
 [data-theme="dark"] .badge-phase{background:rgba(255,255,255,.08);color:var(--text-dim);border-color:rgba(255,255,255,.1)}
 [data-theme="dark"] .badge-group{background:#1e3a8a;color:#93c5fd}
 [data-theme="dark"] .badge-upcoming{background:#1e3a8a;color:#93c5fd;border-color:#2563eb}
+[data-theme="dark"] .badge-muted{background:rgba(255,255,255,.06);color:var(--text-dim);border-color:rgba(255,255,255,.1)}
 [data-theme="dark"] .badge-finished{background:#14532d;color:#86efac;border-color:#16a34a}
 [data-theme="dark"] .badge-live{background:#7f1d1d;color:#fca5a5;border-color:#dc2626}
 [data-theme="dark"] .badge-featured{background:#713f12;color:#fde68a;border-color:#d97706}

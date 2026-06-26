@@ -40,7 +40,8 @@
 <div class="mobile-nav-overlay" id="mobile-nav-overlay" onclick="closeMobileMenu()"></div>
 <div class="mobile-nav-drawer" id="mobile-nav-drawer">
   <a href="/" class="mobile-nav-link" onclick="closeMobileMenu()">🏠 Inicio</a>
-  <a href="/matches" class="mobile-nav-link" onclick="closeMobileMenu()">📅 Partidos</a>
+  <a href="/matches" class="mobile-nav-link active" onclick="closeMobileMenu()">📅 Partidos</a>
+  <a href="/standings" class="mobile-nav-link" onclick="closeMobileMenu()">⚽ Torneo</a>
   <a href="/rankings" class="mobile-nav-link" onclick="closeMobileMenu()">🏅 Ranking</a>
   <a href="/groups" class="mobile-nav-link" onclick="closeMobileMenu()">👥 Grupos</a>
   <a href="/rules" class="mobile-nav-link" onclick="closeMobileMenu()">📖 Reglamento</a>
@@ -125,7 +126,7 @@
     </div>
     <div class="modal-footer" style="display:flex;gap:.5rem;flex-wrap:wrap">
       <button class="btn btn-secondary" onclick="closeModal('modal-prediction')">Cancelar</button>
-      <button class="btn btn-sm" style="background:rgba(239,68,68,.1);color:var(--red);margin-right:auto" onclick="deletePrediction()" id="btn-del-pred" style="display:none">Borrar Pronóstico</button>
+      <button class="btn btn-sm" style="background:rgba(239,68,68,.1);color:var(--red);margin-right:auto;display:none" onclick="deletePrediction()" id="btn-del-pred">Borrar Pronóstico</button>
       <button class="btn btn-primary" onclick="savePrediction()" id="btn-save-pred">Confirmar</button>
     </div>
   </div>
