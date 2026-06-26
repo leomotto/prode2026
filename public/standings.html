@@ -211,6 +211,26 @@ function isTbd(name) {
   return !name || name.startsWith('Clasificado') || name.startsWith('Ganador') || name.startsWith('Perdedor');
 }
 
+// Mapa de ID de partido → etiqueta corta legible
+const MATCH_LABEL = {};
+for (let i = 1; i <= 16; i++) MATCH_LABEL[`R32-M${i}`]  = `P${i} Dieciseisavos`;
+for (let i = 1; i <= 8;  i++) MATCH_LABEL[`R16-M${i}`]  = `P${i} Octavos`;
+for (let i = 1; i <= 4;  i++) MATCH_LABEL[`QF-M${i}`]   = `P${i} Cuartos`;
+for (let i = 1; i <= 2;  i++) MATCH_LABEL[`SF-M${i}`]   = `P${i} Semis`;
+
+function tbdLabel(name) {
+  if (!name) return 'Por definir';
+  if (name.startsWith('Ganador ')) {
+    const id = name.replace('Ganador ', '');
+    return 'Gan. ' + (MATCH_LABEL[id] || id);
+  }
+  if (name.startsWith('Perdedor ')) {
+    const id = name.replace('Perdedor ', '');
+    return 'Perd. ' + (MATCH_LABEL[id] || id);
+  }
+  return 'Por definir';
+}
+
 function renderBracketSlot(slot, dbMatch) {
   const finished = dbMatch?.status === 'FINISHED';
   const live = dbMatch?.status === 'LIVE';
@@ -271,13 +291,17 @@ function renderKoMatch(m) {
     </div>
     <div class="ko-match-body">
       <div class="ko-team${winA ? ' ko-winner' : ''}">
-        <span class="ko-team-flag">${m.teamAFlag || '🏳️'}</span>
-        <span class="ko-team-name${tbdA ? ' tbd' : ''}">${tbdA ? 'Por definir' : m.teamAName}</span>
+        <span class="ko-team-flag">${tbdA ? '🏳️' : (m.teamAFlag || '🏳️')}</span>
+        <div style="flex:1;min-width:0">
+          <div class="ko-team-name${tbdA ? ' tbd' : ''}">${tbdA ? tbdLabel(m.teamAName) : m.teamAName}</div>
+        </div>
         <span class="ko-team-score">${finished ? m.resultA : ''}</span>
       </div>
       <div class="ko-team${winB ? ' ko-winner' : ''}">
-        <span class="ko-team-flag">${m.teamBFlag || '🏳️'}</span>
-        <span class="ko-team-name${tbdB ? ' tbd' : ''}">${tbdB ? 'Por definir' : m.teamBName}</span>
+        <span class="ko-team-flag">${tbdB ? '🏳️' : (m.teamBFlag || '🏳️')}</span>
+        <div style="flex:1;min-width:0">
+          <div class="ko-team-name${tbdB ? ' tbd' : ''}">${tbdB ? tbdLabel(m.teamBName) : m.teamBName}</div>
+        </div>
         <span class="ko-team-score">${finished ? m.resultB : ''}</span>
       </div>
     </div>
