@@ -1,14 +1,13 @@
 'use strict';
-const { R32_BRACKET, computeGroupStandings, computeBestThirds } = require('../services/AdvancementService');
+const { R32_BRACKET, computeGroupStandings, computeThirdAssignments } = require('../services/AdvancementService');
 
 async function standingsRoutes(fastify) {
 
   // GET /api/standings/bracket — bracket proyectado del R32 con nivel de confianza por slot
   fastify.get('/bracket', async () => {
     const groupStandings = await computeGroupStandings(fastify.db);
-    const bestThirds = computeBestThirds(groupStandings);
 
-    // Contar partidos totales vs terminados por grupo para determinar completitud
+    // Contar partidos totales vs terminados por grupo
     const allGroupMatches = await fastify.db.match.findMany({
       where: { phase: 'GRUPOS' },
       select: { groupName: true, status: true },
@@ -28,21 +27,28 @@ async function standingsRoutes(fastify) {
     };
     const allGroupsComplete = Object.values(groupCounts).every(c => c.total === c.finished);
 
-    const resolveTeam = (slot) => {
+    // Asignación de terceros (greedy por grupos elegibles)
+    const thirdAssignments = computeThirdAssignments(groupStandings, allGroupsComplete);
+
+    const resolveTeam = (bracket, sideKey) => {
+      const slot = bracket[sideKey];
       if (slot.type === 'winner') return (groupStandings[slot.group] || [])[0] || null;
       if (slot.type === 'runner') return (groupStandings[slot.group] || [])[1] || null;
-      if (slot.type === 'third')  return bestThirds[slot.rank - 1] || null;
+      if (slot.type === 'third')  return thirdAssignments[`${bracket.id}_${sideKey}`] || null;
       return null;
     };
 
-    const getConfidence = (slot) => {
+    const getConfidence = (bracket, sideKey) => {
+      const slot = bracket[sideKey];
       if (slot.type === 'winner' || slot.type === 'runner') {
         const c = groupCounts[slot.group];
         if (!c || c.finished === 0) return 'PENDING';
         return isGroupComplete(slot.group) ? 'CONFIRMED' : 'TENTATIVE';
       }
       if (slot.type === 'third') {
-        if (!bestThirds[slot.rank - 1]) return 'PENDING';
+        // TENTATIVO si al menos un grupo elegible terminó, CONFIRMADO si todos los grupos terminaron
+        const anyEligibleFinished = slot.eligibleGroups.some(g => isGroupComplete(g));
+        if (!anyEligibleFinished) return 'PENDING';
         return allGroupsComplete ? 'CONFIRMED' : 'TENTATIVE';
       }
       return 'PENDING';
@@ -51,13 +57,13 @@ async function standingsRoutes(fastify) {
     const slotLabel = (slot) => {
       if (slot.type === 'winner') return `1° Grupo ${slot.group}`;
       if (slot.type === 'runner') return `2° Grupo ${slot.group}`;
-      if (slot.type === 'third')  return `Mejor 3° #${slot.rank}`;
+      if (slot.type === 'third')  return `Mejor 3° (${slot.eligibleGroups.join('/')})`;
       return 'Por definir';
     };
 
     return R32_BRACKET.map(bracket => {
-      const teamA = resolveTeam(bracket.sideA);
-      const teamB = resolveTeam(bracket.sideB);
+      const teamA = resolveTeam(bracket, 'sideA');
+      const teamB = resolveTeam(bracket, 'sideB');
       return {
         id:              bracket.id,
         slotLabelA:      slotLabel(bracket.sideA),
@@ -66,8 +72,8 @@ async function standingsRoutes(fastify) {
         teamAFlag:       teamA?.flag  || null,
         teamBName:       teamB?.name  || null,
         teamBFlag:       teamB?.flag  || null,
-        teamAConfidence: getConfidence(bracket.sideA),
-        teamBConfidence: getConfidence(bracket.sideB),
+        teamAConfidence: getConfidence(bracket, 'sideA'),
+        teamBConfidence: getConfidence(bracket, 'sideB'),
       };
     });
   });

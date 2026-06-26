@@ -1,27 +1,31 @@
 'use strict';
 
-// FIFA 2026 Round of 32 bracket
-// Each slot maps a group position to a specific R32 match side
+// FIFA 2026 — Bracket oficial Dieciseisavos de Final (Ronda de 32)
+// Fuente: estructura oficial FIFA 2026
 const R32_BRACKET = [
-  { id: 'R32-M1',  sideA: { type: 'winner', group: 'A' }, sideB: { type: 'runner', group: 'B' } },
-  { id: 'R32-M2',  sideA: { type: 'winner', group: 'C' }, sideB: { type: 'runner', group: 'D' } },
-  { id: 'R32-M3',  sideA: { type: 'winner', group: 'E' }, sideB: { type: 'runner', group: 'F' } },
-  { id: 'R32-M4',  sideA: { type: 'winner', group: 'G' }, sideB: { type: 'runner', group: 'H' } },
-  { id: 'R32-M5',  sideA: { type: 'winner', group: 'B' }, sideB: { type: 'runner', group: 'A' } },
-  { id: 'R32-M6',  sideA: { type: 'winner', group: 'D' }, sideB: { type: 'runner', group: 'C' } },
-  { id: 'R32-M7',  sideA: { type: 'winner', group: 'F' }, sideB: { type: 'runner', group: 'E' } },
-  { id: 'R32-M8',  sideA: { type: 'winner', group: 'H' }, sideB: { type: 'runner', group: 'G' } },
-  { id: 'R32-M9',  sideA: { type: 'winner', group: 'I' }, sideB: { type: 'runner', group: 'J' } },
-  { id: 'R32-M10', sideA: { type: 'winner', group: 'K' }, sideB: { type: 'runner', group: 'L' } },
-  { id: 'R32-M11', sideA: { type: 'winner', group: 'J' }, sideB: { type: 'runner', group: 'I' } },
-  { id: 'R32-M12', sideA: { type: 'winner', group: 'L' }, sideB: { type: 'runner', group: 'K' } },
-  { id: 'R32-M13', sideA: { type: 'third', rank: 1 }, sideB: { type: 'third', rank: 2 } },
-  { id: 'R32-M14', sideA: { type: 'third', rank: 3 }, sideB: { type: 'third', rank: 4 } },
-  { id: 'R32-M15', sideA: { type: 'third', rank: 5 }, sideB: { type: 'third', rank: 6 } },
-  { id: 'R32-M16', sideA: { type: 'third', rank: 7 }, sideB: { type: 'third', rank: 8 } },
+  // ── Lado A — Bloque Superior ──────────────────────────────────
+  { id: 'R32-M1',  sideA: { type: 'winner', group: 'E' }, sideB: { type: 'third', eligibleGroups: ['A','B','C','D','F'] } },
+  { id: 'R32-M2',  sideA: { type: 'winner', group: 'I' }, sideB: { type: 'third', eligibleGroups: ['C','D','F','G','H'] } },
+  { id: 'R32-M3',  sideA: { type: 'runner', group: 'A' }, sideB: { type: 'runner', group: 'B' } },
+  { id: 'R32-M4',  sideA: { type: 'winner', group: 'F' }, sideB: { type: 'runner', group: 'C' } },
+  // ── Lado A — Bloque Inferior ──────────────────────────────────
+  { id: 'R32-M5',  sideA: { type: 'runner', group: 'K' }, sideB: { type: 'runner', group: 'L' } },
+  { id: 'R32-M6',  sideA: { type: 'winner', group: 'H' }, sideB: { type: 'runner', group: 'J' } },
+  { id: 'R32-M7',  sideA: { type: 'winner', group: 'D' }, sideB: { type: 'third', eligibleGroups: ['B','E','F','I','J'] } },
+  { id: 'R32-M8',  sideA: { type: 'winner', group: 'G' }, sideB: { type: 'third', eligibleGroups: ['A','E','H','I','J'] } },
+  // ── Lado B — Bloque Superior ──────────────────────────────────
+  { id: 'R32-M9',  sideA: { type: 'winner', group: 'C' }, sideB: { type: 'runner', group: 'F' } },
+  { id: 'R32-M10', sideA: { type: 'runner', group: 'E' }, sideB: { type: 'runner', group: 'I' } },
+  { id: 'R32-M11', sideA: { type: 'winner', group: 'A' }, sideB: { type: 'third', eligibleGroups: ['C','E','F','H','I'] } },
+  { id: 'R32-M12', sideA: { type: 'winner', group: 'L' }, sideB: { type: 'third', eligibleGroups: ['E','H','I','J','K'] } },
+  // ── Lado B — Bloque Inferior ──────────────────────────────────
+  { id: 'R32-M13', sideA: { type: 'winner', group: 'J' }, sideB: { type: 'runner', group: 'H' } },
+  { id: 'R32-M14', sideA: { type: 'runner', group: 'D' }, sideB: { type: 'runner', group: 'G' } },
+  { id: 'R32-M15', sideA: { type: 'winner', group: 'B' }, sideB: { type: 'third', eligibleGroups: ['E','F','G','I','J'] } },
+  { id: 'R32-M16', sideA: { type: 'winner', group: 'K' }, sideB: { type: 'third', eligibleGroups: ['D','E','I','J','L'] } },
 ];
 
-// Knockout cascade: defines which finished match feeds each slot of the next round
+// Cascada knockout: define qué partido terminado alimenta cada slot del siguiente round
 const KNOCKOUT_FEEDS = {
   'R16-M1':   { sideA: { winner: 'R32-M1'  }, sideB: { winner: 'R32-M2'  } },
   'R16-M2':   { sideA: { winner: 'R32-M3'  }, sideB: { winner: 'R32-M4'  } },
@@ -91,21 +95,39 @@ function computeBestThirds(groupStandings) {
   thirds.sort((a, b) =>
     b.pts - a.pts || b.gd - a.gd || b.gf - a.gf || a.name.localeCompare(b.name)
   );
-  return thirds.slice(0, 8);
+  return thirds;
 }
 
-function resolveR32Slot(slot, groupStandings, bestThirds) {
-  if (slot.type === 'winner') return (groupStandings[slot.group] || [])[0] || null;
-  if (slot.type === 'runner') return (groupStandings[slot.group] || [])[1] || null;
-  if (slot.type === 'third')  return bestThirds[slot.rank - 1] || null;
-  return null;
+// Asigna las 8 mejores terceras plazas a los slots con eligibleGroups
+// usando un algoritmo greedy: en orden del bracket, asigna el mejor tercero disponible
+// de los grupos elegibles para ese slot.
+// Solo funciona cuando todos los grupos están completos (la asignación es definitiva).
+function computeThirdAssignments(groupStandings, allGroupsComplete) {
+  if (!allGroupsComplete) return {};
+
+  const allThirds = computeBestThirds(groupStandings);
+  const usedGroups = new Set();
+  const assignments = {};
+
+  for (const bracket of R32_BRACKET) {
+    for (const sideKey of ['sideA', 'sideB']) {
+      const slot = bracket[sideKey];
+      if (slot.type === 'third') {
+        const pick = allThirds.find(t => slot.eligibleGroups.includes(t.group) && !usedGroups.has(t.group));
+        if (pick) {
+          assignments[`${bracket.id}_${sideKey}`] = pick;
+          usedGroups.add(pick.group);
+        }
+      }
+    }
+  }
+  return assignments;
 }
 
 async function advanceGroupsToR32(db) {
   const groupStandings = await computeGroupStandings(db);
-  const bestThirds = computeBestThirds(groupStandings);
 
-  // Only write confirmed teams (group fully finished). Clear tentative data already in DB.
+  // Determinar qué grupos están 100% finalizados
   const allGroupMatches = await db.match.findMany({
     where: { phase: 'GRUPOS' },
     select: { groupName: true, status: true },
@@ -123,14 +145,27 @@ async function advanceGroupsToR32(db) {
   };
   const allGroupsComplete = Object.values(groupCounts).every(c => c.total === c.finished);
 
+  // Asignación de terceros (solo cuando todos los grupos terminaron)
+  const thirdAssignments = computeThirdAssignments(groupStandings, allGroupsComplete);
+
+  const resolveSlot = (bracket, sideKey) => {
+    const slot = bracket[sideKey];
+    if (slot.type === 'winner') {
+      return isGroupComplete(slot.group) ? ((groupStandings[slot.group] || [])[0] || null) : null;
+    }
+    if (slot.type === 'runner') {
+      return isGroupComplete(slot.group) ? ((groupStandings[slot.group] || [])[1] || null) : null;
+    }
+    if (slot.type === 'third') {
+      return thirdAssignments[`${bracket.id}_${sideKey}`] || null;
+    }
+    return null;
+  };
+
   const ops = [];
   for (const bracket of R32_BRACKET) {
-    const sideAConfirmed = bracket.sideA.type === 'third' ? allGroupsComplete : isGroupComplete(bracket.sideA.group);
-    const sideBConfirmed = bracket.sideB.type === 'third' ? allGroupsComplete : isGroupComplete(bracket.sideB.group);
-
-    const teamA = sideAConfirmed ? resolveR32Slot(bracket.sideA, groupStandings, bestThirds) : null;
-    const teamB = sideBConfirmed ? resolveR32Slot(bracket.sideB, groupStandings, bestThirds) : null;
-
+    const teamA = resolveSlot(bracket, 'sideA');
+    const teamB = resolveSlot(bracket, 'sideB');
     ops.push(db.match.update({
       where: { id: bracket.id },
       data: {
@@ -144,7 +179,7 @@ async function advanceGroupsToR32(db) {
   }
 
   await Promise.all(ops);
-  return { updatedR32: ops.length, groupStandings, bestThirds };
+  return { updatedR32: ops.length, groupStandings };
 }
 
 async function advanceKnockoutMatch(db, finishedMatchId) {
@@ -200,4 +235,12 @@ async function runFullAdvancement(db) {
   return { ...r32Result, cascadeUpdates: cascadeCount };
 }
 
-module.exports = { R32_BRACKET, advanceGroupsToR32, advanceKnockoutMatch, runFullAdvancement, computeGroupStandings, computeBestThirds };
+module.exports = {
+  R32_BRACKET,
+  advanceGroupsToR32,
+  advanceKnockoutMatch,
+  runFullAdvancement,
+  computeGroupStandings,
+  computeBestThirds,
+  computeThirdAssignments,
+};
