@@ -30,7 +30,7 @@ jobs:
           username: ${{ secrets.ALWAYSDATA_SSH_USER }}
           key:      ${{ secrets.ALWAYSDATA_SSH_KEY }}
           port:     22
-          envs:     GH_PAT
+          envs:     GH_PAT,ALWAYSDATA_API_KEY,ALWAYSDATA_SITE_ID
           script: |
             set -e
             cd $HOME/prode2026
@@ -41,5 +41,7 @@ jobs:
             chmod +x deploy.sh
             ./deploy.sh
         env:
-          GH_PAT: ${{ secrets.GH_PAT }}
+          GH_PAT:               ${{ secrets.GH_PAT }}
+          ALWAYSDATA_API_KEY:   ${{ secrets.ALWAYSDATA_API_KEY }}
+          ALWAYSDATA_SITE_ID:   ${{ secrets.ALWAYSDATA_SITE_ID }}
 
