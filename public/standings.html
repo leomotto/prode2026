@@ -44,7 +44,7 @@
 .ko-team{display:flex;align-items:center;gap:.6rem;padding:.35rem 0}
 .ko-team+.ko-team{border-top:1px solid var(--border)}
 .ko-team-flag{font-size:1.3rem;line-height:1;flex-shrink:0;width:1.6rem;text-align:center}
-.ko-team-name{font-weight:600;font-size:.85rem;flex:1;color:var(--text)}
+.ko-team-name{font-weight:600;font-size:.85rem;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ko-team-score{font-size:1.1rem;font-weight:800;color:var(--navy);min-width:1.4rem;text-align:center}
 [data-theme="dark"] .ko-team-score{color:#93c5fd}
 .ko-team-name.tbd{color:var(--text-dim);font-style:italic;font-weight:400}
@@ -250,11 +250,15 @@ function renderBracketSlot(slot, dbMatch) {
 
   const renderTeam = (name, flag, conf, slotLabel, isWinner, score) => {
     const hasTeam = name && !isTbd(name);
+    const badge = hasTeam && conf !== 'PENDING' ? confBadge(conf) : '';
     return `<div class="ko-team${isWinner ? ' ko-winner' : ''}">
       <span class="ko-team-flag">${flag || '🏳️'}</span>
       <div style="flex:1;min-width:0">
-        <div class="ko-team-name${hasTeam ? '' : ' tbd'}">${hasTeam ? name : 'Por definir'}</div>
-        <div class="ko-slot-label">${slotLabel}${hasTeam && conf !== 'PENDING' ? ' ' + confBadge(conf) : ''}</div>
+        <div style="display:flex;align-items:center;gap:.3rem;flex-wrap:wrap;row-gap:.1rem">
+          <span class="ko-team-name${hasTeam ? '' : ' tbd'}">${hasTeam ? name : 'Por definir'}</span>
+          ${badge}
+        </div>
+        ${slotLabel ? `<div class="ko-slot-label">${slotLabel}</div>` : ''}
       </div>
       <span class="ko-team-score">${finished && score !== undefined && score !== null ? score : ''}</span>
     </div>`;
