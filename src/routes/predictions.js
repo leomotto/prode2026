@@ -58,6 +58,7 @@ async function predictionsRoutes(fastify) {
     const match = await fastify.db.match.findUnique({ where: { id: matchId } });
     if (!match) return reply.status(404).send({ error: 'Partido no encontrado' });
     if (match.status !== 'UPCOMING') return reply.status(400).send({ error: 'El partido ya comenzó, no se puede pronosticar' });
+    if (!match.teamAName || !match.teamBName) return reply.status(400).send({ error: 'Los equipos de este partido aún no están confirmados' });
 
     const existing = await fastify.db.prediction.findUnique({
       where: { userId_matchId: { userId: request.user.id, matchId } },

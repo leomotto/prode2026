@@ -205,7 +205,8 @@ function renderMatches() {
 function renderCard(m) {
   const pred = myPredictions[m.id];
   const hasResult = m.resultA !== null && m.resultB !== null;
-  const canPredict = m.status === 'UPCOMING';
+  const teamsConfirmed = !!m.teamAName && !!m.teamBName;
+  const canPredict = m.status === 'UPCOMING' && teamsConfirmed;
   const isLive = m.status === 'LIVE';
   const notifyOn = Notify.isOn(m.id);
   const codeA = teamCode(m.teamAFlag), codeB = teamCode(m.teamBFlag);
@@ -262,7 +263,9 @@ function renderCard(m) {
       <span class="fc-venue">🕐 ${Fmt.time(m.date)} &nbsp; 📍 ${m.city}</span>
       ${canPredict
         ? `<button class="btn btn-primary btn-sm" onclick="openPrediction('${m.id}')">${pred?'✏️ Editar':'Pronosticar'}</button>`
-        : ''}
+        : m.status === 'UPCOMING' && !teamsConfirmed
+          ? `<span class="badge badge-muted" title="Se habilita cuando ambos equipos estén confirmados">⏳ Pendiente de confirmación</span>`
+          : ''}
     </div>
   </div>`;
 }

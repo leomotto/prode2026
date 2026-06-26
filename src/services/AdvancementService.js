@@ -105,18 +105,42 @@ async function advanceGroupsToR32(db) {
   const groupStandings = await computeGroupStandings(db);
   const bestThirds = computeBestThirds(groupStandings);
 
+  // Only write confirmed teams (group fully finished). Clear tentative data already in DB.
+  const allGroupMatches = await db.match.findMany({
+    where: { phase: 'GRUPOS' },
+    select: { groupName: true, status: true },
+  });
+  const groupCounts = {};
+  for (const m of allGroupMatches) {
+    const g = m.groupName;
+    if (!groupCounts[g]) groupCounts[g] = { total: 0, finished: 0 };
+    groupCounts[g].total++;
+    if (m.status === 'FINISHED') groupCounts[g].finished++;
+  }
+  const isGroupComplete = (g) => {
+    const c = groupCounts[g];
+    return c && c.total > 0 && c.total === c.finished;
+  };
+  const allGroupsComplete = Object.values(groupCounts).every(c => c.total === c.finished);
+
   const ops = [];
   for (const bracket of R32_BRACKET) {
-    const teamA = resolveR32Slot(bracket.sideA, groupStandings, bestThirds);
-    const teamB = resolveR32Slot(bracket.sideB, groupStandings, bestThirds);
-    const data = {};
-    if (teamA) { data.teamAName = teamA.name; data.teamAFlag = teamA.flag; }
-    if (teamB) { data.teamBName = teamB.name; data.teamBFlag = teamB.flag; }
-    if (teamA || teamB) {
-      const isArg = (teamA && teamA.name === 'Argentina') || (teamB && teamB.name === 'Argentina');
-      data.argentina = isArg;
-      ops.push(db.match.update({ where: { id: bracket.id }, data }));
-    }
+    const sideAConfirmed = bracket.sideA.type === 'third' ? allGroupsComplete : isGroupComplete(bracket.sideA.group);
+    const sideBConfirmed = bracket.sideB.type === 'third' ? allGroupsComplete : isGroupComplete(bracket.sideB.group);
+
+    const teamA = sideAConfirmed ? resolveR32Slot(bracket.sideA, groupStandings, bestThirds) : null;
+    const teamB = sideBConfirmed ? resolveR32Slot(bracket.sideB, groupStandings, bestThirds) : null;
+
+    ops.push(db.match.update({
+      where: { id: bracket.id },
+      data: {
+        teamAName: teamA?.name ?? null,
+        teamAFlag: teamA?.flag ?? null,
+        teamBName: teamB?.name ?? null,
+        teamBFlag: teamB?.flag ?? null,
+        argentina: teamA?.name === 'Argentina' || teamB?.name === 'Argentina',
+      },
+    }));
   }
 
   await Promise.all(ops);
