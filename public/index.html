@@ -104,8 +104,17 @@
       <!-- COLUMNA PRINCIPAL -->
       <div>
 
+        <!-- PARTIDOS EN VIVO -->
+        <div id="live-section" style="display:none">
+          <div class="section-title">
+            <span>🔴 En Vivo</span>
+            <a href="/matches" onclick="sessionStorage.setItem('matchFilter','LIVE')">Ver en partidos →</a>
+          </div>
+          <div id="live-matches"></div>
+        </div>
+
         <!-- PRÓXIMOS PARTIDOS -->
-        <div class="section-title">
+        <div class="section-title" id="next-title">
           Próximos Partidos
           <a href="/matches">Ver todos →</a>
         </div>
@@ -294,15 +303,51 @@ api.groups.mine().then(groups => {
     </div>`).join('');
 }).catch(() => { document.getElementById('dash-groups').innerHTML = ''; });
 
-// Próximos partidos (los pronosticables con estado)
+// Partidos en vivo + próximos
 let dashMatches = [], dashPreds = {};
-Promise.all([api.matches.all('?status=UPCOMING'), api.predictions.mine()]).then(([ms, ps]) => {
-  dashMatches = ms;
+Promise.all([
+  api.matches.all('?status=LIVE'),
+  api.matches.all('?status=UPCOMING'),
+  api.predictions.mine()
+]).then(([live, upcoming, ps]) => {
   dashPreds = Object.fromEntries(ps.map(p => [p.matchId, p]));
-  renderNextMatches(ms, dashPreds);
+  dashMatches = upcoming;
+
+  // Sección en vivo
+  if (live.length) {
+    document.getElementById('live-section').style.display = '';
+    renderLiveMatches(live, dashPreds);
+  }
+  renderNextMatches(upcoming, dashPreds);
 }).catch(() => {
   document.getElementById('next-matches').innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>Error al cargar</p></div>';
 });
+
+function renderLiveMatches(matches, preds) {
+  const el = document.getElementById('live-matches');
+  el.innerHTML = `<div class="matches-grid">${matches.map(m => {
+    const pred = preds[m.id];
+    const hasScore = m.resultA !== null && m.resultB !== null;
+    return `<div class="fixture-card live-match ${m.argentina?'argentina':''} ${m.featured?'featured':''}">
+      <div class="fc-head"><div class="fc-badges">
+        <span class="badge badge-live">🔴 En Vivo</span>
+        ${m.groupName ? `<span class="badge badge-group">Grupo ${m.groupName}</span>` : ''}
+        ${pred ? `<span class="badge badge-finished" style="background:rgba(16,185,129,.1);color:var(--green);border-color:var(--green)">🎯 ${pred.scoreA}—${pred.scoreB}</span>` : ''}
+      </div></div>
+      <div class="fc-body">
+        <div class="fc-team-home"><div class="fc-code">${teamCode(m.teamAFlag)}</div><div class="fc-flag-sm">${m.teamAFlag}</div><div class="fc-name">${m.teamAName}</div></div>
+        <div class="fc-vs-block">
+          ${hasScore
+            ? `<div class="fc-score-disp">${m.resultA} - ${m.resultB}</div>`
+            : `<div style="font-size:.75rem;font-weight:700;color:var(--red)">🔴 EN VIVO</div>`}
+        </div>
+        <div class="fc-team-away"><div class="fc-code">${teamCode(m.teamBFlag)}</div><div class="fc-flag-sm">${m.teamBFlag}</div><div class="fc-name">${m.teamBName}</div></div>
+      </div>
+      <div class="fc-foot"><span class="fc-venue">🕐 ${Fmt.time(m.date)} &nbsp; 📍 ${m.city || ''}</span></div>
+    </div>`;
+  }).join('')}</div>`;
+  renderEmojis(el);
+}
 
 function renderNextMatches(matches, preds) {
   const el = document.getElementById('next-matches');

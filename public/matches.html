@@ -75,6 +75,7 @@
       <button class="tab-btn" onclick="setFilter(this,'CUARTOS')">Cuartos</button>
       <button class="tab-btn" onclick="setFilter(this,'SEMIFINAL')">Semis</button>
       <button class="tab-btn" onclick="setFilter(this,'FINAL')">🏆 Final</button>
+      <button class="tab-btn" onclick="setFilter(this,'LIVE')">🔴 En Vivo</button>
       <button class="tab-btn" onclick="setFilter(this,'UPCOMING')">⏱ Próximos</button>
       <button class="tab-btn" onclick="setFilter(this,'FINISHED')">✅ Finalizados</button>
       <button class="tab-btn" onclick="setFilter(this,'notify')">🔔 Mis alertas</button>
@@ -153,7 +154,16 @@ async function loadAll() {
   const [matches, preds] = await Promise.all([api.matches.all(), api.predictions.mine()]);
   allMatches = matches;
   myPredictions = Object.fromEntries(preds.map(p => [p.matchId, p]));
-  renderMatches();
+
+  // Si el index redirigió con filtro LIVE, aplicarlo automáticamente
+  const pending = sessionStorage.getItem('matchFilter');
+  if (pending) {
+    sessionStorage.removeItem('matchFilter');
+    const btn = [...document.querySelectorAll('.tab-btn')].find(b => b.textContent.includes('En Vivo'));
+    if (btn) setFilter(btn, pending);
+  } else {
+    renderMatches();
+  }
   scheduleRefresh();
 }
 
