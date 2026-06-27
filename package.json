@@ -10,7 +10,8 @@
     "db:push": "npx prisma db push",
     "db:seed": "node prisma/seed.js",
     "db:studio": "npx prisma studio",
-    "db:generate": "npx prisma generate"
+    "db:generate": "npx prisma generate",
+    "test": "node --test test/scoring.test.js test/advancement.test.js"
   },
   "dependencies": {
     "@fastify/cors": "^9.0.1",

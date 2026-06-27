@@ -1,0 +1,182 @@
+'use strict';
+
+const { test } = require('node:test');
+const assert   = require('node:assert/strict');
+const {
+  computeBestThirds,
+  computeThirdAssignments,
+  advanceKnockoutMatch,
+  R32_BRACKET,
+} = require('../src/services/AdvancementService');
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+function team(name, pts, gd = 0, gf = 0) {
+  return { name, pts, gd, gf, pj: 3, pg: 0, pe: 0, pp: 0, gc: 0, flag: '🏳️' };
+}
+
+// Mock db factory: findUnique devuelve matches por id, update los registra
+function mockDb(matchMap) {
+  const updates = [];
+  return {
+    updates,
+    match: {
+      findUnique: async ({ where }) => matchMap[where.id] ?? null,
+      update: async ({ where, data }) => {
+        updates.push({ id: where.id, data });
+        return {};
+      },
+    },
+  };
+}
+
+// ── computeBestThirds ──────────────────────────────────────────────────────
+
+test('computeBestThirds: ordena por pts → gd → gf', () => {
+  const standings = {
+    A: [team('1A', 9), team('2A', 6), team('3A', 3, 1, 3)],
+    B: [team('1B', 9), team('2B', 6), team('3B', 3, 1, 4)], // más gf que 3A
+    C: [team('1C', 7), team('2C', 5), team('3C', 4)],        // más pts
+  };
+  const thirds = computeBestThirds(standings);
+  assert.equal(thirds[0].name, '3C'); // 4 pts
+  assert.equal(thirds[1].name, '3B'); // 3 pts, gf=4
+  assert.equal(thirds[2].name, '3A'); // 3 pts, gf=3
+});
+
+test('computeBestThirds: ignora grupos sin partidos jugados (pj=0)', () => {
+  const standings = {
+    A: [team('1A', 9), team('2A', 6), { ...team('3A', 0), pj: 0 }],
+    B: [team('1B', 9), team('2B', 6), team('3B', 3)],
+  };
+  const thirds = computeBestThirds(standings);
+  assert.equal(thirds.length, 1);
+  assert.equal(thirds[0].name, '3B');
+});
+
+// ── computeThirdAssignments ────────────────────────────────────────────────
+
+test('computeThirdAssignments: retorna vacío si no todos los grupos terminaron', () => {
+  const standings = { A: [team('1A', 9), team('2A', 6), team('3A', 3)] };
+  const result = computeThirdAssignments(standings, false);
+  assert.deepEqual(result, {});
+});
+
+test('computeThirdAssignments: asigna cada tercero a un único slot', () => {
+  // Construir standings con los 12 grupos del Mundial 2026
+  const groupLetters = 'ABCDEFGHIJKL'.split('');
+  const standings = {};
+  groupLetters.forEach((g, i) => {
+    standings[g] = [
+      team(`1${g}`, 9),
+      team(`2${g}`, 6),
+      team(`3${g}`, i + 1), // pts distintos para facilitar orden determinístico
+    ];
+  });
+
+  const assignments = computeThirdAssignments(standings, true);
+  const assignedGroups = Object.values(assignments).map(t => t.group);
+
+  // Cada grupo aparece a lo sumo una vez en las asignaciones
+  const unique = new Set(assignedGroups);
+  assert.equal(unique.size, assignedGroups.length, 'no debe haber grupos duplicados');
+
+  // El slot correcto del R32_BRACKET respeta eligibleGroups
+  for (const [key, assignedTeam] of Object.entries(assignments)) {
+    // key = "R32-M1_sideA"
+    const [bracketId, sideKey] = key.split('_');
+    const bracket = R32_BRACKET.find(b => b.id === bracketId);
+    assert.ok(bracket, `bracket ${bracketId} debe existir`);
+    const slot = bracket[sideKey];
+    assert.equal(slot.type, 'third');
+    assert.ok(
+      slot.eligibleGroups.includes(assignedTeam.group),
+      `grupo ${assignedTeam.group} no es elegible para ${key}`
+    );
+  }
+});
+
+// ── advanceKnockoutMatch ───────────────────────────────────────────────────
+
+test('ganador por goles avanza al siguiente partido', async () => {
+  // R32-M1 winner → R16-M1 sideA
+  const db = mockDb({
+    'R32-M1': { id: 'R32-M1', resultA: 2, resultB: 0, penaltyA: null, penaltyB: null, teamAName: 'Argentina', teamAFlag: '🇦🇷', teamBName: 'Francia', teamBFlag: '🇫🇷' },
+    'R16-M1': { id: 'R16-M1', teamAName: null, teamBName: 'Alemania' },
+  });
+
+  const result = await advanceKnockoutMatch(db, 'R32-M1');
+
+  assert.ok(result, 'debe retornar resultado');
+  assert.equal(result.winner.name, 'Argentina');
+  assert.equal(result.loser.name, 'Francia');
+
+  const r16update = db.updates.find(u => u.id === 'R16-M1');
+  assert.ok(r16update, 'debe haber actualizado R16-M1');
+  assert.equal(r16update.data.teamAName, 'Argentina');
+});
+
+test('empate sin penaltyA/B → no avanza (partido aún no tiene definición)', async () => {
+  const db = mockDb({
+    'R32-M1': { id: 'R32-M1', resultA: 1, resultB: 1, penaltyA: null, penaltyB: null, teamAName: 'Argentina', teamAFlag: '🇦🇷', teamBName: 'Francia', teamBFlag: '🇫🇷' },
+  });
+
+  const result = await advanceKnockoutMatch(db, 'R32-M1');
+  assert.equal(result, null);
+  assert.equal(db.updates.length, 0);
+});
+
+test('empate con penales → ganador por penales avanza', async () => {
+  // Argentina gana 4-2 en penales después de 1-1 en tiempo reglamentario+extra
+  const db = mockDb({
+    'R32-M1': { id: 'R32-M1', resultA: 1, resultB: 1, penaltyA: 4, penaltyB: 2, teamAName: 'Argentina', teamAFlag: '🇦🇷', teamBName: 'Francia', teamBFlag: '🇫🇷' },
+    'R16-M1': { id: 'R16-M1', teamAName: null, teamBName: 'Alemania' },
+  });
+
+  const result = await advanceKnockoutMatch(db, 'R32-M1');
+
+  assert.ok(result, 'debe retornar resultado con datos de penales');
+  assert.equal(result.winner.name, 'Argentina');
+  assert.equal(result.loser.name, 'Francia');
+
+  const r16update = db.updates.find(u => u.id === 'R16-M1');
+  assert.ok(r16update, 'debe haber actualizado el próximo partido');
+  assert.equal(r16update.data.teamAName, 'Argentina');
+});
+
+test('perdedor en penales va al tercer puesto si corresponde', async () => {
+  // SF-M1 loser → TP-M1 sideA
+  const db = mockDb({
+    'SF-M1': { id: 'SF-M1', resultA: 0, resultB: 0, penaltyA: 3, penaltyB: 5, teamAName: 'Brasil', teamAFlag: '🇧🇷', teamBName: 'Francia', teamBFlag: '🇫🇷' },
+    'TP-M1': { id: 'TP-M1', teamAName: null, teamBName: null },
+    'FINAL-M1': { id: 'FINAL-M1', teamAName: null, teamBName: null },
+  });
+
+  const result = await advanceKnockoutMatch(db, 'SF-M1');
+
+  assert.ok(result);
+  assert.equal(result.winner.name, 'Francia'); // más penales
+  assert.equal(result.loser.name, 'Brasil');
+
+  const tpUpdate = db.updates.find(u => u.id === 'TP-M1');
+  assert.ok(tpUpdate, 'Brasil debe ir al tercer puesto');
+  assert.equal(tpUpdate.data.teamAName, 'Brasil');
+
+  const finalUpdate = db.updates.find(u => u.id === 'FINAL-M1');
+  assert.ok(finalUpdate, 'Francia debe ir a la final');
+  assert.equal(finalUpdate.data.teamAName, 'Francia');
+});
+
+test('match no encontrado → retorna null', async () => {
+  const db = mockDb({});
+  const result = await advanceKnockoutMatch(db, 'inexistente');
+  assert.equal(result, null);
+});
+
+test('match sin resultado → retorna null', async () => {
+  const db = mockDb({
+    'R32-M1': { id: 'R32-M1', resultA: null, resultB: null, penaltyA: null, penaltyB: null },
+  });
+  const result = await advanceKnockoutMatch(db, 'R32-M1');
+  assert.equal(result, null);
+});
