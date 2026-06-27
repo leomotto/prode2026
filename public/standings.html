@@ -19,6 +19,10 @@
 .st-table th:first-child{text-align:left}
 .st-table td{padding:.6rem .6rem;font-size:.82rem;text-align:center;border-top:1px solid var(--border);vertical-align:middle}
 .st-table td:first-child{text-align:left}
+@media(max-width:480px){
+  .st-table th,.st-table td{padding:.45rem .35rem;font-size:.75rem}
+  .st-col-wdl{display:none}
+}
 .st-table tbody tr:hover{background:var(--surface-2)}
 .st-team-cell{display:flex;align-items:center;gap:.5rem}
 .st-flag{font-size:1.2rem;line-height:1;flex-shrink:0}
@@ -326,11 +330,10 @@ function renderGroup({ group, teams }, bestThirds = new Set()) {
           <tr>
             <th style="width:40%">Equipo</th>
             <th title="Partidos Jugados">PJ</th>
-            <th title="Ganados">G</th>
-            <th title="Empatados">E</th>
-            <th title="Perdidos">P</th>
-            <th title="Goles a Favor">GF</th>
-            <th title="Goles en Contra">GC</th>
+            <th class="st-col-wdl" title="Ganados">G</th>
+            <th class="st-col-wdl" title="Empatados">E</th>
+            <th class="st-col-wdl" title="Perdidos">P</th>
+            <th title="Goles a Favor : Goles en Contra">GF:GC</th>
             <th title="Diferencia de Gol">DG</th>
             <th title="Puntos"><strong>Pts</strong></th>
           </tr>
@@ -350,11 +353,10 @@ function renderGroup({ group, teams }, bestThirds = new Set()) {
                 </div>
               </td>
               <td>${t.pj}</td>
-              <td>${t.pg}</td>
-              <td>${t.pe}</td>
-              <td>${t.pp}</td>
-              <td>${t.gf}</td>
-              <td>${t.gc}</td>
+              <td class="st-col-wdl">${t.pg}</td>
+              <td class="st-col-wdl">${t.pe}</td>
+              <td class="st-col-wdl">${t.pp}</td>
+              <td style="font-size:.78rem;white-space:nowrap">${t.gf}:${t.gc}</td>
               <td style="color:${t.gd>0?'var(--green)':t.gd<0?'var(--red)':'var(--text-dim)'}">${t.gd>0?'+':''}${t.gd}</td>
               <td class="st-pts">${t.pts}</td>
             </tr>`;
