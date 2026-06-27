@@ -173,7 +173,7 @@ async function adminRoutes(fastify) {
 
     const updatedPreds = await fastify.db.prediction.findMany({
       where: { matchId: id },
-      select: { userId: true, scoreA: true, scoreB: true, pointsTotal: true },
+      select: { userId: true, scoreA: true, scoreB: true, pointsBase: true, pointsTotal: true },
     });
     const userIds = [...new Set(updatedPreds.map(p => p.userId))];
     const users = await fastify.db.user.findMany({
