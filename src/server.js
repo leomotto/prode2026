@@ -157,109 +157,22 @@ async function bootstrap() {
     }
   }, 60_000); // cada 60 segundos
 
-  // ── Job: Sincronización automática de resultados (Fase 3) ──
-  // Intervalo de 15 min (plan Free: 100 req/día). Solo llama a la API externa si hay partidos LIVE.
-  setInterval(async () => {
+  // ── Job: Sincronización automática de resultados ──────────
+  // Plan Free: 100 req/día → intervalo 15 min. Solo corre si hay partidos LIVE.
+  // Se ejecuta también de inmediato al arrancar para no esperar 15 min post-deploy.
+  const { runSync } = require('./services/SyncService');
+  const doSync = async () => {
     if (!config.API_FOOTBALL_KEY) return;
     try {
-      // 1. Solo proceder si hay al menos un partido LIVE en nuestra BD
-      const liveMatches = await fastify.db.match.findMany({ where: { status: 'LIVE' } });
-      if (!liveMatches.length) return;
-
-      // API-Football indexa por fecha UTC. Usar UTC evita el bug donde partidos
-      // que empiezan a las 21-23hs Argentina (00-02hs UTC del día siguiente)
-      // no aparecen al buscar por fecha Argentina.
-      const dateStr = new Date().toISOString().slice(0, 10);
-      const activeMatches = liveMatches;
-
-      // 2. Fetch todos los fixtures del día (UTC). Plan Free no permite combinar
-      //    ?date con ?league, así que se filtra por equipo en el matching local.
-      const response = await fetch(`https://v3.football.api-sports.io/fixtures?date=${dateStr}`, {
-        headers: {
-          'x-rapidapi-host': 'v3.football.api-sports.io',
-          'x-apisports-key': config.API_FOOTBALL_KEY
-        }
-      });
-      const data = await response.json();
-      if (!data.response || data.errors?.length) {
-        fastify.log.warn('Error from api-football: ' + JSON.stringify(data.errors));
-        return;
-      }
-
-      const MatchService = require('./services/MatchService');
-
-      // Mapa ES→EN para matching contra api-football (usa nombres en inglés)
-      const TEAM_EN = {
-        'ALEMANIA':'GERMANY','ARABIA SAUDITA':'SAUDI ARABIA','ARGELIA':'ALGERIA',
-        'BÉLGICA':'BELGIUM','BOSNIA':'BOSNIA','BRASIL':'BRAZIL',
-        'CABO VERDE':'CAPE VERDE','CANADÁ':'CANADA','CHEQUIA':'CZECH REPUBLIC',
-        'COREA DEL SUR':'SOUTH KOREA','COSTA DE MARFIL':'IVORY COAST',
-        'CURAZAO':'CURAÇAO','EGIPTO':'EGYPT','EE.UU.':'USA',
-        'ESCOCIA':'SCOTLAND','ESPAÑA':'SPAIN','FRANCIA':'FRANCE',
-        'HAITÍ':'HAITI','INGLATERRA':'ENGLAND','IRÁN':'IRAN',
-        'JAPÓN':'JAPAN','JORDANIA':'JORDAN','MARRUECOS':'MOROCCO',
-        'MÉXICO':'MEXICO','NORUEGA':'NORWAY','NUEVA ZELANDA':'NEW ZEALAND',
-        'PAÍSES BAJOS':'NETHERLANDS','POLONIA':'POLAND',
-        'R.D. CONGO':'DR CONGO','SUECIA':'SWEDEN','SUIZA':'SWITZERLAND',
-        'SUDÁFRICA':'SOUTH AFRICA','TÚNEZ':'TUNISIA','TURQUÍA':'TÜRKIYE',
-      };
-      const toEN = (name) => TEAM_EN[name.toUpperCase()] || name.toUpperCase();
-
-      for (const localMatch of activeMatches) {
-        const nameA = toEN(localMatch.teamAName || '');
-        const nameB = toEN(localMatch.teamBName || '');
-        const apiFixture = data.response.find(f => {
-          const home = f.teams.home.name.toUpperCase();
-          const away = f.teams.away.name.toUpperCase();
-          return (home.includes(nameA) || nameA.includes(home)) &&
-                 (away.includes(nameB) || nameB.includes(away));
-        });
-
-        if (!apiFixture) continue;
-
-        const statusShort = apiFixture.fixture.status.short; // "1H", "HT", "2H", "FT", "AET", "PEN"
-        const goalsHome = apiFixture.goals.home;
-        const goalsAway = apiFixture.goals.away;
-
-        // Is it finished?
-        const isFinished = ['FT', 'AET', 'PEN'].includes(statusShort);
-
-        // Sincronizar ÚNICAMENTE si el partido está actualmente EN VIVO en nuestra base de datos
-        if (localMatch.status === 'LIVE') {
-          if (goalsHome !== null && goalsAway !== null) {
-            await fastify.db.match.update({
-              where: { id: localMatch.id },
-              data: {
-                resultA: goalsHome,
-                resultB: goalsAway,
-                status: isFinished ? 'FINISHED' : 'LIVE'
-              }
-            });
-
-            if (isFinished && localMatch.status !== 'FINISHED') {
-              await MatchService.calculatePointsForMatch(fastify.db, localMatch.id);
-              // Propagate bracket advancement
-              try {
-                const { advanceGroupsToR32, advanceKnockoutMatch } = require('./services/AdvancementService');
-                if (localMatch.phase === 'GRUPOS') {
-                  await advanceGroupsToR32(fastify.db);
-                } else {
-                  await advanceKnockoutMatch(fastify.db, localMatch.id);
-                }
-              } catch (advErr) {
-                fastify.log.warn('Auto-sync advancement error: ' + advErr.message);
-              }
-              fastify.log.info(`✅ Auto-Sync Finalizado: ${localMatch.teamAName} vs ${localMatch.teamBName} (${goalsHome}-${goalsAway})`);
-            } else {
-              fastify.log.info(`⚽ Auto-Sync En Vivo: ${localMatch.teamAName} vs ${localMatch.teamBName} (${goalsHome}-${goalsAway})`);
-            }
-          }
-        }
-      }
+      const result = await runSync(fastify.db, config.API_FOOTBALL_KEY, fastify.log);
+      if (result.updated > 0)
+        fastify.log.info(`🔄 Sync: ${result.updated} partidos actualizados, ${result.finished} finalizados`);
     } catch (e) {
       fastify.log.warn('Auto-sync error: ' + e.message);
     }
-  }, 15 * 60_000); // cada 15 minutos (3 checks por tiempo; plan Free: 100 req/día; solo corre con partidos LIVE)
+  };
+  doSync(); // inmediato al arrancar
+  setInterval(doSync, 15 * 60_000);
 
 
 }

@@ -57,6 +57,7 @@ const api = {
     setResult:    (id, b)  => api.post(`/admin/matches/${id}/result`, b),
     resetMatch:   (id)     => api.post(`/admin/matches/${id}/reset`),
     resetAllMatches:()     => api.post('/admin/matches/reset-all'),
+    syncNow:       ()      => api.post('/admin/sync'),
     users:        ()       => api.get('/admin/users'),
     updateUser:   (id, b)  => api.patch(`/admin/users/${id}`, b),
     getUserPredictions: (id) => api.get(`/admin/users/${id}/predictions`),
@@ -397,7 +398,7 @@ if (window.location.pathname !== '/login' && Auth.isLogged()) {
 
 // ── VERSION FOOTER & TURNSTILE CENTERING ─────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  const version = 'v1.4.8';
+  const version = 'v31f03d8';
   
   // 1. Center Turnstile containers programmatically
   const tsContainers = document.querySelectorAll('#ts-login, #ts-register');

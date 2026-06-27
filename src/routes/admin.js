@@ -119,6 +119,15 @@ async function adminRoutes(fastify) {
     return { success: true, ...result };
   });
 
+  // POST /api/admin/sync — forzar sincronización inmediata con api-football
+  fastify.post('/sync', { preHandler: fastify.adminOnly }, async (request, reply) => {
+    const config = require('../config');
+    if (!config.API_FOOTBALL_KEY) return reply.status(503).send({ error: 'API_FOOTBALL_KEY no configurada' });
+    const { runSync } = require('../services/SyncService');
+    const result = await runSync(fastify.db, config.API_FOOTBALL_KEY, fastify.log);
+    return { success: true, ...result };
+  });
+
   // POST /api/admin/matches/:id/result — cargar resultado y calcular puntos
   fastify.post('/matches/:id/result', {
     preHandler: fastify.adminOnly,

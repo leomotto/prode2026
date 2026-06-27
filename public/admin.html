@@ -77,7 +77,8 @@
           <button class="tab-btn" onclick="filterAdminStatus(this,'LIVE')">🔴 En Vivo</button>
           <button class="tab-btn" onclick="filterAdminStatus(this,'FINISHED')">✅ Finalizados</button>
         </div>
-        <div style="display:flex;gap:.5rem">
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+          <button class="btn btn-sm btn-primary" id="btn-sync" onclick="forceSyncNow()">🔄 Sincronizar ahora</button>
           <button class="btn btn-sm" style="background:rgba(239,68,68,.1);color:var(--red)" onclick="resetAllMatches()">⚠️ Resetear Todos</button>
           <input type="text" class="form-input" id="admin-search" placeholder="Buscar equipo..." style="width:180px" oninput="filterBySearch(this.value)">
         </div>
@@ -631,6 +632,20 @@ async function saveResult() {
     closeModal('modal-result');
     loadAdminData();
   } catch (err) { Toast.error('Error', err.message); }
+}
+
+async function forceSyncNow() {
+  const btn = document.getElementById('btn-sync');
+  btn.disabled = true; btn.textContent = '⏳ Sincronizando...';
+  try {
+    const res = await api.admin.syncNow();
+    Toast.success('Sync completado', `${res.updated} actualizados, ${res.finished} finalizados, ${res.noMatch} sin match`);
+    if (res.updated > 0) loadAdminData();
+  } catch(e) {
+    Toast.error('Error en sync', e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = '🔄 Sincronizar ahora';
+  }
 }
 
 async function resetAllMatches() {
