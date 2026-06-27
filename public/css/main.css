@@ -449,4 +449,34 @@ input,select,textarea{font-family:inherit}
   display: inline-block;
 }
 
+/* ── VIEW TRANSITIONS — navegación suave entre páginas ────────────────
+   Requiere Chrome 111+ / Safari 18.2+ / Edge 111+.
+   En browsers sin soporte simplemente no aplica (progressive enhancement).
+   ─────────────────────────────────────────────────────────────────── */
+@view-transition {
+  navigation: auto;
+}
+
+/* El nav queda "anclado": no flashea al cambiar de página */
+nav.nav {
+  view-transition-name: site-nav;
+}
+
+/* Contenido: fade rápido salida / entrada */
+::view-transition-old(root) {
+  animation: 120ms ease-out vt-fade-out;
+}
+::view-transition-new(root) {
+  animation: 180ms ease-in vt-fade-in;
+}
+
+/* El nav no anima, se mantiene fijo visualmente */
+::view-transition-old(site-nav),
+::view-transition-new(site-nav) {
+  animation: none;
+}
+
+@keyframes vt-fade-out { to   { opacity: 0; transform: translateY(-4px); } }
+@keyframes vt-fade-in  { from { opacity: 0; transform: translateY(4px);  } }
+
 

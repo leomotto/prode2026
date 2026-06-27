@@ -396,6 +396,22 @@ if (window.location.pathname !== '/login' && Auth.isLogged()) {
   document.addEventListener('DOMContentLoaded', () => HelpWidget.init());
 }
 
+/* ── PREFETCH ON HOVER — navegación casi instantánea ────────────────
+   Al pasar el mouse sobre un link interno, precarga la página en caché.
+   Compatible con todos los browsers; si no soportan prefetch, no hace nada.
+   ─────────────────────────────────────────────────────────────────── */
+document.addEventListener('mouseover', e => {
+  const a = e.target.closest('a[href]');
+  if (!a || a._prefetched) return;
+  const url = a.href;
+  if (!url.startsWith(location.origin + '/') || url === location.href) return;
+  a._prefetched = true;
+  const link = document.createElement('link');
+  link.rel = 'prefetch';
+  link.href = url;
+  document.head.appendChild(link);
+}, { passive: true });
+
 // ── VERSION FOOTER & TURNSTILE CENTERING ─────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   const version = 'v31f03d8';
