@@ -449,18 +449,13 @@ input,select,textarea{font-family:inherit}
   display: inline-block;
 }
 
-/* ── VIEW TRANSITIONS — navegación suave entre páginas ────────────────
+/* ── VIEW TRANSITIONS — header fijo, solo refresca el contenido ────────
+   El root (que incluye el nav fijo) NO anima → el header "persiste".
+   Solo .page-wrapper hace fade, posicionado debajo del nav.
    Requiere Chrome 111+ / Safari 18.2+ / Edge 111+.
-   En browsers sin soporte simplemente no aplica (progressive enhancement).
-
-   IMPORTANTE:
-   - NO usar view-transition-name en nav.nav (position:fixed + anchoring
-     crea artefactos: el snapshot viejo y nuevo se superponen).
-   - NO usar translateY (crea un hueco visible entre nav fijo y contenido).
-   - Agregar background en html para evitar flash blanco del browser.
    ─────────────────────────────────────────────────────────────────── */
 
-/* Fondo del html evita flash blanco durante la transición */
+/* Fondo del html evita flash blanco del browser durante la transición */
 html { background: #f0f4f8; }
 [data-theme="dark"] html { background: #0f1117; }
 
@@ -468,12 +463,22 @@ html { background: #f0f4f8; }
   navigation: auto;
 }
 
-/* Cross-fade simple: sin translateY, sin anchoring del nav */
-::view-transition-old(root) {
-  animation: 90ms linear both vt-fade-out;
-}
+/* El nav es parte del root y no se mueve — solo el contenido transiciona */
+::view-transition-old(root),
 ::view-transition-new(root) {
-  animation: 110ms linear both vt-fade-in;
+  animation: none;
+}
+
+/* Solo el contenido debajo del nav hace fade */
+.page-wrapper {
+  view-transition-name: page-content;
+}
+
+::view-transition-old(page-content) {
+  animation: 100ms linear both vt-fade-out;
+}
+::view-transition-new(page-content) {
+  animation: 130ms linear both vt-fade-in;
 }
 
 @keyframes vt-fade-out { to   { opacity: 0; } }
