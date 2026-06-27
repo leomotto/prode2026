@@ -19,15 +19,9 @@ const TEAM_EN = {
 const toEN = (name) => TEAM_EN[name.toUpperCase()] || name.toUpperCase();
 
 /**
- * Sincroniza resultados de partidos LIVE contra la API de api-football.
- * Retorna un resumen { updated, finished, noMatch, skipped }.
+ * Fetch fixtures from API-Football for a given UTC date.
  */
-async function runSync(db, apiKey, log) {
-  const liveMatches = await db.match.findMany({ where: { status: 'LIVE' } });
-  if (!liveMatches.length) return { updated: 0, finished: 0, noMatch: 0, skipped: 0 };
-
-  // API-Football indexa por fecha UTC
-  const dateStr = new Date().toISOString().slice(0, 10);
+async function fetchFixturesByDate(dateStr, apiKey) {
   const response = await fetch(`https://v3.football.api-sports.io/fixtures?date=${dateStr}`, {
     headers: {
       'x-rapidapi-host': 'v3.football.api-sports.io',
@@ -35,8 +29,45 @@ async function runSync(db, apiKey, log) {
     }
   });
   const data = await response.json();
-  if (!data.response || data.errors?.length) {
+  if (!data.response || (data.errors && Object.keys(data.errors).length)) {
     throw new Error('api-football error: ' + JSON.stringify(data.errors));
+  }
+  return data.response;
+}
+
+/**
+ * Sincroniza resultados de partidos LIVE contra la API de api-football.
+ *
+ * Fix medianoche UTC: agrupa los partidos LIVE por su fecha UTC de inicio
+ * y hace una llamada por fecha única. Evita que partidos que empezaron
+ * el día anterior y siguen LIVE no sean encontrados cuando la fecha local
+ * cambia a medianoche UTC.
+ *
+ * Fix penales: cuando el status de la API es 'PEN', guarda también
+ * penaltyA/penaltyB para que AdvancementService pueda determinar el
+ * ganador en bracket aun con resultado empatado tras prórroga.
+ *
+ * Retorna { updated, finished, noMatch, liveChecked }.
+ */
+async function runSync(db, apiKey, log) {
+  const liveMatches = await db.match.findMany({ where: { status: 'LIVE' } });
+  if (!liveMatches.length) return { updated: 0, finished: 0, noMatch: 0, liveChecked: 0 };
+
+  // Agrupar partidos LIVE por la fecha UTC de su inicio programado.
+  // Caso normal: todos en la misma fecha → 1 llamada API.
+  // Caso medianoche: partido de ayer todavía en curso → 2 llamadas.
+  const dateGroups = new Map();
+  for (const m of liveMatches) {
+    const dateStr = new Date(m.date).toISOString().slice(0, 10);
+    if (!dateGroups.has(dateStr)) dateGroups.set(dateStr, []);
+    dateGroups.get(dateStr).push(m);
+  }
+
+  // Recolectar todos los fixtures en un único array (sin duplicados relevantes)
+  const allFixtures = [];
+  for (const dateStr of dateGroups.keys()) {
+    const fixtures = await fetchFixturesByDate(dateStr, apiKey);
+    allFixtures.push(...fixtures);
   }
 
   const MatchService = require('./MatchService');
@@ -47,14 +78,18 @@ async function runSync(db, apiKey, log) {
   for (const localMatch of liveMatches) {
     const nameA = toEN(localMatch.teamAName || '');
     const nameB = toEN(localMatch.teamBName || '');
-    const apiFixture = data.response.find(f => {
+    const apiFixture = allFixtures.find(f => {
       const home = f.teams.home.name.toUpperCase();
       const away = f.teams.away.name.toUpperCase();
       return (home.includes(nameA) || nameA.includes(home)) &&
              (away.includes(nameB) || nameB.includes(away));
     });
 
-    if (!apiFixture) { noMatch++; continue; }
+    if (!apiFixture) {
+      noMatch++;
+      if (log) log.warn(`⚠️ Sync: no se encontró fixture para ${localMatch.teamAName} vs ${localMatch.teamBName}`);
+      continue;
+    }
 
     const statusShort = apiFixture.fixture.status.short;
     const goalsHome   = apiFixture.goals.home;
@@ -63,10 +98,19 @@ async function runSync(db, apiKey, log) {
 
     if (goalsHome === null || goalsAway === null) continue;
 
-    await db.match.update({
-      where: { id: localMatch.id },
-      data: { resultA: goalsHome, resultB: goalsAway, status: isFinished ? 'FINISHED' : 'LIVE' }
-    });
+    // Cuando el partido termina en penales, guardar los goles de la tanda
+    // para que AdvancementService pueda determinar el ganador del bracket.
+    const matchData = {
+      resultA: goalsHome,
+      resultB: goalsAway,
+      status: isFinished ? 'FINISHED' : 'LIVE',
+    };
+    if (statusShort === 'PEN') {
+      matchData.penaltyA = apiFixture.score?.penalty?.home ?? null;
+      matchData.penaltyB = apiFixture.score?.penalty?.away ?? null;
+    }
+
+    await db.match.update({ where: { id: localMatch.id }, data: matchData });
     updated++;
 
     if (isFinished) {
@@ -81,7 +125,10 @@ async function runSync(db, apiKey, log) {
         if (log) log.warn('Advancement error: ' + e.message);
       }
       finished++;
-      if (log) log.info(`✅ Sync Finalizado: ${localMatch.teamAName} vs ${localMatch.teamBName} (${goalsHome}-${goalsAway})`);
+      const suffix = statusShort === 'PEN'
+        ? ` (${goalsHome}-${goalsAway}, pen ${matchData.penaltyA}-${matchData.penaltyB})`
+        : ` (${goalsHome}-${goalsAway})`;
+      if (log) log.info(`✅ Sync Finalizado: ${localMatch.teamAName} vs ${localMatch.teamBName}${suffix}`);
     } else {
       if (log) log.info(`⚽ Sync En Vivo: ${localMatch.teamAName} vs ${localMatch.teamBName} (${goalsHome}-${goalsAway})`);
     }

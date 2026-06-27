@@ -81,8 +81,10 @@ model Match {
   venue       String
   city        String
   status      MatchStatus @default(UPCOMING)
-  resultA     Int?        // goles equipo A
-  resultB     Int?        // goles equipo B
+  resultA     Int?        // goles equipo A (incluye prórroga)
+  resultB     Int?        // goles equipo B (incluye prórroga)
+  penaltyA    Int?        // goles equipo A en penales (solo partidos PEN)
+  penaltyB    Int?        // goles equipo B en penales (solo partidos PEN)
   featured    Boolean     @default(false) // destacado desde admin
   argentina   Boolean     @default(false) // partido de Argentina
   createdAt   DateTime    @default(now())

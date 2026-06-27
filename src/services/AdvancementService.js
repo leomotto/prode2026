@@ -185,12 +185,28 @@ async function advanceGroupsToR32(db) {
 async function advanceKnockoutMatch(db, finishedMatchId) {
   const match = await db.match.findUnique({ where: { id: finishedMatchId } });
   if (!match || match.resultA === null || match.resultB === null) return null;
-  if (match.resultA === match.resultB) return null;
 
-  const winner = match.resultA > match.resultB
+  // Determinar ganador considerando penales.
+  // En un partido que va a penales resultA === resultB (goles en 90+ET).
+  // El ganador se determina por penaltyA/penaltyB almacenados por SyncService.
+  let scoreA = match.resultA;
+  let scoreB = match.resultB;
+  if (scoreA === scoreB) {
+    if (match.penaltyA !== null && match.penaltyB !== null) {
+      // Usar marcador de penales para desempatar
+      scoreA = match.penaltyA;
+      scoreB = match.penaltyB;
+    } else {
+      // Sin datos de penales: no se puede determinar ganador aún
+      return null;
+    }
+  }
+  if (scoreA === scoreB) return null; // empate en penales (no debería ocurrir)
+
+  const winner = scoreA > scoreB
     ? { name: match.teamAName, flag: match.teamAFlag }
     : { name: match.teamBName, flag: match.teamBFlag };
-  const loser = match.resultA > match.resultB
+  const loser = scoreA > scoreB
     ? { name: match.teamBName, flag: match.teamBFlag }
     : { name: match.teamAName, flag: match.teamAFlag };
 
