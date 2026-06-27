@@ -361,24 +361,45 @@ loadAll().catch(() => {
   document.getElementById('matches-list').innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>Error al cargar. Recargá la página.</p></div>';
 });
 
-// Smart polling: 30s si hay LIVE, 60s si no
+// Polling solo durante partidos en vivo, cada 15 min alineado al inicio del partido.
+// Primer llamado a los 15 min de iniciado; sin partidos LIVE, no hay polling.
 let _refreshTimer;
 function scheduleRefresh() {
-  clearInterval(_refreshTimer);
-  const hasLive = allMatches.some(m => m.status === 'LIVE');
-  const interval = hasLive ? 30_000 : 60_000;
-  _refreshTimer = setInterval(async () => {
+  clearTimeout(_refreshTimer);
+
+  const liveMatches = allMatches.filter(m => m.status === 'LIVE');
+  if (!liveMatches.length) return;
+
+  const now = Date.now();
+  const INTERVAL = 15 * 60 * 1000;
+
+  let nextPollIn = Infinity;
+  for (const m of liveMatches) {
+    const start = new Date(m.date).getTime();
+    const elapsed = now - start;
+    if (elapsed < INTERVAL) {
+      // Partido empezó hace menos de 15 min: esperar al primer poll
+      nextPollIn = Math.min(nextPollIn, INTERVAL - elapsed);
+    } else {
+      // Próxima marca de 15 min desde el inicio del partido
+      const nextMark = (Math.floor(elapsed / INTERVAL) + 1) * INTERVAL;
+      nextPollIn = Math.min(nextPollIn, nextMark - elapsed);
+    }
+  }
+
+  if (!isFinite(nextPollIn) || nextPollIn <= 0) nextPollIn = INTERVAL;
+
+  _refreshTimer = setTimeout(async () => {
     try {
       const [matches, preds] = await Promise.all([api.matches.all(), api.predictions.mine()]);
       allMatches = matches;
       myPredictions = Object.fromEntries(preds.map(p => [p.matchId, p]));
       renderMatches();
-      scheduleRefresh(); // re-evaluar intervalo
     } catch { /* ignorar fallos de red */ }
-  }, interval);
+    scheduleRefresh();
+  }, nextPollIn);
 }
-scheduleRefresh();
-window.addEventListener('beforeunload', () => clearInterval(_refreshTimer));
+window.addEventListener('beforeunload', () => clearTimeout(_refreshTimer));
 
 
 </script>
