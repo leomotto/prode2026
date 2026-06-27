@@ -23,7 +23,7 @@
       <div><div>PRODE MUNDIAL</div><small>2026</small></div>
     </a>
     <div class="nav-links">
-      <a href="/" class="nav-link">🏠 Inicio</a>
+      <a href="/" class="nav-link active">🏠 Inicio</a>
       <a href="/matches" class="nav-link">📅 Partidos</a>
       <a href="/rankings" class="nav-link">🏅 Ranking</a>
       <a href="/standings" class="nav-link">⚽ Torneo</a>
@@ -48,8 +48,8 @@
 <div class="mobile-nav-drawer" id="mobile-nav-drawer">
   <a href="/" class="mobile-nav-link active" onclick="closeMobileMenu()">🏠 Inicio</a>
   <a href="/matches" class="mobile-nav-link" onclick="closeMobileMenu()">📅 Partidos</a>
-  <a href="/standings" class="mobile-nav-link" onclick="closeMobileMenu()">⚽ Torneo</a>
   <a href="/rankings" class="mobile-nav-link" onclick="closeMobileMenu()">🏅 Ranking</a>
+  <a href="/standings" class="mobile-nav-link" onclick="closeMobileMenu()">⚽ Torneo</a>
   <a href="/groups" class="mobile-nav-link" onclick="closeMobileMenu()">👥 Grupos</a>
   <a href="/rules" class="mobile-nav-link" onclick="closeMobileMenu()">📖 Reglamento</a>
   <hr class="mobile-nav-divider">
@@ -57,7 +57,7 @@
   <a href="/profile" class="mobile-nav-link" onclick="closeMobileMenu()">👤 Mi Perfil</a>
   <button class="mobile-nav-link" onclick="doLogout()">🚪 Salir</button>
   <hr class="mobile-nav-divider">
-  <button class="mobile-nav-link" onclick="Theme.toggle();this.previousElementSibling.previousElementSibling.previousElementSibling.previousElementSibling.previousElementSibling.textContent=Theme.isDark()?'☀️':'🌙'">🌙 Modo oscuro/claro</button>
+  <button class="mobile-nav-link" id="mobile-theme-btn" onclick="Theme.toggle();document.getElementById('mobile-theme-btn').textContent=Theme.isDark()?'☀️ Modo claro':'🌙 Modo oscuro'">🌙 Modo oscuro</button>
 </div>
 
 <div class="page-wrapper">
