@@ -158,7 +158,7 @@ async function bootstrap() {
   }, 60_000); // cada 60 segundos
 
   // ── Job: Sincronización automática de resultados (Fase 3) ──
-  // Intervalo de 10 min (plan Free: 100 req/día). Solo llama a la API externa si hay partidos LIVE.
+  // Intervalo de 15 min (plan Free: 100 req/día). Solo llama a la API externa si hay partidos LIVE.
   setInterval(async () => {
     if (!config.API_FOOTBALL_KEY) return;
     try {
@@ -166,11 +166,14 @@ async function bootstrap() {
       const liveMatches = await fastify.db.match.findMany({ where: { status: 'LIVE' } });
       if (!liveMatches.length) return;
 
-      const dateStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).format(new Date());
+      // API-Football indexa por fecha UTC. Usar UTC evita el bug donde partidos
+      // que empiezan a las 21-23hs Argentina (00-02hs UTC del día siguiente)
+      // no aparecen al buscar por fecha Argentina.
+      const dateStr = new Date().toISOString().slice(0, 10);
       const activeMatches = liveMatches;
 
-      // 2. Fetch fixtures from api-football for today
-      const response = await fetch(`https://v3.football.api-sports.io/fixtures?date=${dateStr}`, {
+      // 2. Fetch fixtures World Cup 2026 del día (UTC) desde api-football
+      const response = await fetch(`https://v3.football.api-sports.io/fixtures?date=${dateStr}&league=1&season=2026`, {
         headers: {
           'x-rapidapi-host': 'v3.football.api-sports.io',
           'x-apisports-key': config.API_FOOTBALL_KEY
