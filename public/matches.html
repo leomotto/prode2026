@@ -154,6 +154,7 @@ async function loadAll() {
   allMatches = matches;
   myPredictions = Object.fromEntries(preds.map(p => [p.matchId, p]));
   renderMatches();
+  scheduleRefresh();
 }
 
 function setFilter(btn, filter) {
