@@ -172,8 +172,9 @@ async function bootstrap() {
       const dateStr = new Date().toISOString().slice(0, 10);
       const activeMatches = liveMatches;
 
-      // 2. Fetch fixtures World Cup 2026 del día (UTC) desde api-football
-      const response = await fetch(`https://v3.football.api-sports.io/fixtures?date=${dateStr}&league=1&season=2026`, {
+      // 2. Fetch todos los fixtures del día (UTC). Plan Free no permite combinar
+      //    ?date con ?league, así que se filtra por equipo en el matching local.
+      const response = await fetch(`https://v3.football.api-sports.io/fixtures?date=${dateStr}`, {
         headers: {
           'x-rapidapi-host': 'v3.football.api-sports.io',
           'x-apisports-key': config.API_FOOTBALL_KEY
