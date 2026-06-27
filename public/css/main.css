@@ -452,31 +452,31 @@ input,select,textarea{font-family:inherit}
 /* ── VIEW TRANSITIONS — navegación suave entre páginas ────────────────
    Requiere Chrome 111+ / Safari 18.2+ / Edge 111+.
    En browsers sin soporte simplemente no aplica (progressive enhancement).
+
+   IMPORTANTE:
+   - NO usar view-transition-name en nav.nav (position:fixed + anchoring
+     crea artefactos: el snapshot viejo y nuevo se superponen).
+   - NO usar translateY (crea un hueco visible entre nav fijo y contenido).
+   - Agregar background en html para evitar flash blanco del browser.
    ─────────────────────────────────────────────────────────────────── */
+
+/* Fondo del html evita flash blanco durante la transición */
+html { background: #f0f4f8; }
+[data-theme="dark"] html { background: #0f1117; }
+
 @view-transition {
   navigation: auto;
 }
 
-/* El nav queda "anclado": no flashea al cambiar de página */
-nav.nav {
-  view-transition-name: site-nav;
-}
-
-/* Contenido: fade rápido salida / entrada */
+/* Cross-fade simple: sin translateY, sin anchoring del nav */
 ::view-transition-old(root) {
-  animation: 120ms ease-out vt-fade-out;
+  animation: 90ms linear both vt-fade-out;
 }
 ::view-transition-new(root) {
-  animation: 180ms ease-in vt-fade-in;
+  animation: 110ms linear both vt-fade-in;
 }
 
-/* El nav no anima, se mantiene fijo visualmente */
-::view-transition-old(site-nav),
-::view-transition-new(site-nav) {
-  animation: none;
-}
-
-@keyframes vt-fade-out { to   { opacity: 0; transform: translateY(-4px); } }
-@keyframes vt-fade-in  { from { opacity: 0; transform: translateY(4px);  } }
+@keyframes vt-fade-out { to   { opacity: 0; } }
+@keyframes vt-fade-in  { from { opacity: 0; } }
 
 
