@@ -11,7 +11,7 @@
     "db:seed": "node prisma/seed.js",
     "db:studio": "npx prisma studio",
     "db:generate": "npx prisma generate",
-    "test": "node --test test/scoring.test.js test/advancement.test.js"
+    "test": "node --test test/scoring.test.js test/advancement.test.js test/sync.test.js"
   },
   "dependencies": {
     "@fastify/cors": "^9.0.1",

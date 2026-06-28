@@ -79,12 +79,21 @@ async function runSync(db, apiKey, log) {
   for (const localMatch of liveMatches) {
     const nameA = toEN(localMatch.teamAName || '');
     const nameB = toEN(localMatch.teamBName || '');
-    const apiFixture = allFixtures.find(f => {
+    // Buscar fixture en ambas direcciones: la asignación home/away de la API
+    // puede no coincidir con el orden teamA/teamB del DB (p.ej. Uzbekistán
+    // figura como local en la API pero como teamB en el DB).
+    let apiFixture = null;
+    let reversed   = false;
+    for (const f of allFixtures) {
       const home = f.teams.home.name.toUpperCase();
       const away = f.teams.away.name.toUpperCase();
-      return (home.includes(nameA) || nameA.includes(home)) &&
-             (away.includes(nameB) || nameB.includes(away));
-    });
+      if ((home.includes(nameA) || nameA.includes(home)) && (away.includes(nameB) || nameB.includes(away))) {
+        apiFixture = f; reversed = false; break;
+      }
+      if ((away.includes(nameA) || nameA.includes(away)) && (home.includes(nameB) || nameB.includes(home))) {
+        apiFixture = f; reversed = true; break;
+      }
+    }
 
     if (!apiFixture) {
       noMatch++;
@@ -93,9 +102,13 @@ async function runSync(db, apiKey, log) {
     }
 
     const statusShort = apiFixture.fixture.status.short;
-    const goalsHome   = apiFixture.goals.home;
-    const goalsAway   = apiFixture.goals.away;
     const isFinished  = ['FT', 'AET', 'PEN'].includes(statusShort);
+
+    // Cuando el orden está invertido, swapear goles para que resultA/B
+    // correspondan a teamA/teamB del DB respectivamente.
+    const goalsRaw  = { home: apiFixture.goals.home, away: apiFixture.goals.away };
+    const goalsHome = reversed ? goalsRaw.away : goalsRaw.home;
+    const goalsAway = reversed ? goalsRaw.home : goalsRaw.away;
 
     if (goalsHome === null || goalsAway === null) continue;
 
@@ -107,8 +120,10 @@ async function runSync(db, apiKey, log) {
       status: isFinished ? 'FINISHED' : 'LIVE',
     };
     if (statusShort === 'PEN') {
-      matchData.penaltyA = apiFixture.score?.penalty?.home ?? null;
-      matchData.penaltyB = apiFixture.score?.penalty?.away ?? null;
+      const penHome = apiFixture.score?.penalty?.home ?? null;
+      const penAway = apiFixture.score?.penalty?.away ?? null;
+      matchData.penaltyA = reversed ? penAway : penHome;
+      matchData.penaltyB = reversed ? penHome : penAway;
     }
 
     await db.match.update({ where: { id: localMatch.id }, data: matchData });
