@@ -162,7 +162,7 @@ async function adminRoutes(fastify) {
 
     // Reasignar equipos según el bracket correcto y standings actuales
     const result = await advanceGroupsToR32(fastify.db);
-    return { success: true, datesFixed: r32Dates.length, ...result };
+    return { success: true, datesFixed: r32Schedule.length, ...result };
   });
 
   // POST /api/admin/sync — forzar sincronización inmediata con api-football
