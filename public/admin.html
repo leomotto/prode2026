@@ -639,7 +639,10 @@ async function forceSyncNow() {
   btn.disabled = true; btn.textContent = '⏳ Sincronizando...';
   try {
     const res = await api.admin.syncNow();
-    Toast.success('Sync completado', `${res.updated} actualizados, ${res.finished} finalizados, ${res.noMatch} sin match`);
+    let detail = `${res.updated} actualizados, ${res.finished} finalizados, ${res.noMatch} sin match`;
+    if (res.notFound?.length) detail += ` — no encontrado: ${res.notFound.map(n => n.db + ' (buscado: ' + n.searched + ')').join('; ')}`;
+    Toast.success('Sync completado', detail);
+    if (res.notFound?.length) console.warn('[Sync] API teams devueltos:', res.apiTeams);
     if (res.updated > 0) loadAdminData();
   } catch(e) {
     Toast.error('Error en sync', e.message);

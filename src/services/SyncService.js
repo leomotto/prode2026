@@ -75,6 +75,7 @@ async function runSync(db, apiKey, log) {
   const { advanceGroupsToR32, advanceKnockoutMatch } = require('./AdvancementService');
 
   let updated = 0, finished = 0, noMatch = 0;
+  const notFound = [];
 
   for (const localMatch of liveMatches) {
     const nameA = toEN(localMatch.teamAName || '');
@@ -97,7 +98,12 @@ async function runSync(db, apiKey, log) {
 
     if (!apiFixture) {
       noMatch++;
-      if (log) log.warn(`⚠️ Sync: no se encontró fixture para ${localMatch.teamAName} vs ${localMatch.teamBName}`);
+      notFound.push({
+        db: `${localMatch.teamAName} vs ${localMatch.teamBName}`,
+        searched: `${nameA} vs ${nameB}`,
+        date: new Date(localMatch.date).toISOString().slice(0, 10),
+      });
+      if (log) log.warn(`⚠️ Sync: no se encontró fixture para ${localMatch.teamAName} vs ${localMatch.teamBName} (buscado: ${nameA} vs ${nameB})`);
       continue;
     }
 
@@ -150,7 +156,9 @@ async function runSync(db, apiKey, log) {
     }
   }
 
-  return { updated, finished, noMatch, liveChecked: liveMatches.length };
+  // Incluir debug con equipos API para diagnóstico de noMatch
+  const apiTeams = allFixtures.map(f => `${f.teams.home.name} vs ${f.teams.away.name}`);
+  return { updated, finished, noMatch, liveChecked: liveMatches.length, notFound, apiTeams };
 }
 
 module.exports = { runSync };
