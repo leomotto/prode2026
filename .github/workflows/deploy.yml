@@ -3,6 +3,7 @@ name: Deploy to Alwaysdata
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 # ── Secrets necesarios ────────────────────────────────────────────────────────
 # ALWAYSDATA_SSH_HOST  → ssh-muchacholoco.alwaysdata.net
