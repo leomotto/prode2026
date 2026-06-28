@@ -98,12 +98,24 @@ async function runSync(db, apiKey, log) {
 
     if (!apiFixture) {
       noMatch++;
+      // Buscar fixtures que tengan alguna similitud parcial con nameA o nameB
+      const candidates = allFixtures
+        .filter(f => {
+          const h = f.teams.home.name.toUpperCase();
+          const a = f.teams.away.name.toUpperCase();
+          return h.includes(nameA) || nameA.includes(h) ||
+                 a.includes(nameA) || nameA.includes(a) ||
+                 h.includes(nameB) || nameB.includes(h) ||
+                 a.includes(nameB) || nameB.includes(a);
+        })
+        .map(f => `${f.teams.home.name} vs ${f.teams.away.name}`);
       notFound.push({
         db: `${localMatch.teamAName} vs ${localMatch.teamBName}`,
         searched: `${nameA} vs ${nameB}`,
         date: new Date(localMatch.date).toISOString().slice(0, 10),
+        candidates: candidates.length ? candidates : ['(sin candidatos en la API)'],
       });
-      if (log) log.warn(`⚠️ Sync: no se encontró fixture para ${localMatch.teamAName} vs ${localMatch.teamBName} (buscado: ${nameA} vs ${nameB})`);
+      if (log) log.warn(`⚠️ Sync: no se encontró ${nameA} vs ${nameB}. Candidatos: ${candidates.join(' | ') || 'ninguno'}`);
       continue;
     }
 
@@ -156,9 +168,7 @@ async function runSync(db, apiKey, log) {
     }
   }
 
-  // Incluir debug con equipos API para diagnóstico de noMatch
-  const apiTeams = allFixtures.map(f => `${f.teams.home.name} vs ${f.teams.away.name}`);
-  return { updated, finished, noMatch, liveChecked: liveMatches.length, notFound, apiTeams };
+  return { updated, finished, noMatch, liveChecked: liveMatches.length, notFound };
 }
 
 module.exports = { runSync };
