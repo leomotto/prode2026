@@ -1,5 +1,8 @@
 'use strict';
 
+// Orden cronológico de fases del torneo
+const PHASE_ORDER = ['GRUPOS', 'DIECISEISAVOS', 'OCTAVOS', 'CUARTOS', 'SEMIFINAL', 'TERCER_PUESTO', 'FINAL'];
+
 async function rankingsRoutes(fastify) {
 
   // GET /api/rankings?phase=
@@ -12,10 +15,16 @@ async function rankingsRoutes(fastify) {
       select: { id: true, displayName: true, avatar: true },
     });
 
-    // Traer predicciones calculadas solo para partidos finalizados Y con puntos calculados
+    // Para fases knockout, acumular puntos desde GRUPOS hasta esa fase inclusive,
+    // así el ranking siempre tiene datos apenas arranca la fase.
     const predWhere = { match: { status: 'FINISHED' }, pointsTotal: { not: null } };
     if (phase) {
-      predWhere.match.phase = phase.toUpperCase();
+      const phaseUpper = phase.toUpperCase();
+      const phaseIdx = PHASE_ORDER.indexOf(phaseUpper);
+      const includedPhases = phaseIdx > 0
+        ? PHASE_ORDER.slice(0, phaseIdx + 1)
+        : [phaseUpper];
+      predWhere.match = { ...predWhere.match, phase: { in: includedPhases } };
     }
 
     const predictions = await fastify.db.prediction.findMany({
