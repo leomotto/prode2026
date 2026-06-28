@@ -662,9 +662,7 @@ async function fixR32() {
   const btn = document.getElementById('btn-fix-r32');
   btn.disabled = true; btn.textContent = '⏳ Corrigiendo...';
   try {
-    const res = await fetch('/api/admin/fix-r32', { method: 'POST', headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Error desconocido');
+    const data = await api.post('/admin/fix-r32', {});
     Toast.success('R32 corregido', `${data.datesFixed} fechas actualizadas, ${data.updatedR32} partidos reasignados`);
     loadAdminData();
   } catch(e) {
