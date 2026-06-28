@@ -1,23 +1,79 @@
 'use strict';
 
+// Solo contiene equipos cuyo nombre en español y en inglés no comparten
+// ninguna palabra significativa. Variantes de acento, puntuación y orden
+// de palabras se resuelven automáticamente por el algoritmo de word-set.
 const TEAM_EN = {
-  'ALEMANIA':'GERMANY','ARABIA SAUDITA':'SAUDI ARABIA','ARGELIA':'ALGERIA',
-  'BÉLGICA':'BELGIUM','BOSNIA':'BOSNIA','BRASIL':'BRAZIL',
-  'CABO VERDE':'CAPE VERDE','CANADÁ':'CANADA','CHEQUIA':'CZECH REPUBLIC',
-  'COREA DEL SUR':'SOUTH KOREA','COSTA DE MARFIL':'IVORY COAST',
-  'CURAZAO':'CURAÇAO','EGIPTO':'EGYPT','EE.UU.':'USA',
-  'ESCOCIA':'SCOTLAND','ESPAÑA':'SPAIN','FRANCIA':'FRANCE',
-  'HAITÍ':'HAITI','INGLATERRA':'ENGLAND','IRÁN':'IRAN',
-  'JAPÓN':'JAPAN','JORDANIA':'JORDAN','MARRUECOS':'MOROCCO',
-  'MÉXICO':'MEXICO','NORUEGA':'NORWAY','NUEVA ZELANDA':'NEW ZEALAND',
-  'PAÍSES BAJOS':'NETHERLANDS','POLONIA':'POLAND',
-  'R.D. CONGO':'CONGO DR','SUECIA':'SWEDEN','SUIZA':'SWITZERLAND',
-  'SUDÁFRICA':'SOUTH AFRICA','TÚNEZ':'TUNISIA','TURQUÍA':'TÜRKIYE',
-  'CROACIA':'CROATIA','UZBEKISTÁN':'UZBEKISTAN','PANAMÁ':'PANAMA',
-  'COLOMBIA':'COLOMBIA','PORTUGAL':'PORTUGAL','CONGO':'CONGO',
-  'REP. DOMINICANA':'DOMINICAN REPUBLIC',
+  'ALEMANIA':        'GERMANY',
+  'ARGELIA':         'ALGERIA',
+  'BELGICA':         'BELGIUM',
+  'BRASIL':          'BRAZIL',
+  'CHEQUIA':         'CZECH REPUBLIC',
+  'COREA DEL SUR':   'SOUTH KOREA',
+  'COSTA DE MARFIL': 'IVORY COAST',
+  'CURAZAO':         'CURACAO',
+  'EE UU':           'UNITED STATES',
+  'EGIPTO':          'EGYPT',
+  'ESCOCIA':         'SCOTLAND',
+  'ESPANA':          'SPAIN',
+  'FRANCIA':         'FRANCE',
+  'INGLATERRA':      'ENGLAND',
+  'JAPON':           'JAPAN',
+  'JORDANIA':        'JORDAN',
+  'MARRUECOS':       'MOROCCO',
+  'NORUEGA':         'NORWAY',
+  'NUEVA ZELANDA':   'NEW ZEALAND',
+  'PAISES BAJOS':    'NETHERLANDS',
+  'POLONIA':         'POLAND',
+  'REP DOMINICANA':  'DOMINICAN REPUBLIC',
+  'SUDAFRICA':       'SOUTH AFRICA',
+  'SUECIA':          'SWEDEN',
+  'SUIZA':           'SWITZERLAND',
+  'TUNEZ':           'TUNISIA',
+  'TURQUIA':         'TURKIYE',
+  'CROACIA':         'CROATIA',
 };
-const toEN = (name) => TEAM_EN[name.toUpperCase()] || name.toUpperCase();
+
+/**
+ * Quita acentos, pasa a mayúsculas y reemplaza caracteres no alfanuméricos
+ * por espacios. Resultado estable para usar como clave de TEAM_EN.
+ */
+function normalize(str) {
+  return str
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Conjunto de palabras significativas (más de 2 caracteres) de un nombre.
+ * Filtrar palabras cortas evita falsos positivos con "DE", "OF", "DR", etc.
+ */
+function wordSet(str) {
+  return new Set(normalize(str).split(' ').filter(w => w.length > 2));
+}
+
+function hasOverlap(setA, setB) {
+  for (const w of setA) if (setB.has(w)) return true;
+  return false;
+}
+
+/**
+ * Compara un nombre de equipo de la DB (español) con uno de la API (inglés).
+ * 1. Intenta coincidencia directa por word-set: maneja acentos, puntuación
+ *    y orden de palabras sin configuración manual.
+ * 2. Si no hay overlap, traduce via TEAM_EN y reintenta: cubre los casos
+ *    donde español e inglés no comparten ninguna palabra (Alemania/Germany).
+ */
+function teamMatches(dbName, apiName) {
+  const apiWords = wordSet(apiName);
+  if (hasOverlap(wordSet(dbName), apiWords)) return true;
+  const translated = TEAM_EN[normalize(dbName)];
+  return !!translated && hasOverlap(wordSet(translated), apiWords);
+}
 
 /**
  * Fetch fixtures from API-Football for a given UTC date.
@@ -40,23 +96,19 @@ async function fetchFixturesByDate(dateStr, apiKey) {
  * Sincroniza resultados de partidos LIVE contra la API de api-football.
  *
  * Fix medianoche UTC: agrupa los partidos LIVE por su fecha UTC de inicio
- * y hace una llamada por fecha única. Evita que partidos que empezaron
- * el día anterior y siguen LIVE no sean encontrados cuando la fecha local
- * cambia a medianoche UTC.
+ * y hace una llamada por fecha única.
  *
  * Fix penales: cuando el status de la API es 'PEN', guarda también
  * penaltyA/penaltyB para que AdvancementService pueda determinar el
  * ganador en bracket aun con resultado empatado tras prórroga.
  *
- * Retorna { updated, finished, noMatch, liveChecked }.
+ * Retorna { updated, finished, noMatch, liveChecked, notFound }.
  */
 async function runSync(db, apiKey, log) {
   const liveMatches = await db.match.findMany({ where: { status: 'LIVE' } });
-  if (!liveMatches.length) return { updated: 0, finished: 0, noMatch: 0, liveChecked: 0 };
+  if (!liveMatches.length) return { updated: 0, finished: 0, noMatch: 0, liveChecked: 0, notFound: [] };
 
-  // Agrupar partidos LIVE por la fecha UTC de su inicio programado.
-  // Caso normal: todos en la misma fecha → 1 llamada API.
-  // Caso medianoche: partido de ayer todavía en curso → 2 llamadas.
+  // Agrupar por fecha UTC de inicio. Caso normal: 1 llamada. Caso medianoche: 2.
   const dateGroups = new Map();
   for (const m of liveMatches) {
     const dateStr = new Date(m.date).toISOString().slice(0, 10);
@@ -64,7 +116,6 @@ async function runSync(db, apiKey, log) {
     dateGroups.get(dateStr).push(m);
   }
 
-  // Recolectar todos los fixtures en un único array (sin duplicados relevantes)
   const allFixtures = [];
   for (const dateStr of dateGroups.keys()) {
     const fixtures = await fetchFixturesByDate(dateStr, apiKey);
@@ -78,60 +129,47 @@ async function runSync(db, apiKey, log) {
   const notFound = [];
 
   for (const localMatch of liveMatches) {
-    const nameA = toEN(localMatch.teamAName || '');
-    const nameB = toEN(localMatch.teamBName || '');
-    // Buscar fixture en ambas direcciones: la asignación home/away de la API
-    // puede no coincidir con el orden teamA/teamB del DB (p.ej. Uzbekistán
-    // figura como local en la API pero como teamB en el DB).
     let apiFixture = null;
     let reversed   = false;
+
     for (const f of allFixtures) {
-      const home = f.teams.home.name.toUpperCase();
-      const away = f.teams.away.name.toUpperCase();
-      if ((home.includes(nameA) || nameA.includes(home)) && (away.includes(nameB) || nameB.includes(away))) {
+      const home = f.teams.home.name;
+      const away = f.teams.away.name;
+      if (teamMatches(localMatch.teamAName, home) && teamMatches(localMatch.teamBName, away)) {
         apiFixture = f; reversed = false; break;
       }
-      if ((away.includes(nameA) || nameA.includes(away)) && (home.includes(nameB) || nameB.includes(home))) {
+      if (teamMatches(localMatch.teamAName, away) && teamMatches(localMatch.teamBName, home)) {
         apiFixture = f; reversed = true; break;
       }
     }
 
     if (!apiFixture) {
       noMatch++;
-      // Buscar fixtures que tengan alguna similitud parcial con nameA o nameB
       const candidates = allFixtures
         .filter(f => {
-          const h = f.teams.home.name.toUpperCase();
-          const a = f.teams.away.name.toUpperCase();
-          return h.includes(nameA) || nameA.includes(h) ||
-                 a.includes(nameA) || nameA.includes(a) ||
-                 h.includes(nameB) || nameB.includes(h) ||
-                 a.includes(nameB) || nameB.includes(a);
+          const h = f.teams.home.name, a = f.teams.away.name;
+          return teamMatches(localMatch.teamAName, h) || teamMatches(localMatch.teamAName, a) ||
+                 teamMatches(localMatch.teamBName, h) || teamMatches(localMatch.teamBName, a);
         })
         .map(f => `${f.teams.home.name} vs ${f.teams.away.name}`);
       notFound.push({
         db: `${localMatch.teamAName} vs ${localMatch.teamBName}`,
-        searched: `${nameA} vs ${nameB}`,
         date: new Date(localMatch.date).toISOString().slice(0, 10),
         candidates: candidates.length ? candidates : ['(sin candidatos en la API)'],
       });
-      if (log) log.warn(`⚠️ Sync: no se encontró ${nameA} vs ${nameB}. Candidatos: ${candidates.join(' | ') || 'ninguno'}`);
+      if (log) log.warn(`⚠️ Sync sin match: ${localMatch.teamAName} vs ${localMatch.teamBName}. Candidatos: ${candidates.join(' | ') || 'ninguno'}`);
       continue;
     }
 
     const statusShort = apiFixture.fixture.status.short;
     const isFinished  = ['FT', 'AET', 'PEN'].includes(statusShort);
 
-    // Cuando el orden está invertido, swapear goles para que resultA/B
-    // correspondan a teamA/teamB del DB respectivamente.
     const goalsRaw  = { home: apiFixture.goals.home, away: apiFixture.goals.away };
     const goalsHome = reversed ? goalsRaw.away : goalsRaw.home;
     const goalsAway = reversed ? goalsRaw.home : goalsRaw.away;
 
     if (goalsHome === null || goalsAway === null) continue;
 
-    // Cuando el partido termina en penales, guardar los goles de la tanda
-    // para que AdvancementService pueda determinar el ganador del bracket.
     const matchData = {
       resultA: goalsHome,
       resultB: goalsAway,
@@ -171,4 +209,4 @@ async function runSync(db, apiKey, log) {
   return { updated, finished, noMatch, liveChecked: liveMatches.length, notFound };
 }
 
-module.exports = { runSync };
+module.exports = { runSync, teamMatches, normalize };

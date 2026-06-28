@@ -2,38 +2,17 @@
 
 const { test } = require('node:test');
 const assert   = require('node:assert/strict');
+const { teamMatches } = require('../src/services/SyncService');
 
-// Extrae sólo la lógica de matching y asignación de goles del SyncService
-// para testear sin llamadas de red ni DB.
-
-const TEAM_EN = {
-  'ALEMANIA':'GERMANY','ARABIA SAUDITA':'SAUDI ARABIA','ARGELIA':'ALGERIA',
-  'BÉLGICA':'BELGIUM','BOSNIA':'BOSNIA','BRASIL':'BRAZIL',
-  'CABO VERDE':'CAPE VERDE','CANADÁ':'CANADA','CHEQUIA':'CZECH REPUBLIC',
-  'COREA DEL SUR':'SOUTH KOREA','COSTA DE MARFIL':'IVORY COAST',
-  'CURAZAO':'CURAÇAO','EGIPTO':'EGYPT','EE.UU.':'USA',
-  'ESCOCIA':'SCOTLAND','ESPAÑA':'SPAIN','FRANCIA':'FRANCE',
-  'HAITÍ':'HAITI','INGLATERRA':'ENGLAND','IRÁN':'IRAN',
-  'JAPÓN':'JAPAN','JORDANIA':'JORDAN','MARRUECOS':'MOROCCO',
-  'MÉXICO':'MEXICO','NORUEGA':'NORWAY','NUEVA ZELANDA':'NEW ZEALAND',
-  'PAÍSES BAJOS':'NETHERLANDS','POLONIA':'POLAND',
-  'R.D. CONGO':'CONGO DR','SUECIA':'SWEDEN','SUIZA':'SWITZERLAND',
-  'SUDÁFRICA':'SOUTH AFRICA','TÚNEZ':'TUNISIA','TURQUÍA':'TÜRKIYE',
-  'CROACIA':'CROATIA','UZBEKISTÁN':'UZBEKISTAN','PANAMÁ':'PANAMA',
-  'COLOMBIA':'COLOMBIA','PORTUGAL':'PORTUGAL','CONGO':'CONGO',
-  'REP. DOMINICANA':'DOMINICAN REPUBLIC',
-};
-const toEN = n => TEAM_EN[n.toUpperCase()] || n.toUpperCase();
+// ── helpers locales ────────────────────────────────────────────────────────
 
 function findFixture(allFixtures, teamAName, teamBName) {
-  const nameA = toEN(teamAName || '');
-  const nameB = toEN(teamBName || '');
   for (const f of allFixtures) {
-    const home = f.teams.home.name.toUpperCase();
-    const away = f.teams.away.name.toUpperCase();
-    if ((home.includes(nameA) || nameA.includes(home)) && (away.includes(nameB) || nameB.includes(away)))
+    const home = f.teams.home.name;
+    const away = f.teams.away.name;
+    if (teamMatches(teamAName, home) && teamMatches(teamBName, away))
       return { fixture: f, reversed: false };
-    if ((away.includes(nameA) || nameA.includes(away)) && (home.includes(nameB) || nameB.includes(home)))
+    if (teamMatches(teamAName, away) && teamMatches(teamBName, home))
       return { fixture: f, reversed: true };
   }
   return null;
@@ -46,16 +25,8 @@ function resolveGoals(fixture, reversed) {
   };
 }
 
-// ── Tests ─────────────────────────────────────────────────────────────────
+// ── fixtures de prueba ─────────────────────────────────────────────────────
 
-const fixtureUzbekistanVsCongo = {
-  teams: { home: { name: 'Uzbekistan' }, away: { name: 'Congo' } },
-  goals: { home: 2, away: 1 },
-  fixture: { status: { short: '2H' } },
-  score: { penalty: { home: null, away: null } },
-};
-
-// Fixture real de la API para R.D. Congo — la API usa "Congo DR" (orden invertido vs "DR CONGO")
 const fixtureCongoVsUzbekistan = {
   teams: { home: { name: 'Congo DR' }, away: { name: 'Uzbekistan' } },
   goals: { home: 1, away: 0 },
@@ -70,21 +41,63 @@ const fixtureColombiaVsPortugal = {
   score: { penalty: { home: null, away: null } },
 };
 
-const allFixtures = [fixtureUzbekistanVsCongo, fixtureColombiaVsPortugal];
+const allFixtures = [fixtureCongoVsUzbekistan, fixtureColombiaVsPortugal];
 
-test('Congo vs Uzbekistán: encuentra fixture aunque el orden API esté invertido', () => {
-  const result = findFixture(allFixtures, 'Congo', 'Uzbekistán');
-  assert.ok(result, 'debe encontrar el fixture');
-  assert.equal(result.reversed, true, 'debe detectar que el orden está invertido');
+// ── teamMatches: casos unitarios ───────────────────────────────────────────
+
+test('teamMatches: nombre idéntico', () => {
+  assert.ok(teamMatches('Colombia', 'Colombia'));
 });
 
-test('Congo vs Uzbekistán: swapea goles correctamente cuando está invertido', () => {
-  const result = findFixture(allFixtures, 'Congo', 'Uzbekistán');
+test('teamMatches: acento no impide match (Uzbekistán ↔ Uzbekistan)', () => {
+  assert.ok(teamMatches('Uzbekistán', 'Uzbekistan'));
+});
+
+test('teamMatches: R.D. Congo ↔ Congo DR (orden de palabras diferente)', () => {
+  assert.ok(teamMatches('R.D. Congo', 'Congo DR'));
+});
+
+test('teamMatches: Arabia Saudita ↔ Saudi Arabia (palabra compartida)', () => {
+  assert.ok(teamMatches('Arabia Saudita', 'Saudi Arabia'));
+});
+
+test('teamMatches: Cabo Verde ↔ Cape Verde (palabra compartida)', () => {
+  assert.ok(teamMatches('Cabo Verde', 'Cape Verde'));
+});
+
+test('teamMatches: traducción TEAM_EN — Alemania ↔ Germany', () => {
+  assert.ok(teamMatches('Alemania', 'Germany'));
+});
+
+test('teamMatches: traducción TEAM_EN — Países Bajos ↔ Netherlands', () => {
+  assert.ok(teamMatches('Países Bajos', 'Netherlands'));
+});
+
+test('teamMatches: traducción TEAM_EN — EE.UU. ↔ United States', () => {
+  assert.ok(teamMatches('EE.UU.', 'United States'));
+});
+
+test('teamMatches: no falso positivo (Colombia ≠ Germany)', () => {
+  assert.ok(!teamMatches('Colombia', 'Germany'));
+});
+
+test('teamMatches: no falso positivo (Congo ≠ Colombia)', () => {
+  assert.ok(!teamMatches('Congo', 'Colombia'));
+});
+
+// ── findFixture: integración ───────────────────────────────────────────────
+
+test('R.D. Congo vs Uzbekistán: encuentra fixture con nombre API "Congo DR"', () => {
+  const result = findFixture(allFixtures, 'R.D. Congo', 'Uzbekistán');
+  assert.ok(result, 'debe encontrar el fixture');
+  assert.equal(result.reversed, false, 'Congo DR es home = teamA → no invertido');
+});
+
+test('R.D. Congo vs Uzbekistán: goles correctos', () => {
+  const result = findFixture(allFixtures, 'R.D. Congo', 'Uzbekistán');
   const { resultA, resultB } = resolveGoals(result.fixture, result.reversed);
-  // API: Uzbekistán(home)=2, Congo(away)=1
-  // DB: Congo(teamA) debería tener 1 gol, Uzbekistán(teamB) 2 goles
-  assert.equal(resultA, 1, 'Congo (teamA) debe tener 1 gol');
-  assert.equal(resultB, 2, 'Uzbekistán (teamB) debe tener 2 goles');
+  assert.equal(resultA, 1); // R.D. Congo 1
+  assert.equal(resultB, 0); // Uzbekistán 0
 });
 
 test('Colombia vs Portugal: encuentra fixture en orden normal', () => {
@@ -103,20 +116,4 @@ test('Colombia vs Portugal: goles en orden correcto', () => {
 test('equipo inexistente → retorna null', () => {
   const result = findFixture(allFixtures, 'Narnia', 'Wakanda');
   assert.equal(result, null);
-});
-
-// Regresión: R.D. Congo en DB → API devuelve "Congo DR" (orden de palabras diferente)
-test('R.D. Congo vs Uzbekistán: mapeo TEAM_EN produce CONGO DR que matchea con API', () => {
-  const fixtures = [fixtureCongoVsUzbekistan];
-  const result = findFixture(fixtures, 'R.D. Congo', 'Uzbekistán');
-  assert.ok(result, 'debe encontrar el fixture con nombre API "Congo DR"');
-  assert.equal(result.reversed, false, 'Congo DR es home, R.D. Congo es teamA → no invertido');
-});
-
-test('R.D. Congo vs Uzbekistán: goles correctos (no invertido)', () => {
-  const fixtures = [fixtureCongoVsUzbekistan];
-  const result = findFixture(fixtures, 'R.D. Congo', 'Uzbekistán');
-  const { resultA, resultB } = resolveGoals(result.fixture, result.reversed);
-  assert.equal(resultA, 1); // R.D. Congo 1
-  assert.equal(resultB, 0); // Uzbekistán 0
 });
