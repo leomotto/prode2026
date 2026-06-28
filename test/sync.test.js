@@ -17,7 +17,7 @@ const TEAM_EN = {
   'JAPÓN':'JAPAN','JORDANIA':'JORDAN','MARRUECOS':'MOROCCO',
   'MÉXICO':'MEXICO','NORUEGA':'NORWAY','NUEVA ZELANDA':'NEW ZEALAND',
   'PAÍSES BAJOS':'NETHERLANDS','POLONIA':'POLAND',
-  'R.D. CONGO':'DR CONGO','SUECIA':'SWEDEN','SUIZA':'SWITZERLAND',
+  'R.D. CONGO':'CONGO DR','SUECIA':'SWEDEN','SUIZA':'SWITZERLAND',
   'SUDÁFRICA':'SOUTH AFRICA','TÚNEZ':'TUNISIA','TURQUÍA':'TÜRKIYE',
   'CROACIA':'CROATIA','UZBEKISTÁN':'UZBEKISTAN','PANAMÁ':'PANAMA',
   'COLOMBIA':'COLOMBIA','PORTUGAL':'PORTUGAL','CONGO':'CONGO',
@@ -51,6 +51,14 @@ function resolveGoals(fixture, reversed) {
 const fixtureUzbekistanVsCongo = {
   teams: { home: { name: 'Uzbekistan' }, away: { name: 'Congo' } },
   goals: { home: 2, away: 1 },
+  fixture: { status: { short: '2H' } },
+  score: { penalty: { home: null, away: null } },
+};
+
+// Fixture real de la API para R.D. Congo — la API usa "Congo DR" (orden invertido vs "DR CONGO")
+const fixtureCongoVsUzbekistan = {
+  teams: { home: { name: 'Congo DR' }, away: { name: 'Uzbekistan' } },
+  goals: { home: 1, away: 0 },
   fixture: { status: { short: '2H' } },
   score: { penalty: { home: null, away: null } },
 };
@@ -95,4 +103,20 @@ test('Colombia vs Portugal: goles en orden correcto', () => {
 test('equipo inexistente → retorna null', () => {
   const result = findFixture(allFixtures, 'Narnia', 'Wakanda');
   assert.equal(result, null);
+});
+
+// Regresión: R.D. Congo en DB → API devuelve "Congo DR" (orden de palabras diferente)
+test('R.D. Congo vs Uzbekistán: mapeo TEAM_EN produce CONGO DR que matchea con API', () => {
+  const fixtures = [fixtureCongoVsUzbekistan];
+  const result = findFixture(fixtures, 'R.D. Congo', 'Uzbekistán');
+  assert.ok(result, 'debe encontrar el fixture con nombre API "Congo DR"');
+  assert.equal(result.reversed, false, 'Congo DR es home, R.D. Congo es teamA → no invertido');
+});
+
+test('R.D. Congo vs Uzbekistán: goles correctos (no invertido)', () => {
+  const fixtures = [fixtureCongoVsUzbekistan];
+  const result = findFixture(fixtures, 'R.D. Congo', 'Uzbekistán');
+  const { resultA, resultB } = resolveGoals(result.fixture, result.reversed);
+  assert.equal(resultA, 1); // R.D. Congo 1
+  assert.equal(resultB, 0); // Uzbekistán 0
 });
