@@ -125,31 +125,33 @@ async function adminRoutes(fastify) {
   fastify.post('/fix-r32', { preHandler: fastify.adminOnly }, async () => {
     const { advanceGroupsToR32 } = require('../services/AdvancementService');
 
-    const r32Dates = [
-      ['R32-M1',  '2026-06-28'],
-      ['R32-M2',  '2026-06-29'],
-      ['R32-M3',  '2026-06-29'],
-      ['R32-M4',  '2026-06-29'],
-      ['R32-M5',  '2026-06-30'],
-      ['R32-M6',  '2026-06-30'],
-      ['R32-M7',  '2026-06-30'],
-      ['R32-M8',  '2026-07-01'],
-      ['R32-M9',  '2026-07-01'],
-      ['R32-M10', '2026-07-01'],
-      ['R32-M11', '2026-07-02'],
-      ['R32-M12', '2026-07-02'],
-      ['R32-M13', '2026-07-02'],
-      ['R32-M14', '2026-07-03'],
-      ['R32-M15', '2026-07-03'],
-      ['R32-M16', '2026-07-03'],
+    // Horarios reales FIFA 2026 R32 (fuente: SI Sports / FIFA.com)
+    // Convertidos a UTC desde EDT (UTC-4 en junio/julio)
+    const r32Schedule = [
+      { id: 'R32-M1',  datetime: '2026-06-28T19:00:00Z' }, // Jun 28 3pm EDT  → 16:00 ART
+      { id: 'R32-M2',  datetime: '2026-06-29T17:00:00Z' }, // Jun 29 1pm EDT  → 14:00 ART
+      { id: 'R32-M3',  datetime: '2026-06-29T20:30:00Z' }, // Jun 29 4:30pm EDT→ 17:30 ART
+      { id: 'R32-M4',  datetime: '2026-06-30T01:00:00Z' }, // Jun 29 9pm EDT  → 22:00 ART
+      { id: 'R32-M5',  datetime: '2026-06-30T17:00:00Z' }, // Jun 30 1pm EDT  → 14:00 ART
+      { id: 'R32-M6',  datetime: '2026-06-30T21:00:00Z' }, // Jun 30 5pm EDT  → 18:00 ART
+      { id: 'R32-M7',  datetime: '2026-07-01T01:00:00Z' }, // Jun 30 9pm EDT  → 22:00 ART
+      { id: 'R32-M8',  datetime: '2026-07-01T16:00:00Z' }, // Jul 1  12pm EDT → 13:00 ART
+      { id: 'R32-M9',  datetime: '2026-07-01T20:00:00Z' }, // Jul 1  4pm EDT  → 17:00 ART
+      { id: 'R32-M10', datetime: '2026-07-02T00:00:00Z' }, // Jul 1  8pm EDT  → 21:00 ART
+      { id: 'R32-M11', datetime: '2026-07-02T19:00:00Z' }, // Jul 2  3pm EDT  → 16:00 ART
+      { id: 'R32-M12', datetime: '2026-07-03T03:00:00Z' }, // Jul 2  11pm EDT → 00:00 ART (1B vs 3G)
+      { id: 'R32-M13', datetime: '2026-07-02T23:00:00Z' }, // Jul 2  7pm EDT  → 20:00 ART (2K vs 2L)
+      { id: 'R32-M14', datetime: '2026-07-03T18:00:00Z' }, // Jul 3  2pm EDT  → 15:00 ART
+      { id: 'R32-M15', datetime: '2026-07-03T22:00:00Z' }, // Jul 3  6pm EDT  → 19:00 ART
+      { id: 'R32-M16', datetime: '2026-07-04T01:30:00Z' }, // Jul 3  9:30pm EDT→22:30 ART
     ];
 
-    // Actualizar fechas y limpiar asignaciones previas de equipos
-    await Promise.all(r32Dates.map(([id, date]) =>
+    // Actualizar fechas/horarios y limpiar asignaciones previas de equipos
+    await Promise.all(r32Schedule.map(({ id, datetime }) =>
       fastify.db.match.update({
         where: { id },
         data: {
-          date: new Date(`${date}T18:00:00-05:00`),
+          date: new Date(datetime),
           teamAName: null,
           teamAFlag: null,
           teamBName: null,
