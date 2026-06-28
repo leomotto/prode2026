@@ -4,9 +4,7 @@ const { test } = require('node:test');
 const assert   = require('node:assert/strict');
 const {
   computeBestThirds,
-  computeThirdAssignments,
   advanceKnockoutMatch,
-  R32_BRACKET,
 } = require('../src/services/AdvancementService');
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -52,48 +50,6 @@ test('computeBestThirds: ignora grupos sin partidos jugados (pj=0)', () => {
   const thirds = computeBestThirds(standings);
   assert.equal(thirds.length, 1);
   assert.equal(thirds[0].name, '3B');
-});
-
-// ── computeThirdAssignments ────────────────────────────────────────────────
-
-test('computeThirdAssignments: retorna vacío si no todos los grupos terminaron', () => {
-  const standings = { A: [team('1A', 9), team('2A', 6), team('3A', 3)] };
-  const result = computeThirdAssignments(standings, false);
-  assert.deepEqual(result, {});
-});
-
-test('computeThirdAssignments: asigna cada tercero a un único slot', () => {
-  // Construir standings con los 12 grupos del Mundial 2026
-  const groupLetters = 'ABCDEFGHIJKL'.split('');
-  const standings = {};
-  groupLetters.forEach((g, i) => {
-    standings[g] = [
-      team(`1${g}`, 9),
-      team(`2${g}`, 6),
-      team(`3${g}`, i + 1), // pts distintos para facilitar orden determinístico
-    ];
-  });
-
-  const assignments = computeThirdAssignments(standings, true);
-  const assignedGroups = Object.values(assignments).map(t => t.group);
-
-  // Cada grupo aparece a lo sumo una vez en las asignaciones
-  const unique = new Set(assignedGroups);
-  assert.equal(unique.size, assignedGroups.length, 'no debe haber grupos duplicados');
-
-  // El slot correcto del R32_BRACKET respeta eligibleGroups
-  for (const [key, assignedTeam] of Object.entries(assignments)) {
-    // key = "R32-M1_sideA"
-    const [bracketId, sideKey] = key.split('_');
-    const bracket = R32_BRACKET.find(b => b.id === bracketId);
-    assert.ok(bracket, `bracket ${bracketId} debe existir`);
-    const slot = bracket[sideKey];
-    assert.equal(slot.type, 'third');
-    assert.ok(
-      slot.eligibleGroups.includes(assignedTeam.group),
-      `grupo ${assignedTeam.group} no es elegible para ${key}`
-    );
-  }
 });
 
 // ── advanceKnockoutMatch ───────────────────────────────────────────────────

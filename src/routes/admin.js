@@ -119,6 +119,50 @@ async function adminRoutes(fastify) {
     return { success: true, ...result };
   });
 
+  // POST /api/admin/fix-r32 — corregir fechas y reasignar equipos del bracket R32
+  // Necesario porque el seed original tenía fechas incorrectas (2/día en vez de 1+3+3+3+3+3)
+  // y el R32_BRACKET antiguo tenía slots equivocados.
+  fastify.post('/fix-r32', { preHandler: fastify.adminOnly }, async () => {
+    const { advanceGroupsToR32 } = require('../services/AdvancementService');
+
+    const r32Dates = [
+      ['R32-M1',  '2026-06-28'],
+      ['R32-M2',  '2026-06-29'],
+      ['R32-M3',  '2026-06-29'],
+      ['R32-M4',  '2026-06-29'],
+      ['R32-M5',  '2026-06-30'],
+      ['R32-M6',  '2026-06-30'],
+      ['R32-M7',  '2026-06-30'],
+      ['R32-M8',  '2026-07-01'],
+      ['R32-M9',  '2026-07-01'],
+      ['R32-M10', '2026-07-01'],
+      ['R32-M11', '2026-07-02'],
+      ['R32-M12', '2026-07-02'],
+      ['R32-M13', '2026-07-02'],
+      ['R32-M14', '2026-07-03'],
+      ['R32-M15', '2026-07-03'],
+      ['R32-M16', '2026-07-03'],
+    ];
+
+    // Actualizar fechas y limpiar asignaciones previas de equipos
+    await Promise.all(r32Dates.map(([id, date]) =>
+      fastify.db.match.update({
+        where: { id },
+        data: {
+          date: new Date(`${date}T18:00:00-05:00`),
+          teamAName: null,
+          teamAFlag: null,
+          teamBName: null,
+          teamBFlag: null,
+        },
+      })
+    ));
+
+    // Reasignar equipos según el bracket correcto y standings actuales
+    const result = await advanceGroupsToR32(fastify.db);
+    return { success: true, datesFixed: r32Dates.length, ...result };
+  });
+
   // POST /api/admin/sync — forzar sincronización inmediata con api-football
   fastify.post('/sync', { preHandler: fastify.adminOnly }, async (request, reply) => {
     const config = require('../config');

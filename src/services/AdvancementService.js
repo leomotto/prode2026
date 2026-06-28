@@ -1,28 +1,26 @@
 'use strict';
 
 // FIFA 2026 — Bracket oficial Dieciseisavos de Final (Ronda de 32)
-// Fuente: estructura oficial FIFA 2026
+// Fuente: calendario oficial FIFA 2026 (CBS Sports / Wikipedia)
+// Cada slot tercero tiene grupo fijo: 3D siempre juega vs 1E, 3F vs 1I, etc.
+// Grupos A/C/H/J no tienen slot de tercero → sus 3ros quedan eliminados.
 const R32_BRACKET = [
-  // ── Lado A — Bloque Superior ──────────────────────────────────
-  { id: 'R32-M1',  sideA: { type: 'winner', group: 'E' }, sideB: { type: 'third', eligibleGroups: ['A','B','C','D','F'] } },
-  { id: 'R32-M2',  sideA: { type: 'winner', group: 'I' }, sideB: { type: 'third', eligibleGroups: ['C','D','F','G','H'] } },
-  { id: 'R32-M3',  sideA: { type: 'runner', group: 'A' }, sideB: { type: 'runner', group: 'B' } },
-  { id: 'R32-M4',  sideA: { type: 'winner', group: 'F' }, sideB: { type: 'runner', group: 'C' } },
-  // ── Lado A — Bloque Inferior ──────────────────────────────────
-  { id: 'R32-M5',  sideA: { type: 'runner', group: 'K' }, sideB: { type: 'runner', group: 'L' } },
-  { id: 'R32-M6',  sideA: { type: 'winner', group: 'H' }, sideB: { type: 'runner', group: 'J' } },
-  { id: 'R32-M7',  sideA: { type: 'winner', group: 'D' }, sideB: { type: 'third', eligibleGroups: ['B','E','F','I','J'] } },
-  { id: 'R32-M8',  sideA: { type: 'winner', group: 'G' }, sideB: { type: 'third', eligibleGroups: ['A','E','H','I','J'] } },
-  // ── Lado B — Bloque Superior ──────────────────────────────────
-  { id: 'R32-M9',  sideA: { type: 'winner', group: 'C' }, sideB: { type: 'runner', group: 'F' } },
-  { id: 'R32-M10', sideA: { type: 'runner', group: 'E' }, sideB: { type: 'runner', group: 'I' } },
-  { id: 'R32-M11', sideA: { type: 'winner', group: 'A' }, sideB: { type: 'third', eligibleGroups: ['C','E','F','H','I'] } },
-  { id: 'R32-M12', sideA: { type: 'winner', group: 'L' }, sideB: { type: 'third', eligibleGroups: ['E','H','I','J','K'] } },
-  // ── Lado B — Bloque Inferior ──────────────────────────────────
-  { id: 'R32-M13', sideA: { type: 'winner', group: 'J' }, sideB: { type: 'runner', group: 'H' } },
-  { id: 'R32-M14', sideA: { type: 'runner', group: 'D' }, sideB: { type: 'runner', group: 'G' } },
-  { id: 'R32-M15', sideA: { type: 'winner', group: 'B' }, sideB: { type: 'third', eligibleGroups: ['E','F','G','I','J'] } },
-  { id: 'R32-M16', sideA: { type: 'winner', group: 'K' }, sideB: { type: 'third', eligibleGroups: ['D','E','I','J','L'] } },
+  { id: 'R32-M1',  sideA: { type: 'runner', group: 'A' }, sideB: { type: 'runner', group: 'B' } },   // Jun 28 — 2A vs 2B
+  { id: 'R32-M2',  sideA: { type: 'winner', group: 'C' }, sideB: { type: 'runner', group: 'F' } },   // Jun 29 — 1C vs 2F
+  { id: 'R32-M3',  sideA: { type: 'winner', group: 'E' }, sideB: { type: 'third',  group: 'D' } },   // Jun 29 — 1E vs 3D
+  { id: 'R32-M4',  sideA: { type: 'winner', group: 'F' }, sideB: { type: 'runner', group: 'C' } },   // Jun 29 — 1F vs 2C
+  { id: 'R32-M5',  sideA: { type: 'runner', group: 'E' }, sideB: { type: 'runner', group: 'I' } },   // Jun 30 — 2E vs 2I
+  { id: 'R32-M6',  sideA: { type: 'winner', group: 'I' }, sideB: { type: 'third',  group: 'F' } },   // Jun 30 — 1I vs 3F
+  { id: 'R32-M7',  sideA: { type: 'winner', group: 'A' }, sideB: { type: 'third',  group: 'E' } },   // Jun 30 — 1A vs 3E
+  { id: 'R32-M8',  sideA: { type: 'winner', group: 'L' }, sideB: { type: 'third',  group: 'K' } },   // Jul 1  — 1L vs 3K
+  { id: 'R32-M9',  sideA: { type: 'winner', group: 'G' }, sideB: { type: 'third',  group: 'I' } },   // Jul 1  — 1G vs 3I
+  { id: 'R32-M10', sideA: { type: 'winner', group: 'D' }, sideB: { type: 'third',  group: 'B' } },   // Jul 1  — 1D vs 3B
+  { id: 'R32-M11', sideA: { type: 'winner', group: 'H' }, sideB: { type: 'runner', group: 'J' } },   // Jul 2  — 1H vs 2J
+  { id: 'R32-M12', sideA: { type: 'winner', group: 'B' }, sideB: { type: 'third',  group: 'G' } },   // Jul 2  — 1B vs 3G
+  { id: 'R32-M13', sideA: { type: 'runner', group: 'K' }, sideB: { type: 'runner', group: 'L' } },   // Jul 2  — 2K vs 2L
+  { id: 'R32-M14', sideA: { type: 'runner', group: 'D' }, sideB: { type: 'runner', group: 'G' } },   // Jul 3  — 2D vs 2G
+  { id: 'R32-M15', sideA: { type: 'winner', group: 'J' }, sideB: { type: 'runner', group: 'H' } },   // Jul 3  — 1J vs 2H
+  { id: 'R32-M16', sideA: { type: 'winner', group: 'K' }, sideB: { type: 'third',  group: 'L' } },   // Jul 3  — 1K vs 3L
 ];
 
 // Cascada knockout: define qué partido terminado alimenta cada slot del siguiente round
@@ -98,36 +96,9 @@ function computeBestThirds(groupStandings) {
   return thirds;
 }
 
-// Asigna las 8 mejores terceras plazas a los slots con eligibleGroups
-// usando un algoritmo greedy: en orden del bracket, asigna el mejor tercero disponible
-// de los grupos elegibles para ese slot.
-// Solo funciona cuando todos los grupos están completos (la asignación es definitiva).
-function computeThirdAssignments(groupStandings, allGroupsComplete) {
-  if (!allGroupsComplete) return {};
-
-  const allThirds = computeBestThirds(groupStandings);
-  const usedGroups = new Set();
-  const assignments = {};
-
-  for (const bracket of R32_BRACKET) {
-    for (const sideKey of ['sideA', 'sideB']) {
-      const slot = bracket[sideKey];
-      if (slot.type === 'third') {
-        const pick = allThirds.find(t => slot.eligibleGroups.includes(t.group) && !usedGroups.has(t.group));
-        if (pick) {
-          assignments[`${bracket.id}_${sideKey}`] = pick;
-          usedGroups.add(pick.group);
-        }
-      }
-    }
-  }
-  return assignments;
-}
-
 async function advanceGroupsToR32(db) {
   const groupStandings = await computeGroupStandings(db);
 
-  // Determinar qué grupos están 100% finalizados
   const allGroupMatches = await db.match.findMany({
     where: { phase: 'GRUPOS' },
     select: { groupName: true, status: true },
@@ -143,23 +114,15 @@ async function advanceGroupsToR32(db) {
     const c = groupCounts[g];
     return c && c.total > 0 && c.total === c.finished;
   };
-  const allGroupsComplete = Object.values(groupCounts).every(c => c.total === c.finished);
 
-  // Asignación de terceros (solo cuando todos los grupos terminaron)
-  const thirdAssignments = computeThirdAssignments(groupStandings, allGroupsComplete);
-
+  // Cada slot tiene un grupo fijo. El tipo determina la posición: winner=1°, runner=2°, third=3°.
+  // Para terceros, el grupo está predeterminado en el bracket (no hay selección de "mejores 8").
   const resolveSlot = (bracket, sideKey) => {
     const slot = bracket[sideKey];
-    if (slot.type === 'winner') {
-      return isGroupComplete(slot.group) ? ((groupStandings[slot.group] || [])[0] || null) : null;
-    }
-    if (slot.type === 'runner') {
-      return isGroupComplete(slot.group) ? ((groupStandings[slot.group] || [])[1] || null) : null;
-    }
-    if (slot.type === 'third') {
-      return thirdAssignments[`${bracket.id}_${sideKey}`] || null;
-    }
-    return null;
+    if (!isGroupComplete(slot.group)) return null;
+    const g = groupStandings[slot.group] || [];
+    const idx = slot.type === 'winner' ? 0 : slot.type === 'runner' ? 1 : 2;
+    return g[idx] ? { name: g[idx].name, flag: g[idx].flag } : null;
   };
 
   const ops = [];
@@ -258,5 +221,4 @@ module.exports = {
   runFullAdvancement,
   computeGroupStandings,
   computeBestThirds,
-  computeThirdAssignments,
 };
