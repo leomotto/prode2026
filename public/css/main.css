@@ -428,14 +428,33 @@ input,select,textarea{font-family:inherit}
 .podium-pts{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--gold)}
 .podium-pts-lg{font-size:1.6rem}
 @media(max-width:480px){.podium-item{min-width:80px;padding:.75rem .5rem}.podium-name-clip{max-width:80px}.podium-pts-lg{font-size:1.3rem}.rank-points{font-size:1.1rem}}
-@media(max-width:560px){
-  .ranking-table th,.ranking-table td{padding:.5rem .5rem}
-  .ranking-table th:nth-child(n+4),.ranking-table td:nth-child(n+4){display:none}
-  .rank-pos{font-size:1.2rem;width:36px}
-  .rank-avatar{width:28px;height:28px;font-size:.85rem}
-  .rank-name{font-size:.82rem}
-  .rank-points{font-size:1.2rem}
+/* ── RANKING CARDS (mobile) ── */
+.ranking-desktop{display:block}
+.ranking-cards{display:none}
+.rank-card{display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;border-bottom:1px solid var(--border);border-left:3px solid transparent}
+.rank-card-1{border-left-color:#ca8a04;background:linear-gradient(90deg,rgba(202,138,4,.07),transparent 50%)}
+.rank-card-2{border-left-color:#9ca3af;background:linear-gradient(90deg,rgba(156,163,175,.06),transparent 50%)}
+.rank-card-3{border-left-color:#b45309;background:linear-gradient(90deg,rgba(180,83,9,.06),transparent 50%)}
+.rank-card-me{background:rgba(202,138,4,.07)!important}
+.rank-card-num{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;line-height:1;width:30px;text-align:center;color:var(--text-muted);flex-shrink:0}
+.rank-card-1 .rank-card-num{color:#ca8a04}
+.rank-card-2 .rank-card-num{color:#9ca3af}
+.rank-card-3 .rank-card-num{color:#b45309}
+.rank-card-avatar{width:34px;height:34px;border-radius:50%;background:var(--surface-2);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.rank-card-body{flex:1;min-width:0}
+.rank-card-name{font-weight:700;font-size:.875rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+.rank-card-stats{display:flex;gap:.6rem;margin-top:.2rem;flex-wrap:wrap}
+.rank-card-stat{font-size:.7rem;color:var(--text-dim);white-space:nowrap}
+.rank-card-pts{text-align:right;flex-shrink:0}
+.rank-card-pts-val{font-family:'Bebas Neue',sans-serif;font-size:1.9rem;line-height:1;color:var(--navy)}
+.rank-card-pts-label{font-size:.6rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);text-align:center}
+@media(max-width:640px){
+  .ranking-desktop{display:none}
+  .ranking-cards{display:block}
 }
+[data-theme="dark"] .rank-card-me{background:rgba(202,138,4,.1)!important}
+[data-theme="dark"] .rank-card-pts-val{color:#93c5fd}
+[data-theme="dark"] .rank-card-name{color:var(--text)}
 
 /* ── DARK MODE READABILITY OVERRIDES ── */
 [data-theme="dark"] .btn-primary { background: #2563eb; color: #fff; }

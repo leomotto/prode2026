@@ -212,38 +212,58 @@ function renderRanking(ranking, phaseLabel = null, groupName = null, groupPhaseL
     ? `<div style="font-size:.78rem;color:var(--text-dim);padding:.6rem 1rem .25rem">${groupPhaseLabel ? `Fase: ${groupPhaseLabel}` : 'Todos los pronósticos'}</div>`
     : (phaseLabel ? `<div style="font-size:.78rem;color:var(--text-dim);padding:.6rem 1rem .25rem">Fase: ${phaseLabel}</div>` : '');
 
-  document.getElementById('ranking-table-container').innerHTML = subtitle + `
-    <table class="ranking-table">
-      <thead>
-        <tr>
-          <th style="width:44px">#</th>
-          <th>Participante</th>
-          <th style="text-align:right">Pts</th>
-          <th style="text-align:center">Exactos</th>
-          <th style="text-align:center">Ganador</th>
-          <th style="text-align:center">% Acierto</th>
-          <th style="text-align:center">Partidos</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${ranking.map(r => `
-          <tr class="${r.userId===myId?'me':''} rank-${r.rank}">
-            <td class="rank-pos">${r.rank<=3?['🥇','🥈','🥉'][r.rank-1]:r.rank}</td>
-            <td><div class="rank-user">
-              <div class="rank-avatar">${r.avatar||'⚽'}</div>
-              <div>
-                <div class="rank-name">${r.displayName}${r.userId===myId?' <span style="font-size:.7rem;color:var(--gold)">(vos)</span>':''}</div>
-                ${r.isOwner ? '<div style="font-size:.68rem;color:var(--text-dim)">👑 Creador</div>' : ''}
-              </div>
-            </div></td>
-            <td class="rank-points">${r.totalPoints}</td>
-            <td style="text-align:center"><span class="badge badge-featured">${r.exactos ?? '—'}</span></td>
-            <td style="text-align:center;color:var(--green);font-weight:700">${r.ganadores ?? '—'}</td>
-            <td style="text-align:center;color:var(--text-dim);font-size:.82rem">${r.winRate != null ? r.winRate + '%' : '—'}</td>
-            <td style="text-align:center;color:var(--text-dim)">${r.partidos}</td>
-          </tr>`).join('')}
-      </tbody>
-    </table>`;
+  const medals = ['🥇','🥈','🥉'];
+
+  const tableHTML = `<div class="ranking-desktop"><table class="ranking-table">
+    <thead><tr>
+      <th style="width:44px">#</th>
+      <th>Participante</th>
+      <th style="text-align:right">Pts</th>
+      <th style="text-align:center">Exactos</th>
+      <th style="text-align:center">Ganador</th>
+      <th style="text-align:center">% Acierto</th>
+      <th style="text-align:center">Partidos</th>
+    </tr></thead>
+    <tbody>${ranking.map(r => `
+      <tr class="${r.userId===myId?'me':''} rank-${r.rank}">
+        <td class="rank-pos">${r.rank<=3?medals[r.rank-1]:r.rank}</td>
+        <td><div class="rank-user">
+          <div class="rank-avatar">${r.avatar||'⚽'}</div>
+          <div>
+            <div class="rank-name">${r.displayName}${r.userId===myId?' <span style="font-size:.7rem;color:var(--gold)">(vos)</span>':''}</div>
+            ${r.isOwner?'<div style="font-size:.68rem;color:var(--text-dim)">👑 Creador</div>':''}
+          </div>
+        </div></td>
+        <td class="rank-points">${r.totalPoints}</td>
+        <td style="text-align:center"><span class="badge badge-featured">${r.exactos??'—'}</span></td>
+        <td style="text-align:center;color:var(--green);font-weight:700">${r.ganadores??'—'}</td>
+        <td style="text-align:center;color:var(--text-dim);font-size:.82rem">${r.winRate!=null?r.winRate+'%':'—'}</td>
+        <td style="text-align:center;color:var(--text-dim)">${r.partidos}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table></div>`;
+
+  const cardsHTML = `<div class="ranking-cards">${ranking.map(r => `
+    <div class="rank-card ${r.rank<=3?'rank-card-'+r.rank:''} ${r.userId===myId?'rank-card-me':''}">
+      <div class="rank-card-num">${r.rank}</div>
+      <div class="rank-card-avatar">${r.avatar||'⚽'}</div>
+      <div class="rank-card-body">
+        <div class="rank-card-name">${r.displayName}${r.userId===myId?' <span style="font-size:.68rem;color:var(--gold)">(vos)</span>':''}</div>
+        <div class="rank-card-stats">
+          <span class="rank-card-stat">✓ ${r.exactos??0} exactos</span>
+          <span class="rank-card-stat" style="color:var(--green)">⚽ ${r.ganadores??0} gan.</span>
+          <span class="rank-card-stat">${r.winRate!=null?r.winRate+'%':'—'} acierto</span>
+          <span class="rank-card-stat">${r.partidos} partidos</span>
+        </div>
+      </div>
+      <div class="rank-card-pts">
+        <div class="rank-card-pts-val">${r.totalPoints}</div>
+        <div class="rank-card-pts-label">pts</div>
+      </div>
+    </div>`).join('')}
+  </div>`;
+
+  document.getElementById('ranking-table-container').innerHTML = subtitle + tableHTML + cardsHTML;
 }
 
 // Cargar ranking global y grupos del usuario
