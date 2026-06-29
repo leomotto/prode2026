@@ -251,7 +251,7 @@ function renderCard(m) {
       </div>
       <div class="fc-vs-block">
         ${hasResult
-          ? `<div class="fc-score-disp">${m.resultA} - ${m.resultB}</div>`
+          ? `<div class="fc-score-disp">${m.resultA} - ${m.resultB}${m.penaltyA != null ? `<div style="font-size:.65rem;color:var(--text-dim);margin-top:.1rem">pen. ${m.penaltyA}-${m.penaltyB}</div>` : ''}</div>`
           : isLive
             ? `<div style="font-size:.75rem;font-weight:700;color:var(--red)">🔴 EN VIVO</div>`
             : `<div class="fc-vs">vs</div><div class="fc-time-disp">${Fmt.time(m.date)}</div>`}

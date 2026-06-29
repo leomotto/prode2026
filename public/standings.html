@@ -246,8 +246,9 @@ function renderBracketSlot(slot, dbMatch) {
   const finished = dbMatch?.status === 'FINISHED';
   const live = dbMatch?.status === 'LIVE';
 
-  const winA = finished && dbMatch.resultA > dbMatch.resultB;
-  const winB = finished && dbMatch.resultB > dbMatch.resultA;
+  const penA = dbMatch?.penaltyA, penB = dbMatch?.penaltyB;
+  const winA = finished && (dbMatch.resultA > dbMatch.resultB || (dbMatch.resultA === dbMatch.resultB && penA != null && penA > penB));
+  const winB = finished && (dbMatch.resultB > dbMatch.resultA || (dbMatch.resultA === dbMatch.resultB && penB != null && penB > penA));
 
   const confBadge = (conf) => {
     if (conf === 'CONFIRMED') return '<span class="badge-confirmed">✓ Confirmado</span>';
@@ -255,7 +256,7 @@ function renderBracketSlot(slot, dbMatch) {
     return '';
   };
 
-  const renderTeam = (name, flag, conf, slotLabel, isWinner, score) => {
+  const renderTeam = (name, flag, conf, slotLabel, isWinner, score, penScore) => {
     const hasTeam = name && !isTbd(name);
     const badge = hasTeam && conf !== 'PENDING' ? confBadge(conf) : '';
     return `<div class="ko-team${isWinner ? ' ko-winner' : ''}">
@@ -267,7 +268,7 @@ function renderBracketSlot(slot, dbMatch) {
         </div>
         ${slotLabel ? `<div class="ko-slot-label">${slotLabel}</div>` : ''}
       </div>
-      <span class="ko-team-score">${finished && score !== undefined && score !== null ? score : ''}</span>
+      <span class="ko-team-score">${finished && score != null ? score : ''}${finished && penScore != null ? `<span style="font-size:.6rem;color:var(--text-dim);display:block;line-height:1">p.${penScore}</span>` : ''}</span>
     </div>`;
   };
 
@@ -281,8 +282,8 @@ function renderBracketSlot(slot, dbMatch) {
       <span style="opacity:.75;font-size:.65rem">${statusLabel}</span>
     </div>
     <div class="ko-match-body">
-      ${renderTeam(slot.teamAName, slot.teamAFlag, slot.teamAConfidence, slot.slotLabelA, winA, dbMatch?.resultA)}
-      ${renderTeam(slot.teamBName, slot.teamBFlag, slot.teamBConfidence, slot.slotLabelB, winB, dbMatch?.resultB)}
+      ${renderTeam(slot.teamAName, slot.teamAFlag, slot.teamAConfidence, slot.slotLabelA, winA, dbMatch?.resultA, penA)}
+      ${renderTeam(slot.teamBName, slot.teamBFlag, slot.teamBConfidence, slot.slotLabelB, winB, dbMatch?.resultB, penB)}
     </div>
     ${dbMatch ? `<div class="ko-match-meta">📍 ${dbMatch.city || dbMatch.venue || ''}</div>` : ''}
   </div>`;
@@ -293,8 +294,9 @@ function renderKoMatch(m) {
   const live = m.status === 'LIVE';
   const tbdA = isTbd(m.teamAName);
   const tbdB = isTbd(m.teamBName);
-  const winA = finished && m.resultA > m.resultB;
-  const winB = finished && m.resultB > m.resultA;
+  const mPenA = m.penaltyA, mPenB = m.penaltyB;
+  const winA = finished && (m.resultA > m.resultB || (m.resultA === m.resultB && mPenA != null && mPenA > mPenB));
+  const winB = finished && (m.resultB > m.resultA || (m.resultA === m.resultB && mPenB != null && mPenB > mPenA));
   const date = new Date(m.date);
   const dateStr = Fmt.datetime(date);
   const statusLabel = finished ? 'Finalizado' : live ? '🔴 En vivo' : dateStr;
@@ -310,14 +312,14 @@ function renderKoMatch(m) {
         <div style="flex:1;min-width:0">
           <div class="ko-team-name${tbdA ? ' tbd' : ''}">${tbdA ? tbdLabel(m.teamAName) : m.teamAName}</div>
         </div>
-        <span class="ko-team-score">${finished ? m.resultA : ''}</span>
+        <span class="ko-team-score">${finished ? m.resultA : ''}${finished && mPenA != null ? `<span style="font-size:.6rem;color:var(--text-dim);display:block;line-height:1">p.${mPenA}</span>` : ''}</span>
       </div>
       <div class="ko-team${winB ? ' ko-winner' : ''}">
         <span class="ko-team-flag">${tbdB ? '🏳️' : (m.teamBFlag || '🏳️')}</span>
         <div style="flex:1;min-width:0">
           <div class="ko-team-name${tbdB ? ' tbd' : ''}">${tbdB ? tbdLabel(m.teamBName) : m.teamBName}</div>
         </div>
-        <span class="ko-team-score">${finished ? m.resultB : ''}</span>
+        <span class="ko-team-score">${finished ? m.resultB : ''}${finished && mPenB != null ? `<span style="font-size:.6rem;color:var(--text-dim);display:block;line-height:1">p.${mPenB}</span>` : ''}</span>
       </div>
     </div>
     <div class="ko-match-meta">📍 ${m.city || m.venue || 'Por confirmar'}</div>
