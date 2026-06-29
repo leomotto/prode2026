@@ -78,11 +78,17 @@
       </div>
     </div>
 
-    <!-- Sub-tabs acumulado/solo-fase (visible solo en fases knockout) -->
+    <!-- Toggle acumulado/solo-fase (visible solo en fases knockout) -->
     <div id="phase-view-tabs" style="display:none;margin-bottom:.75rem">
-      <div class="tabs" style="background:var(--surface-2);border:1px solid var(--border)">
-        <button class="tab-btn active" id="pvt-cumulative" onclick="selectPhaseView(this, true)">📊 Acumulado</button>
-        <button class="tab-btn" id="pvt-solo" onclick="selectPhaseView(this, false)">⚡ Solo esta fase</button>
+      <div style="display:flex;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:.25rem;gap:.25rem">
+        <button id="pvt-cumulative" onclick="selectPhaseView(this, true)"
+          style="flex:1;padding:.5rem .75rem;border:none;border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .15s;background:var(--navy);color:#fff">
+          📊 Acumulado
+        </button>
+        <button id="pvt-solo" onclick="selectPhaseView(this, false)"
+          style="flex:1;padding:.5rem .75rem;border:none;border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .15s;background:none;color:var(--text-dim)">
+          ⚡ Solo esta fase
+        </button>
       </div>
     </div>
 
@@ -94,7 +100,7 @@
   </div>
 </div>
 
-<script src="/js/api.js?v=1.4.8"></script>
+<script src="/js/api.js?v=1.4.9"></script>
 <script>
 Auth.require();
 const user = Auth.getUser();
@@ -125,8 +131,10 @@ async function loadRanking(btn, phase) {
   pvt.style.display = isKnockout ? '' : 'none';
   if (isKnockout) {
     activeCumulative = true;
-    document.getElementById('pvt-cumulative').classList.add('active');
-    document.getElementById('pvt-solo').classList.remove('active');
+    document.getElementById('pvt-cumulative').style.background = 'var(--navy)';
+    document.getElementById('pvt-cumulative').style.color = '#fff';
+    document.getElementById('pvt-solo').style.background = 'none';
+    document.getElementById('pvt-solo').style.color = 'var(--text-dim)';
   }
 
   await _fetchAndRenderRanking(phase, isKnockout ? activeCumulative : false);
@@ -134,8 +142,12 @@ async function loadRanking(btn, phase) {
 
 function selectPhaseView(btn, cumulative) {
   activeCumulative = cumulative;
-  document.querySelectorAll('#phase-view-tabs .tab-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
+  ['pvt-cumulative','pvt-solo'].forEach(id => {
+    const el = document.getElementById(id);
+    const isActive = el === btn;
+    el.style.background = isActive ? 'var(--navy)' : 'none';
+    el.style.color = isActive ? '#fff' : 'var(--text-dim)';
+  });
   _fetchAndRenderRanking(activePhase, cumulative);
 }
 
