@@ -45,7 +45,12 @@ const api = {
   },
   // Rankings
   rankings: {
-    all: (phase) => api.get(`/rankings${phase ? '?phase=' + phase : ''}`),
+    all: (phase, cumulative) => {
+      const params = [];
+      if (phase) params.push('phase=' + phase);
+      if (cumulative) params.push('cumulative=true');
+      return api.get(`/rankings${params.length ? '?' + params.join('&') : ''}`);
+    },
     me:  ()      => api.get('/rankings/me'),
   },
   // Admin

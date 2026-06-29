@@ -5,9 +5,12 @@ const PHASE_ORDER = ['GRUPOS', 'DIECISEISAVOS', 'OCTAVOS', 'CUARTOS', 'SEMIFINAL
 
 async function rankingsRoutes(fastify) {
 
-  // GET /api/rankings?phase=
+  // GET /api/rankings?phase=&cumulative=
+  // cumulative=true → acumula puntos desde GRUPOS hasta la fase indicada inclusive
+  // cumulative=false (default) → solo predicciones de la fase exacta
   fastify.get('/', async (request) => {
-    const { phase } = request.query;
+    const { phase, cumulative } = request.query;
+    const isCumulative = cumulative === 'true';
 
     // Traer todos los usuarios activos
     const users = await fastify.db.user.findMany({
@@ -15,16 +18,18 @@ async function rankingsRoutes(fastify) {
       select: { id: true, displayName: true, avatar: true },
     });
 
-    // Para fases knockout, acumular puntos desde GRUPOS hasta esa fase inclusive,
-    // así el ranking siempre tiene datos apenas arranca la fase.
     const predWhere = { match: { status: 'FINISHED' }, pointsTotal: { not: null } };
     if (phase) {
       const phaseUpper = phase.toUpperCase();
-      const phaseIdx = PHASE_ORDER.indexOf(phaseUpper);
-      const includedPhases = phaseIdx > 0
-        ? PHASE_ORDER.slice(0, phaseIdx + 1)
-        : [phaseUpper];
-      predWhere.match = { ...predWhere.match, phase: { in: includedPhases } };
+      if (isCumulative) {
+        const phaseIdx = PHASE_ORDER.indexOf(phaseUpper);
+        const includedPhases = phaseIdx > 0
+          ? PHASE_ORDER.slice(0, phaseIdx + 1)
+          : [phaseUpper];
+        predWhere.match = { ...predWhere.match, phase: { in: includedPhases } };
+      } else {
+        predWhere.match = { ...predWhere.match, phase: phaseUpper };
+      }
     }
 
     const predictions = await fastify.db.prediction.findMany({
