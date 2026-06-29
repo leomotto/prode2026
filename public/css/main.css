@@ -428,6 +428,14 @@ input,select,textarea{font-family:inherit}
 .podium-pts{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--gold)}
 .podium-pts-lg{font-size:1.6rem}
 @media(max-width:480px){.podium-item{min-width:80px;padding:.75rem .5rem}.podium-name-clip{max-width:80px}.podium-pts-lg{font-size:1.3rem}.rank-points{font-size:1.1rem}}
+@media(max-width:560px){
+  .ranking-table th,.ranking-table td{padding:.5rem .5rem}
+  .ranking-table th:nth-child(n+4),.ranking-table td:nth-child(n+4){display:none}
+  .rank-pos{font-size:1.2rem;width:36px}
+  .rank-avatar{width:28px;height:28px;font-size:.85rem}
+  .rank-name{font-size:.82rem}
+  .rank-points{font-size:1.2rem}
+}
 
 /* ── DARK MODE READABILITY OVERRIDES ── */
 [data-theme="dark"] .btn-primary { background: #2563eb; color: #fff; }
