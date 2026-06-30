@@ -216,15 +216,35 @@ async function adminRoutes(fastify) {
       penaltyA, penaltyB, id
     );
 
-    // Re-correr avance del bracket con los datos de penales actualizados
+    // Re-correr avance completo del bracket
     try {
-      const { advanceKnockoutMatch } = require('../services/AdvancementService');
-      await advanceKnockoutMatch(fastify.db, id);
+      const { runFullAdvancement } = require('../services/AdvancementService');
+      await runFullAdvancement(fastify.db);
     } catch (advErr) {
       fastify.log.warn('fix-penalties advancement error: ' + advErr.message);
     }
 
     return { success: true, id, penaltyA, penaltyB };
+  });
+
+  // POST /api/admin/matches/:id/clear-penalties — borrar penales incorrectos de un partido
+  fastify.post('/matches/:id/clear-penalties', { preHandler: fastify.adminOnly }, async (request) => {
+    const { id } = request.params;
+
+    await fastify.db.$executeRawUnsafe(
+      'UPDATE matches SET "penaltyA"=NULL, "penaltyB"=NULL WHERE id=$1',
+      id
+    );
+
+    // Re-correr avance completo del bracket para corregir propagaciones incorrectas
+    try {
+      const { runFullAdvancement } = require('../services/AdvancementService');
+      await runFullAdvancement(fastify.db);
+    } catch (advErr) {
+      fastify.log.warn('clear-penalties advancement error: ' + advErr.message);
+    }
+
+    return { success: true, id, penaltyA: null, penaltyB: null };
   });
 
   // POST /api/admin/matches/reset-all — limpiar TODOS los partidos y resultados
