@@ -138,6 +138,8 @@ async function adminRoutes(fastify) {
         properties: {
           resultA:         { type: 'integer', minimum: 0 },
           resultB:         { type: 'integer', minimum: 0 },
+          penaltyA:        { type: 'integer', minimum: 0, nullable: true },
+          penaltyB:        { type: 'integer', minimum: 0, nullable: true },
           realFirstScorer: { type: 'string', nullable: true },
           realCardsCount:  { type: 'integer', nullable: true },
           realCornersCount:{ type: 'integer', nullable: true },
@@ -147,11 +149,15 @@ async function adminRoutes(fastify) {
     },
   }, async (request, reply) => {
     const { id } = request.params;
-    const { resultA, resultB, realFirstScorer, realCardsCount, realCornersCount, realMvp } = request.body;
+    const { resultA, resultB, penaltyA, penaltyB, realFirstScorer, realCardsCount, realCornersCount, realMvp } = request.body;
+
+    const matchData = { resultA, resultB, status: 'FINISHED' };
+    if (penaltyA != null) matchData.penaltyA = penaltyA;
+    if (penaltyB != null) matchData.penaltyB = penaltyB;
 
     const match = await fastify.db.match.update({
       where: { id },
-      data: { resultA, resultB, status: 'FINISHED' },
+      data: matchData,
     });
 
     const MatchService = require('../services/MatchService');
@@ -185,6 +191,40 @@ async function adminRoutes(fastify) {
     );
 
     return { updated: updatedPreds.length, message: 'Resultados procesados correctamente' };
+  });
+
+  // POST /api/admin/matches/:id/fix-penalties — corregir/agregar penales a partido ya FINISHED
+  // Útil cuando el resultado ya fue cargado sin penales (ej: partido que fue a penales)
+  fastify.post('/matches/:id/fix-penalties', {
+    preHandler: fastify.adminOnly,
+    schema: {
+      body: {
+        type: 'object',
+        required: ['penaltyA', 'penaltyB'],
+        properties: {
+          penaltyA: { type: 'integer', minimum: 0 },
+          penaltyB: { type: 'integer', minimum: 0 },
+        },
+      },
+    },
+  }, async (request, reply) => {
+    const { id } = request.params;
+    const { penaltyA, penaltyB } = request.body;
+
+    await fastify.db.$executeRawUnsafe(
+      'UPDATE matches SET "penaltyA"=$1, "penaltyB"=$2 WHERE id=$3',
+      penaltyA, penaltyB, id
+    );
+
+    // Re-correr avance del bracket con los datos de penales actualizados
+    try {
+      const { advanceKnockoutMatch } = require('../services/AdvancementService');
+      await advanceKnockoutMatch(fastify.db, id);
+    } catch (advErr) {
+      fastify.log.warn('fix-penalties advancement error: ' + advErr.message);
+    }
+
+    return { success: true, id, penaltyA, penaltyB };
   });
 
   // POST /api/admin/matches/reset-all — limpiar TODOS los partidos y resultados
