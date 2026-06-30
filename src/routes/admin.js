@@ -373,6 +373,32 @@ async function adminRoutes(fastify) {
     }
     return { success: true, updated: results };
   });
+
+  // POST /api/admin/fix-knockout-slots — limpia slots R16/QF/SF/Final no FINISHED y re-propaga desde cero
+  // Usar cuando hay datos corruptos en el bracket knockout por propagaciones anteriores incorrectas
+  fastify.post('/fix-knockout-slots', { preHandler: fastify.adminOnly }, async () => {
+    const db = fastify.db;
+
+    // Limpiar teamA/B en todos los partidos knockout NO finalizados
+    const knockoutPhases = ['OCTAVOS', 'CUARTOS', 'SEMIFINAL', 'TERCERPUESTO', 'FINAL'];
+    const toClean = await db.match.findMany({
+      where: { phase: { in: knockoutPhases }, status: { not: 'FINISHED' } },
+      select: { id: true },
+    });
+
+    for (const m of toClean) {
+      await db.match.update({
+        where: { id: m.id },
+        data: { teamAName: null, teamAFlag: null, teamBName: null, teamBFlag: null, argentina: false },
+      });
+    }
+
+    // Re-propagar desde partidos knockout FINISHED (los resultados reales)
+    const { runFullAdvancement } = require('../services/AdvancementService');
+    const result = await runFullAdvancement(db);
+
+    return { success: true, cleaned: toClean.length, ...result };
+  });
 }
 
 module.exports = adminRoutes;
