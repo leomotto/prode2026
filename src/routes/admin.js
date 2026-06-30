@@ -292,13 +292,24 @@ async function adminRoutes(fastify) {
       { id:'R32-M15', date:new Date('2026-07-01T01:00:00Z'), venue:'Estadio Banorte, Ciudad de México', city:'Ciudad de México', teamAName:'México',          teamAFlag:'🇲🇽', teamACode:'MEX', teamBName:'Ecuador',       teamBFlag:'🇪🇨', teamBCode:'ECU', argentina:false },
       { id:'R32-M16', date:new Date('2026-06-30T01:00:00Z'), venue:'Estadio BBVA, Monterrey',           city:'Monterrey',        teamAName:'Países Bajos',    teamAFlag:'🇳🇱', teamACode:'NED', teamBName:'Marruecos',     teamBFlag:'🇲🇦', teamBCode:'MAR' },
     ];
+    const now = new Date();
     const results = [];
     for (const { id, ...data } of updates) {
-      await db.$executeRawUnsafe(
-        'UPDATE matches SET date=$1, venue=$2, city=$3, "teamAName"=$4, "teamAFlag"=$5, "teamACode"=$6, "teamBName"=$7, "teamBFlag"=$8, "teamBCode"=$9, argentina=$10 WHERE id=$11',
-        data.date, data.venue, data.city, data.teamAName, data.teamAFlag, data.teamACode, data.teamBName, data.teamBFlag, data.teamBCode, data.argentina ?? false, id
-      );
-      results.push(id);
+      // Si la fecha real es futura y el partido está LIVE por un seed incorrecto, resetear a UPCOMING.
+      // Si ya pasó (partido jugado o en curso), dejar el status actual para que el sync lo resuelva.
+      const isFuture = data.date > now;
+      if (isFuture) {
+        await db.$executeRawUnsafe(
+          'UPDATE matches SET date=$1, venue=$2, city=$3, "teamAName"=$4, "teamAFlag"=$5, "teamACode"=$6, "teamBName"=$7, "teamBFlag"=$8, "teamBCode"=$9, argentina=$10, status=\'UPCOMING\'::"MatchStatus" WHERE id=$11',
+          data.date, data.venue, data.city, data.teamAName, data.teamAFlag, data.teamACode, data.teamBName, data.teamBFlag, data.teamBCode, data.argentina ?? false, id
+        );
+      } else {
+        await db.$executeRawUnsafe(
+          'UPDATE matches SET date=$1, venue=$2, city=$3, "teamAName"=$4, "teamAFlag"=$5, "teamACode"=$6, "teamBName"=$7, "teamBFlag"=$8, "teamBCode"=$9, argentina=$10 WHERE id=$11',
+          data.date, data.venue, data.city, data.teamAName, data.teamAFlag, data.teamACode, data.teamBName, data.teamBFlag, data.teamBCode, data.argentina ?? false, id
+        );
+      }
+      results.push({ id, status: isFuture ? 'reset→UPCOMING' : 'kept' });
     }
     return { success: true, updated: results };
   });
