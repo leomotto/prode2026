@@ -337,7 +337,7 @@ function renderLiveMatches(matches, preds) {
       <div class="fc-body">
         <div class="fc-team-home${hasScore ? matchSideClass(m.resultA,m.resultB,'A',m.penaltyA,m.penaltyB) : ''}"><div class="fc-code">${teamCode(m.teamAFlag)}</div><div class="fc-flag-sm">${m.teamAFlag}</div><div class="fc-name">${m.teamAName}</div></div>
         <div class="fc-vs-block">
-          ${hasScore ? scoreDisp(m.resultA,m.resultB,m.penaltyA,m.penaltyB) : `<div style="font-size:.75rem;font-weight:700;color:var(--red)">🔴 EN VIVO</div>`}
+          ${hasScore && m.status === 'LIVE' ? `<div style="font-size:.85rem;font-weight:700;color:var(--red);text-align:center">🔴 ${m.resultA} - ${m.resultB}</div>` : hasScore ? scoreDisp(m.resultA,m.resultB,m.penaltyA,m.penaltyB) : `<div style="font-size:.75rem;font-weight:700;color:var(--red)">🔴 EN VIVO</div>`}
         </div>
         <div class="fc-team-away${hasScore ? matchSideClass(m.resultA,m.resultB,'B',m.penaltyA,m.penaltyB) : ''}"><div class="fc-code">${teamCode(m.teamBFlag)}</div><div class="fc-flag-sm">${m.teamBFlag}</div><div class="fc-name">${m.teamBName}</div></div>
       </div>

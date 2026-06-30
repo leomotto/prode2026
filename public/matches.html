@@ -250,11 +250,10 @@ function renderCard(m) {
         <div class="fc-name">${m.teamAName || 'Por definir'}</div>
       </div>
       <div class="fc-vs-block">
-        ${hasResult
-          ? scoreDisp(m.resultA, m.resultB, m.penaltyA, m.penaltyB)
-          : isLive
-            ? `<div style="font-size:.75rem;font-weight:700;color:var(--red)">🔴 EN VIVO</div>`
-            : `<div class="fc-vs">vs</div>`}
+        ${hasResult && isLive ? `<div style="font-size:.85rem;font-weight:700;color:var(--red);text-align:center">🔴 ${m.resultA} - ${m.resultB}</div>`
+          : hasResult ? scoreDisp(m.resultA, m.resultB, m.penaltyA, m.penaltyB)
+          : isLive ? `<div style="font-size:.75rem;font-weight:700;color:var(--red)">🔴 EN VIVO</div>`
+          : `<div class="fc-vs">vs</div>`}
       </div>
       <div class="fc-team-away${hasResult ? matchSideClass(m.resultA, m.resultB, 'B', m.penaltyA, m.penaltyB) : ''}">
         <div class="fc-code">${codeB}</div>
