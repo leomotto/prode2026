@@ -251,14 +251,13 @@ function renderBracketSlot(slot, dbMatch) {
   const winB = finished && (dbMatch.resultB > dbMatch.resultA || (dbMatch.resultA === dbMatch.resultB && penB != null && penB > penA));
 
   const confBadge = (conf) => {
-    if (conf === 'CONFIRMED') return '<span class="badge-confirmed">✓ Confirmado</span>';
     if (conf === 'TENTATIVE') return '<span class="badge-tentative">⚡ Tentativo</span>';
     return '';
   };
 
   const renderTeam = (name, flag, conf, slotLabel, isWinner, score, penScore) => {
     const hasTeam = name && !isTbd(name);
-    const badge = hasTeam && conf !== 'PENDING' ? confBadge(conf) : '';
+    const badge = conf === 'TENTATIVE' ? confBadge(conf) : '';
     return `<div class="ko-team${isWinner ? ' ko-winner' : ''}">
       <span class="ko-team-flag">${flag || '🏳️'}</span>
       <div style="flex:1;min-width:0">
@@ -272,9 +271,8 @@ function renderBracketSlot(slot, dbMatch) {
     </div>`;
   };
 
-  const date = dbMatch ? new Date(dbMatch.date) : null;
-  const dateStr = date ? Fmt.datetime(date) : '';
-  const statusLabel = finished ? 'Finalizado' : live ? '🔴 En vivo' : (dateStr || 'Fecha por confirmar');
+  const statusLabel = finished ? 'Finalizado' : live ? '🔴 En vivo' : 'Próximo';
+  const meta = dbMatch ? matchMeta(dbMatch) : 'Fecha por confirmar';
 
   return `<div class="ko-match">
     <div class="ko-match-header">
@@ -285,7 +283,7 @@ function renderBracketSlot(slot, dbMatch) {
       ${renderTeam(slot.teamAName, slot.teamAFlag, slot.teamAConfidence, slot.slotLabelA, winA, dbMatch?.resultA, penA)}
       ${renderTeam(slot.teamBName, slot.teamBFlag, slot.teamBConfidence, slot.slotLabelB, winB, dbMatch?.resultB, penB)}
     </div>
-    ${dbMatch ? `<div class="ko-match-meta">📍 ${dbMatch.city || dbMatch.venue || ''}</div>` : ''}
+    <div class="ko-match-meta">${meta}</div>
   </div>`;
 }
 
@@ -297,9 +295,7 @@ function renderKoMatch(m) {
   const mPenA = m.penaltyA, mPenB = m.penaltyB;
   const winA = finished && (m.resultA > m.resultB || (m.resultA === m.resultB && mPenA != null && mPenA > mPenB));
   const winB = finished && (m.resultB > m.resultA || (m.resultA === m.resultB && mPenB != null && mPenB > mPenA));
-  const date = new Date(m.date);
-  const dateStr = Fmt.datetime(date);
-  const statusLabel = finished ? 'Finalizado' : live ? '🔴 En vivo' : dateStr;
+  const statusLabel = finished ? 'Finalizado' : live ? '🔴 En vivo' : 'Próximo';
 
   return `<div class="ko-match">
     <div class="ko-match-header">
@@ -322,7 +318,7 @@ function renderKoMatch(m) {
         <span class="ko-team-score">${finished ? m.resultB : ''}${finished && mPenB != null ? `<span style="font-size:.6rem;color:var(--text-dim);display:block;line-height:1">p.${mPenB}</span>` : ''}</span>
       </div>
     </div>
-    <div class="ko-match-meta">📍 ${m.city || m.venue || 'Por confirmar'}</div>
+    <div class="ko-match-meta">${matchMeta(m)}</div>
   </div>`;
 }
 

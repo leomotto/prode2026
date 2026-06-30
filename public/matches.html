@@ -244,7 +244,7 @@ function renderCard(m) {
     </div>
 
     <div class="fc-body">
-      <div class="fc-team-home${hasResult ? matchSideClass(m.resultA, m.resultB, 'A') : ''}">
+      <div class="fc-team-home${hasResult ? matchSideClass(m.resultA, m.resultB, 'A', m.penaltyA, m.penaltyB) : ''}">
         <div class="fc-code">${codeA}</div>
         <div class="fc-flag-sm">${m.teamAFlag || ''}</div>
         <div class="fc-name">${m.teamAName || 'Por definir'}</div>
@@ -254,10 +254,9 @@ function renderCard(m) {
           ? scoreDisp(m.resultA, m.resultB, m.penaltyA, m.penaltyB)
           : isLive
             ? `<div style="font-size:.75rem;font-weight:700;color:var(--red)">🔴 EN VIVO</div>`
-            : `<div class="fc-vs">vs</div><div class="fc-time-disp">${Fmt.time(m.date)}</div>`}
-        <div style="font-size:.68rem;color:var(--text-muted)">${Fmt.date(m.date)}</div>
+            : `<div class="fc-vs">vs</div>`}
       </div>
-      <div class="fc-team-away${hasResult ? matchSideClass(m.resultA, m.resultB, 'B') : ''}">
+      <div class="fc-team-away${hasResult ? matchSideClass(m.resultA, m.resultB, 'B', m.penaltyA, m.penaltyB) : ''}">
         <div class="fc-code">${codeB}</div>
         <div class="fc-flag-sm">${m.teamBFlag || ''}</div>
         <div class="fc-name">${m.teamBName || 'Por definir'}</div>
@@ -272,7 +271,7 @@ function renderCard(m) {
     </div>` : ''}
 
     <div class="fc-foot">
-      <span class="fc-venue">🕐 ${Fmt.time(m.date)} &nbsp; 📍 ${m.city}</span>
+      <span class="fc-venue">${matchMeta(m)}</span>
       ${canPredict
         ? `<button class="btn btn-primary btn-sm" onclick="openPrediction('${m.id}')">${pred?'✏️ Editar':'Pronosticar'}</button>`
         : m.status === 'UPCOMING' && !teamsConfirmed

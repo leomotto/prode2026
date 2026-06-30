@@ -152,10 +152,12 @@ input,select,textarea{font-family:inherit}
 
 .fc-vs-block{display:flex;flex-direction:column;align-items:center;gap:.1rem}
 .fc-vs{font-size:.75rem;font-weight:700;color:var(--text-muted);text-transform:uppercase}
-.fc-score-disp{font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--navy);line-height:1;letter-spacing:.05em}
+.fc-score-disp{font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--navy);line-height:1;letter-spacing:.05em;display:flex;flex-direction:column;align-items:center;gap:.1rem}
 .fc-score-disp.tbd{font-size:1rem;font-family:'Inter',sans-serif;color:var(--text-dim);font-weight:700}
+.fc-score-nums{display:flex;align-items:baseline;gap:.1rem}
 .fc-scr-w{color:var(--navy)}
-.fc-scr-l{color:var(--text-muted);font-size:1.5rem}
+.fc-scr-l{color:var(--text-muted)}
+.fc-penalty{font-size:.65rem;font-family:'Inter',sans-serif;font-weight:600;color:var(--text-dim);letter-spacing:.02em}
 .fc-time-disp{font-size:.8rem;font-weight:700;color:var(--blue)}
 
 .fc-pred-row{padding:.4rem .875rem;background:#f0fdf4;border-top:1px solid #dcfce7;display:flex;align-items:center;gap:.5rem;font-size:.78rem}
@@ -341,6 +343,7 @@ input,select,textarea{font-family:inherit}
 [data-theme="dark"] .fc-team-winner .fc-name{color:var(--text)}
 [data-theme="dark"] .fc-scr-w{color:var(--text)}
 [data-theme="dark"] .fc-scr-l{color:var(--text-muted)}
+[data-theme="dark"] .fc-penalty{color:var(--text-dim)}
 [data-theme="dark"] .group-badge{color:var(--text)}
 [data-theme="dark"] .fc-score-disp{color:var(--text)}
 [data-theme="dark"] .badge-phase{background:rgba(255,255,255,.08);color:var(--text-dim);border-color:rgba(255,255,255,.1)}

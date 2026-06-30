@@ -339,7 +339,7 @@ function renderAdminMatches(customMatches = null) {
         </div>
       </div>
       <div class="fc-body">
-        <div class="fc-team-home${m.status==='FINISHED'&&m.resultA!==null ? matchSideClass(m.resultA,m.resultB,'A') : ''}">
+        <div class="fc-team-home${m.status==='FINISHED'&&m.resultA!==null ? matchSideClass(m.resultA,m.resultB,'A',m.penaltyA,m.penaltyB) : ''}">
           <div class="fc-code">${teamCode(m.teamAFlag)}</div>
           <div class="fc-flag-sm">${m.teamAFlag}</div>
           <div class="fc-name">${m.teamAName}</div>
@@ -349,22 +349,24 @@ function renderAdminMatches(customMatches = null) {
             ? scoreDisp(m.resultA,m.resultB,m.penaltyA,m.penaltyB)
             : m.status==='LIVE'
               ? `<div style="font-size:.75rem;font-weight:700;color:var(--red)">🔴 EN VIVO</div>`
-              : `<div class="fc-vs">vs</div><div class="fc-time-disp">${Fmt.time(m.date)}</div>`}
-          <div style="font-size:.68rem;color:var(--text-muted)">${Fmt.date(m.date)}</div>
+              : `<div class="fc-vs">vs</div>`}
         </div>
-        <div class="fc-team-away${m.status==='FINISHED'&&m.resultA!==null ? matchSideClass(m.resultA,m.resultB,'B') : ''}">
+        <div class="fc-team-away${m.status==='FINISHED'&&m.resultA!==null ? matchSideClass(m.resultA,m.resultB,'B',m.penaltyA,m.penaltyB) : ''}">
           <div class="fc-code">${teamCode(m.teamBFlag)}</div>
           <div class="fc-flag-sm">${m.teamBFlag}</div>
           <div class="fc-name">${m.teamBName}</div>
         </div>
       </div>
-      <div class="fc-foot" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;border-top:1px dashed var(--border);padding-top:.75rem;margin-top:.75rem">
-        <select class="status-select" onchange="changeStatus('${m.id}', this.value)">
-          <option value="UPCOMING" ${m.status==='UPCOMING'?'selected':''}>Próximo</option>
-          <option value="LIVE"     ${m.status==='LIVE'?'selected':''}>En Vivo</option>
-          <option value="FINISHED" ${m.status==='FINISHED'?'selected':''}>Finalizado</option>
-        </select>
-        <button onclick="openResult('${m.id}')" class="btn btn-primary btn-sm">Resultado</button>
+      <div class="fc-foot" style="display:flex;flex-direction:column;gap:.5rem;border-top:1px dashed var(--border);padding-top:.75rem;margin-top:.75rem">
+        <span class="fc-venue">${matchMeta(m)}</span>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem">
+          <select class="status-select" onchange="changeStatus('${m.id}', this.value)">
+            <option value="UPCOMING" ${m.status==='UPCOMING'?'selected':''}>Próximo</option>
+            <option value="LIVE"     ${m.status==='LIVE'?'selected':''}>En Vivo</option>
+            <option value="FINISHED" ${m.status==='FINISHED'?'selected':''}>Finalizado</option>
+          </select>
+          <button onclick="openResult('${m.id}')" class="btn btn-primary btn-sm">Resultado</button>
+        </div>
       </div>
     </div>`).join('') + '</div>';
 }

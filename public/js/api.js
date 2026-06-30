@@ -225,20 +225,36 @@ const FIFA_CODE = {
   'TO':'TON','TR':'TUR','TT':'TRI','TZ':'TAN','UA':'UKR','UG':'UGA','US':'USA',
   'UY':'URU','UZ':'UZB','VE':'VEN','VN':'VIE','YE':'YEM','ZA':'RSA','ZM':'ZAM','ZW':'ZIM',
 };
-// Returns CSS class suffix for a team side based on match result
-// side: 'A' or 'B'. Returns '' for draws or no result.
-function matchSideClass(rA, rB, side) {
-  if (rA === null || rB === null || rA === rB) return '';
-  const aWins = rA > rB;
-  return (side === 'A' ? aWins : !aWins) ? ' fc-team-winner' : ' fc-team-loser';
+// Determines who wins: regular time, or penalties if draw
+function _matchWinner(rA, rB, penA, penB) {
+  if (rA === null || rB === null) return null;
+  if (rA !== rB) return rA > rB ? 'A' : 'B';
+  if (penA != null && penB != null && penA !== penB) return penA > penB ? 'A' : 'B';
+  return null; // draw
 }
 
-// Renders the score display with winner/loser visual split
+// Returns CSS class suffix for a team side based on match result (incl. penalties)
+function matchSideClass(rA, rB, side, penA, penB) {
+  const winner = _matchWinner(rA, rB, penA, penB);
+  if (!winner) return '';
+  return winner === side ? ' fc-team-winner' : ' fc-team-loser';
+}
+
+// Renders the score display with winner/loser visual split and centered penalty row
 function scoreDisp(rA, rB, penA, penB) {
-  const pen = penA != null ? `<div style="font-size:.65rem;color:var(--text-dim);margin-top:.1rem">pen. ${penA}-${penB}</div>` : '';
-  if (rA === rB) return `<div class="fc-score-disp">${rA} - ${rB}${pen}</div>`;
-  const aWins = rA > rB;
-  return `<div class="fc-score-disp"><span class="${aWins?'fc-scr-w':'fc-scr-l'}">${rA}</span><span style="color:var(--text-muted)"> - </span><span class="${aWins?'fc-scr-l':'fc-scr-w'}">${rB}</span>${pen}</div>`;
+  const winner = _matchWinner(rA, rB, penA, penB);
+  const pen = penA != null ? `<div class="fc-penalty">pen. ${penA}-${penB}</div>` : '';
+  if (!winner) {
+    return `<div class="fc-score-disp"><div class="fc-score-nums">${rA} - ${rB}</div>${pen}</div>`;
+  }
+  const aW = winner === 'A';
+  return `<div class="fc-score-disp"><div class="fc-score-nums"><span class="${aW?'fc-scr-w':'fc-scr-l'}">${rA}</span><span style="color:var(--text-muted)"> - </span><span class="${aW?'fc-scr-l':'fc-scr-w'}">${rB}</span></div>${pen}</div>`;
+}
+
+// Unified match metadata: date · time · venue
+function matchMeta(m) {
+  const venue = m.city || m.venue || '';
+  return `${Fmt.date(m.date)} · ${Fmt.time(m.date)}${venue ? ` · 📍 ${venue}` : ''}`;
 }
 
 function teamCode(flag) {
