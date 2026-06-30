@@ -379,25 +379,20 @@ async function adminRoutes(fastify) {
   fastify.post('/fix-knockout-slots', { preHandler: fastify.adminOnly }, async () => {
     const db = fastify.db;
 
+    // Usar SQL directo para evitar conflictos con el enum MatchPhase en Prisma
     // Limpiar teamA/B en todos los partidos knockout NO finalizados
-    const knockoutPhases = ['OCTAVOS', 'CUARTOS', 'SEMIFINAL', 'TERCERPUESTO', 'FINAL'];
-    const toClean = await db.match.findMany({
-      where: { phase: { in: knockoutPhases }, status: { not: 'FINISHED' } },
-      select: { id: true },
-    });
+    const cleaned = await db.$executeRawUnsafe(`
+      UPDATE matches
+      SET "teamAName" = NULL, "teamAFlag" = NULL, "teamBName" = NULL, "teamBFlag" = NULL, argentina = false
+      WHERE phase IN ('OCTAVOS','CUARTOS','SEMIFINAL','TERCER_PUESTO','FINAL')
+        AND status != 'FINISHED'::"MatchStatus"
+    `);
 
-    for (const m of toClean) {
-      await db.match.update({
-        where: { id: m.id },
-        data: { teamAName: null, teamAFlag: null, teamBName: null, teamBFlag: null, argentina: false },
-      });
-    }
-
-    // Re-propagar desde partidos knockout FINISHED (los resultados reales)
+    // Re-propagar desde partidos FINISHED reales
     const { runFullAdvancement } = require('../services/AdvancementService');
     const result = await runFullAdvancement(db);
 
-    return { success: true, cleaned: toClean.length, ...result };
+    return { success: true, cleaned, ...result };
   });
 }
 
