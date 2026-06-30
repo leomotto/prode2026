@@ -349,7 +349,7 @@ function renderAdminMatches(customMatches = null) {
           ${m.status==='FINISHED' && m.resultA!==null
             ? scoreDisp(m.resultA,m.resultB,m.penaltyA,m.penaltyB)
             : m.status==='LIVE'
-              ? `<div style="font-size:.75rem;font-weight:700;color:var(--red)">🔴 EN VIVO</div>`
+              ? `<div style="font-size:.75rem;font-weight:700;color:var(--red)">🔴 ${m.resultA !== null ? m.resultA + ' - ' + m.resultB : 'EN VIVO'}</div>`
               : `<div class="fc-vs">vs</div>`}
         </div>
         <div class="fc-team-away${m.status==='FINISHED'&&m.resultA!==null ? matchSideClass(m.resultA,m.resultB,'B',m.penaltyA,m.penaltyB) : ''}">

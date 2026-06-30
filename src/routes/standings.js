@@ -25,6 +25,13 @@ async function standingsRoutes(fastify) {
       return c && c.total > 0 && c.total === c.finished;
     };
 
+    // Obtener partidos R32 reales de la DB para usar sus equipos/resultados en los ya jugados
+    const r32Matches = await fastify.db.match.findMany({
+      where: { phase: 'DIECISEISAVOS' },
+      select: { id: true, status: true, teamAName: true, teamAFlag: true, teamBName: true, teamBFlag: true, resultA: true, resultB: true, penaltyA: true, penaltyB: true },
+    });
+    const r32ByIdMap = Object.fromEntries(r32Matches.map(m => [m.id, m]));
+
     // Cada slot de tercero tiene grupo fijo (3D vs 1E, 3F vs 1I, etc.)
     const resolveTeam = (slot) => {
       const g = groupStandings[slot.group] || [];
@@ -46,6 +53,29 @@ async function standingsRoutes(fastify) {
     };
 
     return R32_BRACKET.map(bracket => {
+      const r32Match = r32ByIdMap[bracket.id];
+
+      // Si el partido ya se jugó, usar los equipos reales de la DB
+      // (no recalcular desde grupos — podría diferir del resultado real)
+      if (r32Match && r32Match.status === 'FINISHED') {
+        return {
+          id:              bracket.id,
+          slotLabelA:      slotLabel(bracket.sideA),
+          slotLabelB:      slotLabel(bracket.sideB),
+          teamAName:       r32Match.teamAName  || null,
+          teamAFlag:       r32Match.teamAFlag  || null,
+          teamBName:       r32Match.teamBName  || null,
+          teamBFlag:       r32Match.teamBFlag  || null,
+          teamAConfidence: 'CONFIRMED',
+          teamBConfidence: 'CONFIRMED',
+          resultA:         r32Match.resultA,
+          resultB:         r32Match.resultB,
+          penaltyA:        r32Match.penaltyA,
+          penaltyB:        r32Match.penaltyB,
+          status:          r32Match.status,
+        };
+      }
+
       const teamA = resolveTeam(bracket.sideA);
       const teamB = resolveTeam(bracket.sideB);
       return {
@@ -58,6 +88,7 @@ async function standingsRoutes(fastify) {
         teamBFlag:       teamB?.flag  || null,
         teamAConfidence: getConfidence(bracket.sideA),
         teamBConfidence: getConfidence(bracket.sideB),
+        status:          r32Match?.status || 'UPCOMING',
       };
     });
   });
