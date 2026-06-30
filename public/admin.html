@@ -79,6 +79,7 @@
         </div>
         <div style="display:flex;gap:.5rem;flex-wrap:wrap">
           <button class="btn btn-sm btn-primary" id="btn-sync" onclick="forceSyncNow()">🔄 Sincronizar ahora</button>
+          <button class="btn btn-sm" style="background:rgba(234,179,8,.15);color:#b45309" id="btn-fix-r32" onclick="fixR32Data()">📍 Fix venues/fechas R32</button>
 
           <button class="btn btn-sm" style="background:rgba(239,68,68,.1);color:var(--red)" onclick="resetAllMatches()">⚠️ Resetear Todos</button>
           <input type="text" class="form-input" id="admin-search" placeholder="Buscar equipo..." style="width:180px" oninput="filterBySearch(this.value)">
@@ -659,6 +660,20 @@ async function forceSyncNow() {
   }
 }
 
+
+async function fixR32Data() {
+  const btn = document.getElementById('btn-fix-r32');
+  btn.disabled = true; btn.textContent = '⏳ Actualizando...';
+  try {
+    const res = await api.post('/admin/fix-r32-data');
+    Toast.success('R32 actualizado', `${res.updated.length} partidos actualizados con venues y fechas correctas`);
+    loadAdminData();
+  } catch(e) {
+    Toast.error('Error', e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = '📍 Fix venues/fechas R32';
+  }
+}
 
 async function resetAllMatches() {
   if (!confirm('⚠️ ¿Estás COMPLETAMENTE seguro de que querés resetear TODOS los partidos?\nEsto borrará todos los resultados reales (0-0) y pondrá los partidos en estado PRÓXIMO.\n\nLos pronósticos de los usuarios se mantendrán, pero sus puntos se limpiarán para que puedan recalcularse luego.')) return;
