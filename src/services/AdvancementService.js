@@ -1,26 +1,25 @@
 'use strict';
 
 // FIFA 2026 — Bracket oficial Dieciseisavos de Final (Ronda de 32)
-// Fuente: calendario oficial FIFA 2026 (CBS Sports / Wikipedia)
-// Cada slot tercero tiene grupo fijo: 3D siempre juega vs 1E, 3F vs 1I, etc.
-// Grupos A/C/H/J no tienen slot de tercero → sus 3ros quedan eliminados.
+// Fuente: Al Jazeera + NZ Herald (verificado con API api-football, jun-2026)
+// Confirmados con equipos reales: ARG=1J, CPV=2H (Miami/M6); NED=1F, MAR=3C (Monterrey/M16)
 const R32_BRACKET = [
-  { id: 'R32-M1',  sideA: { type: 'runner', group: 'A' }, sideB: { type: 'runner', group: 'B' } },   // Jun 28 — 2A vs 2B
-  { id: 'R32-M2',  sideA: { type: 'winner', group: 'C' }, sideB: { type: 'runner', group: 'F' } },   // Jun 29 — 1C vs 2F
-  { id: 'R32-M3',  sideA: { type: 'winner', group: 'F' }, sideB: { type: 'third',  group: 'C' } },   // Jun 29 — 1F vs 3C  (Países Bajos vs Marruecos confirmado)
-  { id: 'R32-M4',  sideA: { type: 'winner', group: 'E' }, sideB: { type: 'runner', group: 'C' } },   // Jun 29 — 1E vs 2C
-  { id: 'R32-M5',  sideA: { type: 'runner', group: 'E' }, sideB: { type: 'runner', group: 'I' } },   // Jun 30 — 2E vs 2I
-  { id: 'R32-M6',  sideA: { type: 'winner', group: 'J' }, sideB: { type: 'runner', group: 'H' } },   // Jun 30 — 1J vs 2H  (Argentina vs Cabo Verde, Miami confirmado)
-  { id: 'R32-M7',  sideA: { type: 'winner', group: 'A' }, sideB: { type: 'third',  group: 'E' } },   // Jun 30 — 1A vs 3E
-  { id: 'R32-M8',  sideA: { type: 'winner', group: 'L' }, sideB: { type: 'third',  group: 'K' } },   // Jul 1  — 1L vs 3K
-  { id: 'R32-M9',  sideA: { type: 'winner', group: 'G' }, sideB: { type: 'third',  group: 'I' } },   // Jul 1  — 1G vs 3I
-  { id: 'R32-M10', sideA: { type: 'winner', group: 'D' }, sideB: { type: 'third',  group: 'B' } },   // Jul 1  — 1D vs 3B
-  { id: 'R32-M11', sideA: { type: 'winner', group: 'H' }, sideB: { type: 'runner', group: 'J' } },   // Jul 2  — 1H vs 2J
-  { id: 'R32-M12', sideA: { type: 'winner', group: 'B' }, sideB: { type: 'third',  group: 'G' } },   // Jul 2  — 1B vs 3G
-  { id: 'R32-M13', sideA: { type: 'runner', group: 'K' }, sideB: { type: 'runner', group: 'L' } },   // Jul 2  — 2K vs 2L
-  { id: 'R32-M14', sideA: { type: 'runner', group: 'D' }, sideB: { type: 'runner', group: 'G' } },   // Jul 3  — 2D vs 2G
-  { id: 'R32-M15', sideA: { type: 'winner', group: 'I' }, sideB: { type: 'third',  group: 'F' } },   // Jul 4  — 1I vs 3F
-  { id: 'R32-M16', sideA: { type: 'winner', group: 'K' }, sideB: { type: 'third',  group: 'L' } },   // Jul 3  — 1K vs 3L
+  { id: 'R32-M1',  sideA: { type: 'winner', group: 'I' }, sideB: { type: 'third',  group: 'F' } },  // Jun 30 — 1I vs 3F  (MetLife NY)
+  { id: 'R32-M2',  sideA: { type: 'runner', group: 'E' }, sideB: { type: 'runner', group: 'I' } },  // Jun 30 — 2E vs 2I  (AT&T Dallas)
+  { id: 'R32-M3',  sideA: { type: 'winner', group: 'H' }, sideB: { type: 'runner', group: 'J' } },  // Jul 2  — 1H vs 2J  (SoFi LA)
+  { id: 'R32-M4',  sideA: { type: 'winner', group: 'C' }, sideB: { type: 'runner', group: 'F' } },  // Jun 29 — 1C vs 2F  (NRG Houston)
+  { id: 'R32-M5',  sideA: { type: 'runner', group: 'L' }, sideB: { type: 'runner', group: 'K' } },  // Jul 4  — 2L vs 2K  (Arrowhead KC)
+  { id: 'R32-M6',  sideA: { type: 'winner', group: 'J' }, sideB: { type: 'runner', group: 'H' } },  // Jul 3  — 1J vs 2H  (Hard Rock Miami — Argentina vs Cabo Verde)
+  { id: 'R32-M7',  sideA: { type: 'third',  group: 'B' }, sideB: { type: 'third',  group: 'J' } },  // Jul 3  — 3B vs 3J  (BC Place Vancouver)
+  { id: 'R32-M8',  sideA: { type: 'winner', group: 'K' }, sideB: { type: 'runner', group: 'C' } },  // Jul 2  — 1K vs 2C  (BMO Toronto)
+  { id: 'R32-M9',  sideA: { type: 'winner', group: 'E' }, sideB: { type: 'runner', group: 'D' } },  // Jun 29 — 1E vs 2D  (Gillette Boston)
+  { id: 'R32-M10', sideA: { type: 'winner', group: 'L' }, sideB: { type: 'third',  group: 'L' } },  // Jul 1  — 1L vs 3L  (MB Atlanta)
+  { id: 'R32-M11', sideA: { type: 'winner', group: 'G' }, sideB: { type: 'third',  group: 'I' } },  // Jul 1  — 1G vs 3I  (Lumen Field Seattle)
+  { id: 'R32-M12', sideA: { type: 'third',  group: 'D' }, sideB: { type: 'runner', group: 'G' } },  // Jul 3  — 3D vs 2G  (AT&T Dallas)
+  { id: 'R32-M13', sideA: { type: 'runner', group: 'A' }, sideB: { type: 'winner', group: 'B' } },  // Jun 28 — 2A vs 1B  (SoFi LA)
+  { id: 'R32-M14', sideA: { type: 'winner', group: 'D' }, sideB: { type: 'runner', group: 'B' } },  // Jul 2  — 1D vs 2B  (Levi's SF)
+  { id: 'R32-M15', sideA: { type: 'winner', group: 'A' }, sideB: { type: 'third',  group: 'E' } },  // Jul 1  — 1A vs 3E  (Estadio Banorte Mexico City)
+  { id: 'R32-M16', sideA: { type: 'winner', group: 'F' }, sideB: { type: 'third',  group: 'C' } },  // Jun 30 — 1F vs 3C  (BBVA Monterrey — Países Bajos vs Marruecos)
 ];
 
 // Cascada knockout: define qué partido terminado alimenta cada slot del siguiente round
