@@ -334,23 +334,40 @@ async function adminRoutes(fastify) {
   // POST /api/admin/fix-r32-data — corregir venues, fechas y equipos R32 en producción
   fastify.post('/fix-r32-data', { preHandler: fastify.adminOnly }, async () => {
     const db = fastify.db;
+    // Fixtures oficiales FIFA M73-M88 — orden: teamA=local, teamB=visitante
     const updates = [
-      { id:'R32-M1',  date:new Date('2026-06-30T21:00:00Z'), venue:'MetLife Stadium, Nueva York',         city:'Nueva York',       teamAName:'Francia',         teamAFlag:'🇫🇷', teamACode:'FRA', teamBName:'Suecia',        teamBFlag:'🇸🇪', teamBCode:'SWE' },
-      { id:'R32-M2',  date:new Date('2026-06-30T17:00:00Z'), venue:'AT&T Stadium, Dallas',                city:'Dallas',           teamAName:'Costa de Marfil', teamAFlag:'🇨🇮', teamACode:'CIV', teamBName:'Noruega',       teamBFlag:'🇳🇴', teamBCode:'NOR' },
-      { id:'R32-M3',  date:new Date('2026-07-02T19:00:00Z'), venue:'SoFi Stadium, Los Ángeles',          city:'Los Ángeles',      teamAName:'España',          teamAFlag:'🇪🇸', teamACode:'ESP', teamBName:'Austria',       teamBFlag:'🇦🇹', teamBCode:'AUT' },
-      { id:'R32-M4',  date:new Date('2026-06-29T17:00:00Z'), venue:'NRG Stadium, Houston',               city:'Houston',          teamAName:'Brasil',          teamAFlag:'🇧🇷', teamACode:'BRA', teamBName:'Japón',         teamBFlag:'🇯🇵', teamBCode:'JPN' },
-      { id:'R32-M5',  date:new Date('2026-07-04T01:30:00Z'), venue:'Arrowhead Stadium, Kansas City',     city:'Kansas City',      teamAName:'Colombia',        teamAFlag:'🇨🇴', teamACode:'COL', teamBName:'Ghana',         teamBFlag:'🇬🇭', teamBCode:'GHA' },
-      { id:'R32-M6',  date:new Date('2026-07-03T22:00:00Z'), venue:'Hard Rock Stadium, Miami',           city:'Miami',            teamAName:'Argentina',       teamAFlag:'🇦🇷', teamACode:'ARG', teamBName:'Cabo Verde',    teamBFlag:'🇨🇻', teamBCode:'CPV', argentina:true  },
-      { id:'R32-M7',  date:new Date('2026-07-03T03:00:00Z'), venue:'BC Place, Vancouver',                city:'Vancouver',        teamAName:'Suiza',           teamAFlag:'🇨🇭', teamACode:'SUI', teamBName:'Argelia',       teamBFlag:'🇩🇿', teamBCode:'ALG' },
-      { id:'R32-M8',  date:new Date('2026-07-02T23:00:00Z'), venue:'BMO Field, Toronto',                 city:'Toronto',          teamAName:'Portugal',        teamAFlag:'🇵🇹', teamACode:'POR', teamBName:'Croacia',       teamBFlag:'🇭🇷', teamBCode:'CRO' },
-      { id:'R32-M9',  date:new Date('2026-06-29T20:30:00Z'), venue:'Gillette Stadium, Boston',           city:'Boston',           teamAName:'Alemania',        teamAFlag:'🇩🇪', teamACode:'GER', teamBName:'Paraguay',      teamBFlag:'🇵🇾', teamBCode:'PAR' },
-      { id:'R32-M10', date:new Date('2026-07-01T16:00:00Z'), venue:'Mercedes-Benz Stadium, Atlanta',    city:'Atlanta',          teamAName:'Inglaterra',      teamAFlag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', teamACode:'ENG', teamBName:'R.D. Congo',    teamBFlag:'🇨🇩', teamBCode:'COD' },
-      { id:'R32-M11', date:new Date('2026-07-01T20:00:00Z'), venue:'Lumen Field, Seattle',              city:'Seattle',          teamAName:'Bélgica',         teamAFlag:'🇧🇪', teamACode:'BEL', teamBName:'Senegal',       teamBFlag:'🇸🇳', teamBCode:'SEN' },
-      { id:'R32-M12', date:new Date('2026-07-03T18:00:00Z'), venue:'AT&T Stadium, Dallas',              city:'Dallas',           teamAName:'Australia',       teamAFlag:'🇦🇺', teamACode:'AUS', teamBName:'Egipto',        teamBFlag:'🇪🇬', teamBCode:'EGY' },
-      { id:'R32-M13', date:new Date('2026-06-28T19:00:00Z'), venue:'SoFi Stadium, Los Ángeles',        city:'Los Ángeles',      teamAName:'Canadá',          teamAFlag:'🇨🇦', teamACode:'CAN', teamBName:'Sudáfrica',     teamBFlag:'🇿🇦', teamBCode:'RSA' },
-      { id:'R32-M14', date:new Date('2026-07-02T00:00:00Z'), venue:"Levi's Stadium, San Francisco",    city:'San Francisco',    teamAName:'EE.UU.',          teamAFlag:'🇺🇸', teamACode:'USA', teamBName:'Bosnia',        teamBFlag:'🇧🇦', teamBCode:'BIH' },
-      { id:'R32-M15', date:new Date('2026-07-01T01:00:00Z'), venue:'Estadio Banorte, Ciudad de México', city:'Ciudad de México', teamAName:'México',          teamAFlag:'🇲🇽', teamACode:'MEX', teamBName:'Ecuador',       teamBFlag:'🇪🇨', teamBCode:'ECU', argentina:false },
-      { id:'R32-M16', date:new Date('2026-06-30T01:00:00Z'), venue:'Estadio BBVA, Monterrey',           city:'Monterrey',        teamAName:'Países Bajos',    teamAFlag:'🇳🇱', teamACode:'NED', teamBName:'Marruecos',     teamBFlag:'🇲🇦', teamBCode:'MAR' },
+      // M77 — Francia (local) vs Suecia
+      { id:'R32-M1',  date:new Date('2026-06-30T21:00:00Z'), venue:'MetLife Stadium, Nueva York',          city:'Nueva York',       teamAName:'Francia',         teamAFlag:'🇫🇷', teamACode:'FRA', teamBName:'Suecia',        teamBFlag:'🇸🇪', teamBCode:'SWE' },
+      // M78 — Costa de Marfil (local) vs Noruega
+      { id:'R32-M2',  date:new Date('2026-06-30T17:00:00Z'), venue:'AT&T Stadium, Dallas',                 city:'Dallas',           teamAName:'Costa de Marfil', teamAFlag:'🇨🇮', teamACode:'CIV', teamBName:'Noruega',       teamBFlag:'🇳🇴', teamBCode:'NOR' },
+      // M83 — España (local) vs Austria
+      { id:'R32-M3',  date:new Date('2026-07-02T19:00:00Z'), venue:'SoFi Stadium, Los Ángeles',           city:'Los Ángeles',      teamAName:'España',          teamAFlag:'🇪🇸', teamACode:'ESP', teamBName:'Austria',       teamBFlag:'🇦🇹', teamBCode:'AUT' },
+      // M76 — Brasil (local) vs Japón
+      { id:'R32-M4',  date:new Date('2026-06-29T17:00:00Z'), venue:'NRG Stadium, Houston',                city:'Houston',          teamAName:'Brasil',          teamAFlag:'🇧🇷', teamACode:'BRA', teamBName:'Japón',         teamBFlag:'🇯🇵', teamBCode:'JPN' },
+      // M88 — Colombia (local) vs Ghana
+      { id:'R32-M5',  date:new Date('2026-07-04T01:30:00Z'), venue:'Arrowhead Stadium, Kansas City',      city:'Kansas City',      teamAName:'Colombia',        teamAFlag:'🇨🇴', teamACode:'COL', teamBName:'Ghana',         teamBFlag:'🇬🇭', teamBCode:'GHA' },
+      // M87 — Argentina (local) vs Cabo Verde
+      { id:'R32-M6',  date:new Date('2026-07-03T22:00:00Z'), venue:'Hard Rock Stadium, Miami',            city:'Miami',            teamAName:'Argentina',       teamAFlag:'🇦🇷', teamACode:'ARG', teamBName:'Cabo Verde',    teamBFlag:'🇨🇻', teamBCode:'CPV', argentina:true  },
+      // M85 — Suiza (local) vs Argelia
+      { id:'R32-M7',  date:new Date('2026-07-03T03:00:00Z'), venue:'BC Place, Vancouver',                 city:'Vancouver',        teamAName:'Suiza',           teamAFlag:'🇨🇭', teamACode:'SUI', teamBName:'Argelia',       teamBFlag:'🇩🇿', teamBCode:'ALG' },
+      // M84 — Portugal (local) vs Croacia
+      { id:'R32-M8',  date:new Date('2026-07-02T23:00:00Z'), venue:'BMO Field, Toronto',                  city:'Toronto',          teamAName:'Portugal',        teamAFlag:'🇵🇹', teamACode:'POR', teamBName:'Croacia',       teamBFlag:'🇭🇷', teamBCode:'CRO' },
+      // M74 — Alemania (local) vs Paraguay
+      { id:'R32-M9',  date:new Date('2026-06-29T20:30:00Z'), venue:'Gillette Stadium, Boston',            city:'Boston',           teamAName:'Alemania',        teamAFlag:'🇩🇪', teamACode:'GER', teamBName:'Paraguay',      teamBFlag:'🇵🇾', teamBCode:'PAR' },
+      // M80 — Inglaterra (local) vs R.D. Congo
+      { id:'R32-M10', date:new Date('2026-07-01T16:00:00Z'), venue:'Mercedes-Benz Stadium, Atlanta',     city:'Atlanta',          teamAName:'Inglaterra',      teamAFlag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', teamACode:'ENG', teamBName:'R.D. Congo',    teamBFlag:'🇨🇩', teamBCode:'COD' },
+      // M81 — Bélgica (local) vs Senegal
+      { id:'R32-M11', date:new Date('2026-07-01T20:00:00Z'), venue:'Lumen Field, Seattle',               city:'Seattle',          teamAName:'Bélgica',         teamAFlag:'🇧🇪', teamACode:'BEL', teamBName:'Senegal',       teamBFlag:'🇸🇳', teamBCode:'SEN' },
+      // M86 — Australia (local) vs Egipto
+      { id:'R32-M12', date:new Date('2026-07-03T18:00:00Z'), venue:'AT&T Stadium, Dallas',               city:'Dallas',           teamAName:'Australia',       teamAFlag:'🇦🇺', teamACode:'AUS', teamBName:'Egipto',        teamBFlag:'🇪🇬', teamBCode:'EGY' },
+      // M73 — Sudáfrica (local) vs Canadá  ← CORREGIDO: orden FIFA oficial
+      { id:'R32-M13', date:new Date('2026-06-28T19:00:00Z'), venue:'SoFi Stadium, Los Ángeles',         city:'Los Ángeles',      teamAName:'Sudáfrica',       teamAFlag:'🇿🇦', teamACode:'RSA', teamBName:'Canadá',        teamBFlag:'🇨🇦', teamBCode:'CAN' },
+      // M82 — EE.UU. (local) vs Bosnia y Herzegovina
+      { id:'R32-M14', date:new Date('2026-07-02T00:00:00Z'), venue:"Levi's Stadium, San Francisco",     city:'San Francisco',    teamAName:'EE.UU.',          teamAFlag:'🇺🇸', teamACode:'USA', teamBName:'Bosnia',        teamBFlag:'🇧🇦', teamBCode:'BIH' },
+      // M79 — México (local) vs Ecuador
+      { id:'R32-M15', date:new Date('2026-07-01T01:00:00Z'), venue:'Estadio Banorte, Ciudad de México',  city:'Ciudad de México', teamAName:'México',          teamAFlag:'🇲🇽', teamACode:'MEX', teamBName:'Ecuador',       teamBFlag:'🇪🇨', teamBCode:'ECU' },
+      // M75 — Países Bajos (local) vs Marruecos
+      { id:'R32-M16', date:new Date('2026-06-30T01:00:00Z'), venue:'Estadio BBVA, Monterrey',            city:'Monterrey',        teamAName:'Países Bajos',    teamAFlag:'🇳🇱', teamACode:'NED', teamBName:'Marruecos',     teamBFlag:'🇲🇦', teamBCode:'MAR' },
     ];
     const now = new Date();
     const results = [];
