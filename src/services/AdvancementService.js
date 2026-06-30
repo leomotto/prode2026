@@ -124,8 +124,19 @@ async function advanceGroupsToR32(db) {
     return g[idx] ? { name: g[idx].name, flag: g[idx].flag } : null;
   };
 
+  // Obtener partidos R32 ya FINISHED para no pisar sus equipos reales
+  const finishedR32 = new Set(
+    (await db.match.findMany({
+      where: { phase: 'DIECISEISAVOS', status: 'FINISHED' },
+      select: { id: true },
+    })).map(m => m.id)
+  );
+
   const ops = [];
   for (const bracket of R32_BRACKET) {
+    // No sobreescribir equipos de partidos ya jugados: sus teamNames son los reales
+    if (finishedR32.has(bracket.id)) continue;
+
     const teamA = resolveSlot(bracket, 'sideA');
     const teamB = resolveSlot(bracket, 'sideB');
     ops.push(db.match.update({
@@ -140,7 +151,7 @@ async function advanceGroupsToR32(db) {
     }));
   }
 
-  await Promise.all(ops);
+  if (ops.length) await Promise.all(ops);
   return { updatedR32: ops.length, groupStandings };
 }
 
