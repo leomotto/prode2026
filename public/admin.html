@@ -665,7 +665,7 @@ async function fixR32Data() {
   const btn = document.getElementById('btn-fix-r32');
   btn.disabled = true; btn.textContent = '⏳ Actualizando...';
   try {
-    const res = await api.post('/admin/fix-r32-data');
+    const res = await api.post('/admin/fix-r32-data', {});
     Toast.success('R32 actualizado', `${res.updated.length} partidos actualizados con venues y fechas correctas`);
     loadAdminData();
   } catch(e) {
