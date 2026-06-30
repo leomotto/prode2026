@@ -225,6 +225,22 @@ const FIFA_CODE = {
   'TO':'TON','TR':'TUR','TT':'TRI','TZ':'TAN','UA':'UKR','UG':'UGA','US':'USA',
   'UY':'URU','UZ':'UZB','VE':'VEN','VN':'VIE','YE':'YEM','ZA':'RSA','ZM':'ZAM','ZW':'ZIM',
 };
+// Returns CSS class suffix for a team side based on match result
+// side: 'A' or 'B'. Returns '' for draws or no result.
+function matchSideClass(rA, rB, side) {
+  if (rA === null || rB === null || rA === rB) return '';
+  const aWins = rA > rB;
+  return (side === 'A' ? aWins : !aWins) ? ' fc-team-winner' : ' fc-team-loser';
+}
+
+// Renders the score display with winner/loser visual split
+function scoreDisp(rA, rB, penA, penB) {
+  const pen = penA != null ? `<div style="font-size:.65rem;color:var(--text-dim);margin-top:.1rem">pen. ${penA}-${penB}</div>` : '';
+  if (rA === rB) return `<div class="fc-score-disp">${rA} - ${rB}${pen}</div>`;
+  const aWins = rA > rB;
+  return `<div class="fc-score-disp"><span class="${aWins?'fc-scr-w':'fc-scr-l'}">${rA}</span><span style="color:var(--text-muted)"> - </span><span class="${aWins?'fc-scr-l':'fc-scr-w'}">${rB}</span>${pen}</div>`;
+}
+
 function teamCode(flag) {
   if (!flag) return '???';
   try {

@@ -335,13 +335,11 @@ function renderLiveMatches(matches, preds) {
         ${pred ? `<span class="badge badge-finished" style="background:rgba(16,185,129,.1);color:var(--green);border-color:var(--green)">🎯 ${pred.scoreA}—${pred.scoreB}</span>` : ''}
       </div></div>
       <div class="fc-body">
-        <div class="fc-team-home"><div class="fc-code">${teamCode(m.teamAFlag)}</div><div class="fc-flag-sm">${m.teamAFlag}</div><div class="fc-name">${m.teamAName}</div></div>
+        <div class="fc-team-home${hasScore ? matchSideClass(m.resultA,m.resultB,'A') : ''}"><div class="fc-code">${teamCode(m.teamAFlag)}</div><div class="fc-flag-sm">${m.teamAFlag}</div><div class="fc-name">${m.teamAName}</div></div>
         <div class="fc-vs-block">
-          ${hasScore
-            ? `<div class="fc-score-disp">${m.resultA} - ${m.resultB}${m.penaltyA != null ? `<div style="font-size:.65rem;color:var(--text-dim);margin-top:.1rem">pen. ${m.penaltyA}-${m.penaltyB}</div>` : ''}</div>`
-            : `<div style="font-size:.75rem;font-weight:700;color:var(--red)">🔴 EN VIVO</div>`}
+          ${hasScore ? scoreDisp(m.resultA,m.resultB,m.penaltyA,m.penaltyB) : `<div style="font-size:.75rem;font-weight:700;color:var(--red)">🔴 EN VIVO</div>`}
         </div>
-        <div class="fc-team-away"><div class="fc-code">${teamCode(m.teamBFlag)}</div><div class="fc-flag-sm">${m.teamBFlag}</div><div class="fc-name">${m.teamBName}</div></div>
+        <div class="fc-team-away${hasScore ? matchSideClass(m.resultA,m.resultB,'B') : ''}"><div class="fc-code">${teamCode(m.teamBFlag)}</div><div class="fc-flag-sm">${m.teamBFlag}</div><div class="fc-name">${m.teamBName}</div></div>
       </div>
       <div class="fc-foot"><span class="fc-venue">🕐 ${Fmt.time(m.date)} &nbsp; 📍 ${m.city || ''}</span></div>
     </div>`;

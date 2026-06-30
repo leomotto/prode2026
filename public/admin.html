@@ -339,20 +339,20 @@ function renderAdminMatches(customMatches = null) {
         </div>
       </div>
       <div class="fc-body">
-        <div class="fc-team-home">
+        <div class="fc-team-home${m.status==='FINISHED'&&m.resultA!==null ? matchSideClass(m.resultA,m.resultB,'A') : ''}">
           <div class="fc-code">${teamCode(m.teamAFlag)}</div>
           <div class="fc-flag-sm">${m.teamAFlag}</div>
           <div class="fc-name">${m.teamAName}</div>
         </div>
         <div class="fc-vs-block">
-          ${(m.status === 'FINISHED' || m.status === 'LIVE') && m.resultA !== null
-            ? `<div class="fc-score-disp">${m.resultA} - ${m.resultB}${m.penaltyA != null ? `<div style="font-size:.65rem;color:var(--text-dim);margin-top:.1rem">pen. ${m.penaltyA}-${m.penaltyB}</div>` : ''}</div>`
-            : m.status === 'LIVE'
+          ${m.status==='FINISHED' && m.resultA!==null
+            ? scoreDisp(m.resultA,m.resultB,m.penaltyA,m.penaltyB)
+            : m.status==='LIVE'
               ? `<div style="font-size:.75rem;font-weight:700;color:var(--red)">🔴 EN VIVO</div>`
               : `<div class="fc-vs">vs</div><div class="fc-time-disp">${Fmt.time(m.date)}</div>`}
           <div style="font-size:.68rem;color:var(--text-muted)">${Fmt.date(m.date)}</div>
         </div>
-        <div class="fc-team-away">
+        <div class="fc-team-away${m.status==='FINISHED'&&m.resultA!==null ? matchSideClass(m.resultA,m.resultB,'B') : ''}">
           <div class="fc-code">${teamCode(m.teamBFlag)}</div>
           <div class="fc-flag-sm">${m.teamBFlag}</div>
           <div class="fc-name">${m.teamBName}</div>

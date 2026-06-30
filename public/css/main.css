@@ -144,12 +144,18 @@ input,select,textarea{font-family:inherit}
 .fc-team-home,.fc-team-away{display:flex;flex-direction:column;align-items:center;gap:.2rem}
 .fc-code{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;color:var(--navy);line-height:1;letter-spacing:.04em}
 .fc-flag-sm{font-size:.9rem}
-.fc-name{font-size:.78rem;font-weight:600;color:var(--text-dim);text-align:center}
+.fc-name{font-size:.78rem;font-weight:600;color:var(--text-dim);text-align:center;transition:color .15s,opacity .15s}
+.fc-team-winner .fc-name{color:var(--text);font-weight:700}
+.fc-team-loser .fc-name{opacity:.45}
+.fc-team-loser .fc-flag-sm{opacity:.5}
+.fc-team-loser .fc-code{opacity:.45}
 
 .fc-vs-block{display:flex;flex-direction:column;align-items:center;gap:.1rem}
 .fc-vs{font-size:.75rem;font-weight:700;color:var(--text-muted);text-transform:uppercase}
 .fc-score-disp{font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--navy);line-height:1;letter-spacing:.05em}
 .fc-score-disp.tbd{font-size:1rem;font-family:'Inter',sans-serif;color:var(--text-dim);font-weight:700}
+.fc-scr-w{color:var(--navy)}
+.fc-scr-l{color:var(--text-muted);font-size:1.5rem}
 .fc-time-disp{font-size:.8rem;font-weight:700;color:var(--blue)}
 
 .fc-pred-row{padding:.4rem .875rem;background:#f0fdf4;border-top:1px solid #dcfce7;display:flex;align-items:center;gap:.5rem;font-size:.78rem}
@@ -332,6 +338,9 @@ input,select,textarea{font-family:inherit}
 [data-theme="dark"] .fixture-card:hover{border-color:#5b8cff}
 [data-theme="dark"] .fc-code{color:var(--text)}
 [data-theme="dark"] .fc-name{color:var(--text-dim)}
+[data-theme="dark"] .fc-team-winner .fc-name{color:var(--text)}
+[data-theme="dark"] .fc-scr-w{color:var(--text)}
+[data-theme="dark"] .fc-scr-l{color:var(--text-muted)}
 [data-theme="dark"] .group-badge{color:var(--text)}
 [data-theme="dark"] .fc-score-disp{color:var(--text)}
 [data-theme="dark"] .badge-phase{background:rgba(255,255,255,.08);color:var(--text-dim);border-color:rgba(255,255,255,.1)}
