@@ -7,10 +7,10 @@
 const R32_BRACKET = [
   { id: 'R32-M1',  sideA: { type: 'runner', group: 'A' }, sideB: { type: 'runner', group: 'B' } },   // Jun 28 — 2A vs 2B
   { id: 'R32-M2',  sideA: { type: 'winner', group: 'C' }, sideB: { type: 'runner', group: 'F' } },   // Jun 29 — 1C vs 2F
-  { id: 'R32-M3',  sideA: { type: 'winner', group: 'E' }, sideB: { type: 'third',  group: 'D' } },   // Jun 29 — 1E vs 3D
-  { id: 'R32-M4',  sideA: { type: 'winner', group: 'F' }, sideB: { type: 'runner', group: 'C' } },   // Jun 29 — 1F vs 2C
+  { id: 'R32-M3',  sideA: { type: 'winner', group: 'F' }, sideB: { type: 'third',  group: 'C' } },   // Jun 29 — 1F vs 3C  (Países Bajos vs Marruecos confirmado)
+  { id: 'R32-M4',  sideA: { type: 'winner', group: 'E' }, sideB: { type: 'runner', group: 'C' } },   // Jun 29 — 1E vs 2C
   { id: 'R32-M5',  sideA: { type: 'runner', group: 'E' }, sideB: { type: 'runner', group: 'I' } },   // Jun 30 — 2E vs 2I
-  { id: 'R32-M6',  sideA: { type: 'winner', group: 'I' }, sideB: { type: 'third',  group: 'F' } },   // Jun 30 — 1I vs 3F
+  { id: 'R32-M6',  sideA: { type: 'winner', group: 'J' }, sideB: { type: 'runner', group: 'H' } },   // Jun 30 — 1J vs 2H  (Argentina vs Cabo Verde, Miami confirmado)
   { id: 'R32-M7',  sideA: { type: 'winner', group: 'A' }, sideB: { type: 'third',  group: 'E' } },   // Jun 30 — 1A vs 3E
   { id: 'R32-M8',  sideA: { type: 'winner', group: 'L' }, sideB: { type: 'third',  group: 'K' } },   // Jul 1  — 1L vs 3K
   { id: 'R32-M9',  sideA: { type: 'winner', group: 'G' }, sideB: { type: 'third',  group: 'I' } },   // Jul 1  — 1G vs 3I
@@ -19,7 +19,7 @@ const R32_BRACKET = [
   { id: 'R32-M12', sideA: { type: 'winner', group: 'B' }, sideB: { type: 'third',  group: 'G' } },   // Jul 2  — 1B vs 3G
   { id: 'R32-M13', sideA: { type: 'runner', group: 'K' }, sideB: { type: 'runner', group: 'L' } },   // Jul 2  — 2K vs 2L
   { id: 'R32-M14', sideA: { type: 'runner', group: 'D' }, sideB: { type: 'runner', group: 'G' } },   // Jul 3  — 2D vs 2G
-  { id: 'R32-M15', sideA: { type: 'winner', group: 'J' }, sideB: { type: 'runner', group: 'H' } },   // Jul 3  — 1J vs 2H
+  { id: 'R32-M15', sideA: { type: 'winner', group: 'I' }, sideB: { type: 'third',  group: 'F' } },   // Jul 4  — 1I vs 3F
   { id: 'R32-M16', sideA: { type: 'winner', group: 'K' }, sideB: { type: 'third',  group: 'L' } },   // Jul 3  — 1K vs 3L
 ];
 
