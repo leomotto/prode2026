@@ -12,7 +12,7 @@ const TEAM_EN = {
   'COREA DEL SUR':   'SOUTH KOREA',
   'COSTA DE MARFIL': 'IVORY COAST',
   'CURAZAO':         'CURACAO',
-  'EE UU':           'UNITED STATES',
+  'EE UU':           'USA UNITED STATES',
   'EGIPTO':          'EGYPT',
   'ESCOCIA':         'SCOTLAND',
   'ESPANA':          'SPAIN',
