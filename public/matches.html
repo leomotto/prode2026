@@ -162,7 +162,16 @@ async function loadAll() {
     const btn = [...document.querySelectorAll('.tab-btn')].find(b => b.textContent.includes('En Vivo'));
     if (btn) setFilter(btn, pending);
   } else {
-    renderMatches();
+    // Autodetect current phase based on the earliest live/upcoming match
+    const activeMatches = matches.filter(m => m.status === 'LIVE' || m.status === 'UPCOMING').sort((a,b) => new Date(a.date) - new Date(b.date));
+    if (activeMatches.length > 0 && activeMatches[0].phase) {
+      const currentPhase = activeMatches[0].phase;
+      const btn = [...document.querySelectorAll('.tab-btn')].find(b => b.getAttribute('onclick') === `setFilter(this,'${currentPhase}')`);
+      if (btn) setFilter(btn, currentPhase);
+      else renderMatches();
+    } else {
+      renderMatches();
+    }
   }
   scheduleRefresh();
 }
