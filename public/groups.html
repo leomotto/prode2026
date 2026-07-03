@@ -453,7 +453,7 @@ async function loadChat() {
     const myId = Auth.getUser()?.id;
     box.innerHTML = messages.map(m => {
       const mine = m.userId === myId;
-      const time = Fmt.time(m.createdAt);
+      const time = Fmt.datetime(m.createdAt);
       return `
         <div class="chat-msg ${mine?'mine':'theirs'}">
           <div class="chat-info">
@@ -479,7 +479,7 @@ async function sendChatMessage() {
   let fakeDiv = null;
   if (cEl) {
     const user = Auth.getUser();
-    const time = Fmt.time(new Date());
+    const time = Fmt.datetime(new Date());
     fakeDiv = document.createElement('div');
     fakeDiv.className = 'chat-msg mine';
     fakeDiv.innerHTML = `
