@@ -25,11 +25,11 @@ const R32_BRACKET = [
 // Cascada knockout: define qué partido terminado alimenta cada slot del siguiente round
 const KNOCKOUT_FEEDS = {
   'R16-M1':   { sideA: { winner: 'R32-M13' }, sideB: { winner: 'R32-M16' } },
-  'R16-M2':   { sideA: { winner: 'R32-M9'  }, sideB: { winner: 'R32-M4'  } },
-  'R16-M3':   { sideA: { winner: 'R32-M11' }, sideB: { winner: 'R32-M3'  } },
-  'R16-M4':   { sideA: { winner: 'R32-M14' }, sideB: { winner: 'R32-M8'  } },
-  'R16-M5':   { sideA: { winner: 'R32-M1'  }, sideB: { winner: 'R32-M15' } },
-  'R16-M6':   { sideA: { winner: 'R32-M2'  }, sideB: { winner: 'R32-M10' } },
+  'R16-M2':   { sideA: { winner: 'R32-M9'  }, sideB: { winner: 'R32-M1'  } },
+  'R16-M3':   { sideA: { winner: 'R32-M3'  }, sideB: { winner: 'R32-M8'  } },
+  'R16-M4':   { sideA: { winner: 'R32-M11' }, sideB: { winner: 'R32-M14' } },
+  'R16-M5':   { sideA: { winner: 'R32-M4'  }, sideB: { winner: 'R32-M2'  } },
+  'R16-M6':   { sideA: { winner: 'R32-M15' }, sideB: { winner: 'R32-M10' } },
   'R16-M7':   { sideA: { winner: 'R32-M7'  }, sideB: { winner: 'R32-M6'  } },
   'R16-M8':   { sideA: { winner: 'R32-M12' }, sideB: { winner: 'R32-M5'  } },
   'QF-M1':    { sideA: { winner: 'R16-M1'  }, sideB: { winner: 'R16-M2'  } },
