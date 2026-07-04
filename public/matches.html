@@ -164,14 +164,21 @@ async function loadAll() {
     myPredictions = Object.fromEntries(preds.map(p => [p.matchId, p]));
   } catch (_) { myPredictions = {}; }
 
-  // Si el index redirigió con filtro LIVE, aplicarlo automáticamente
   const pending = sessionStorage.getItem('matchFilter');
   if (pending) {
     sessionStorage.removeItem('matchFilter');
     const btn = [...document.querySelectorAll('.tab-btn')].find(b => b.textContent.includes('En Vivo'));
     if (btn) setFilter(btn, pending);
   } else {
-    renderMatches();
+    const upcoming = allMatches.filter(m => m.status === 'UPCOMING' || m.status === 'LIVE').sort((a, b) => new Date(a.date) - new Date(b.date));
+    if (upcoming.length > 0) {
+      const activePhase = upcoming[0].phase;
+      const btn = [...document.querySelectorAll('.tab-btn')].find(b => b.getAttribute('onclick').includes(`'${activePhase}'`));
+      if (btn) setFilter(btn, activePhase);
+      else renderMatches();
+    } else {
+      renderMatches();
+    }
   }
   scheduleRefresh();
 }
