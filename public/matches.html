@@ -133,7 +133,7 @@
   </div>
 </div>
 
-<script src="/js/api.js?v=1.5.0"></script>
+<script src="/js/api.js?v=1.5.1"></script>
 <script>
 Auth.require();
 const user = Auth.getUser();
@@ -151,9 +151,18 @@ const PHASE_LABEL = { GRUPOS:'Fase de Grupos', DIECISEISAVOS:'Dieciseisavos de F
 const PHASE_ORDER = { GRUPOS:1, DIECISEISAVOS:2, OCTAVOS:3, CUARTOS:4, SEMIFINAL:5, TERCER_PUESTO:6, FINAL:7 };
 
 async function loadAll() {
-  const [matches, preds] = await Promise.all([api.matches.all(), api.predictions.mine()]);
-  allMatches = matches;
-  myPredictions = Object.fromEntries(preds.map(p => [p.matchId, p]));
+  try {
+    allMatches = await api.matches.all();
+  } catch (err) {
+    console.error('Error cargando partidos:', err);
+    document.getElementById('matches-list').innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>Error al cargar. Recargá la página.</p></div>';
+    return;
+  }
+  // Predicciones opcionales — no bloquean si el token expiró
+  try {
+    const preds = await api.predictions.mine();
+    myPredictions = Object.fromEntries(preds.map(p => [p.matchId, p]));
+  } catch (_) { myPredictions = {}; }
 
   // Si el index redirigió con filtro LIVE, aplicarlo automáticamente
   const pending = sessionStorage.getItem('matchFilter');
@@ -399,9 +408,11 @@ function scheduleRefresh() {
 
   _refreshTimer = setTimeout(async () => {
     try {
-      const [matches, preds] = await Promise.all([api.matches.all(), api.predictions.mine()]);
-      allMatches = matches;
-      myPredictions = Object.fromEntries(preds.map(p => [p.matchId, p]));
+      allMatches = await api.matches.all();
+      try {
+        const preds = await api.predictions.mine();
+        myPredictions = Object.fromEntries(preds.map(p => [p.matchId, p]));
+      } catch (_) { /* predicciones opcionales */ }
       renderMatches();
     } catch { /* ignorar fallos de red */ }
     scheduleRefresh();

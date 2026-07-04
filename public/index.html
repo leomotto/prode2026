@@ -212,7 +212,7 @@
   </div>
 </div>
 
-<script src="/js/api.js?v=1.5.0"></script>
+<script src="/js/api.js?v=1.5.1"></script>
 <script>
 Auth.require();
 const user = Auth.getUser();
@@ -308,10 +308,14 @@ let dashMatches = [], dashPreds = {};
 Promise.all([
   api.matches.all('?status=LIVE'),
   api.matches.all('?status=UPCOMING'),
-  api.predictions.mine()
-]).then(([live, upcoming, ps]) => {
-  dashPreds = Object.fromEntries(ps.map(p => [p.matchId, p]));
+]).then(async ([live, upcoming]) => {
   dashMatches = upcoming;
+
+  // Cargar predicciones independientemente — si falla (token expirado) no rompe los partidos
+  try {
+    const ps = await api.predictions.mine();
+    dashPreds = Object.fromEntries(ps.map(p => [p.matchId, p]));
+  } catch (_) { dashPreds = {}; }
 
   // Sección en vivo
   if (live.length) {
@@ -319,8 +323,9 @@ Promise.all([
     renderLiveMatches(live, dashPreds);
   }
   renderNextMatches(upcoming, dashPreds);
-}).catch(() => {
-  document.getElementById('next-matches').innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>Error al cargar</p></div>';
+}).catch((err) => {
+  console.error('Error cargando partidos:', err);
+  document.getElementById('next-matches').innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>Error al cargar partidos</p></div>';
 });
 
 function renderLiveMatches(matches, preds) {
