@@ -105,12 +105,19 @@ async function fetchFixturesByDate(dateStr, apiKey) {
  * Retorna { updated, finished, noMatch, liveChecked, notFound }.
  */
 async function runSync(db, apiKey, log) {
-  const liveMatches = await db.match.findMany({ where: { status: 'LIVE' } });
-  if (!liveMatches.length) return { updated: 0, finished: 0, noMatch: 0, liveChecked: 0, notFound: [] };
+  const syncMatches = await db.match.findMany({
+    where: {
+      OR: [
+        { status: 'LIVE' },
+        { status: 'FINISHED', resultA: null }
+      ]
+    }
+  });
+  if (!syncMatches.length) return { updated: 0, finished: 0, noMatch: 0, liveChecked: 0, notFound: [] };
 
   // Agrupar por fecha UTC de inicio. Caso normal: 1 llamada. Caso medianoche: 2.
   const dateGroups = new Map();
-  for (const m of liveMatches) {
+  for (const m of syncMatches) {
     const dateStr = new Date(m.date).toISOString().slice(0, 10);
     if (!dateGroups.has(dateStr)) dateGroups.set(dateStr, []);
     dateGroups.get(dateStr).push(m);
@@ -128,7 +135,7 @@ async function runSync(db, apiKey, log) {
   let updated = 0, finished = 0, noMatch = 0;
   const notFound = [];
 
-  for (const localMatch of liveMatches) {
+  for (const localMatch of syncMatches) {
     let apiFixture = null;
     let reversed   = false;
 
@@ -206,7 +213,7 @@ async function runSync(db, apiKey, log) {
     }
   }
 
-  return { updated, finished, noMatch, liveChecked: liveMatches.length, notFound };
+  return { updated, finished, noMatch, liveChecked: syncMatches.length, notFound };
 }
 
 module.exports = { runSync, teamMatches, normalize };
