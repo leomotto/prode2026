@@ -451,7 +451,7 @@ document.addEventListener('mouseover', e => {
 
 // ── VERSION FOOTER & TURNSTILE CENTERING ─────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  const version = 'v31f03d8';
+  const version = 'vc77adb2';
   
   // 1. Center Turnstile containers programmatically
   const tsContainers = document.querySelectorAll('#ts-login, #ts-register');
