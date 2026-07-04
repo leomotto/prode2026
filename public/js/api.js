@@ -12,7 +12,16 @@ const api = {
       method, headers, body: body ? JSON.stringify(body) : undefined,
     });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw { status: res.status, message: data.error || 'Error' };
+    if (!res.ok) {
+      if (res.status === 401 && token) {
+        Auth.clear();
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
+        throw new Error('Sesión expirada');
+      }
+      throw { status: res.status, message: data.error || 'Error' };
+    }
     return data;
   },
 
