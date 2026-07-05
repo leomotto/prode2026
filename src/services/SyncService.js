@@ -89,6 +89,20 @@ async function fetchFixturesByDate(dateStr, apiKey) {
   if (!data.response || (data.errors && Object.keys(data.errors).length)) {
     throw new Error('api-football error: ' + JSON.stringify(data.errors));
   }
+  
+  // --- MOCK DE PRUEBA PARA EL USUARIO ---
+  // Inyectamos un resultado falso para Paraguay vs Francia para que pueda
+  // verificar que el botón de sincronización y la lógica de avance funcionan.
+  data.response.push({
+    fixture: { status: { short: 'FT' } }, // FT = Finalizado
+    teams: { 
+      home: { name: 'Paraguay' }, 
+      away: { name: 'France' } // En inglés, tal como viene de la API real
+    },
+    goals: { home: 3, away: 1 } // Paraguay gana 3-1
+  });
+  // --------------------------------------
+
   return data.response;
 }
 
