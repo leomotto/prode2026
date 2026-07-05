@@ -90,28 +90,11 @@ async function fetchFixturesByDate(dateStr, apiKey) {
 
   if (data.errors && Object.keys(data.errors).length) {
     if (data.errors.plan) {
-      // Si la cuenta es gratuita y no permite la fecha pasada, evitamos crashear la ruta.
       console.warn(`[SyncService] API plan error ignorado para fecha ${dateStr}:`, data.errors.plan);
     } else {
       throw new Error('api-football error: ' + JSON.stringify(data.errors));
     }
   }
-
-  // --- MOCK DE PRUEBA PARA EL USUARIO ---
-  // Inyectamos un par de resultados falsos de los partidos que pusiste 'EN VIVO'
-  // (por ej. Argentina vs Austria) para que puedas verificar que el botón funciona,
-  // ya que la API en el plan gratuito da error al pedir fechas pasadas.
-  fixtures.push({
-    fixture: { status: { short: 'FT' } },
-    teams: { home: { name: 'Argentina' }, away: { name: 'Austria' } },
-    goals: { home: 2, away: 1 }
-  });
-  fixtures.push({
-    fixture: { status: { short: 'FT' } },
-    teams: { home: { name: 'France' }, away: { name: 'Iraq' } },
-    goals: { home: 3, away: 0 }
-  });
-  // --------------------------------------
 
   return fixtures;
 }
@@ -135,10 +118,13 @@ async function runSync(db, apiKey, log = null) {
 
   if (!syncMatches.length) return { updated: 0, finished: 0, noMatch: 0, liveChecked: 0, notFound: [] };
 
-  // Agrupar por fecha en zona horaria de Argentina
+  // Agrupar por fecha en zona horaria de Argentina de forma segura (sin depender de ICU sv-SE)
   const dateGroups = new Map();
   for (const match of syncMatches) {
-    const dateStr = new Date(match.date).toLocaleDateString('sv-SE', { timeZone: 'America/Argentina/Buenos_Aires' });
+    const argTimeStr = new Date(match.date).toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' });
+    const d = new Date(argTimeStr);
+    const dateStr = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    
     if (!dateGroups.has(dateStr)) dateGroups.set(dateStr, []);
     dateGroups.get(dateStr).push(match);
   }
