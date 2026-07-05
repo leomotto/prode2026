@@ -226,6 +226,7 @@ async function runFullAdvancement(db) {
 
 module.exports = {
   R32_BRACKET,
+  KNOCKOUT_FEEDS,
   advanceGroupsToR32,
   advanceKnockoutMatch,
   runFullAdvancement,

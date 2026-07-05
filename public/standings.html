@@ -188,10 +188,10 @@ async function loadPhase(phase) {
       if (!groups.length) { showEmpty(el); return; }
       const bestThirds = getBestThirds(groups);
       el.innerHTML = '<div class="st-grid">' + groups.map(g => renderGroup(g, bestThirds)).join('') + '</div>';
-    } else if (phase === 'DIECISEISAVOS') {
+    } else {
       const [bracket, matches] = await Promise.all([
-        api.get('/standings/bracket'),
-        api.get('/matches?phase=DIECISEISAVOS'),
+        api.get(`/standings/bracket?phase=${phase}`),
+        api.get(`/matches?phase=${phase}`),
       ]);
       const matchById = Object.fromEntries(matches.map(m => [m.id, m]));
       const anyTentative = bracket.some(b => b.teamAConfidence === 'TENTATIVE' || b.teamBConfidence === 'TENTATIVE');
@@ -199,10 +199,6 @@ async function loadPhase(phase) {
         ? `<div class="bracket-note">⚠️ Las posiciones marcadas como <strong>Tentativo</strong> pueden cambiar según los resultados pendientes de la fase de grupos.</div>`
         : '';
       el.innerHTML = note + '<div class="ko-grid">' + bracket.map(b => renderBracketSlot(b, matchById[b.id])).join('') + '</div>';
-    } else {
-      const matches = await api.get(`/matches?phase=${phase}`);
-      if (!matches.length) { showEmpty(el); return; }
-      el.innerHTML = '<div class="ko-grid">' + matches.map(renderKoMatch).join('') + '</div>';
     }
     renderEmojis(el);
   } catch(e) {
@@ -219,7 +215,7 @@ function showEmpty(el) {
 }
 
 function isTbd(name) {
-  return !name || name.startsWith('Clasificado') || name.startsWith('Ganador') || name.startsWith('Perdedor');
+  return !name || name.startsWith('Clasificado') || name.startsWith('Ganador') || name.startsWith('Perdedor') || name.startsWith('G P');
 }
 
 // Mapa de ID de partido → etiqueta corta legible
@@ -234,6 +230,10 @@ function tbdLabel(name) {
   if (name.startsWith('Ganador ')) {
     const id = name.replace('Ganador ', '');
     return 'Gan. ' + (MATCH_LABEL[id] || id);
+  }
+  if (name.startsWith('G P')) {
+    const id = name.replace('G P', '');
+    return 'Gan. P' + id;
   }
   if (name.startsWith('Perdedor ')) {
     const id = name.replace('Perdedor ', '');

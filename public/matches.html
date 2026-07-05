@@ -263,7 +263,7 @@ function renderCard(m) {
       <div class="fc-team-home${hasResult ? matchSideClass(m.resultA, m.resultB, 'A', m.penaltyA, m.penaltyB) : ''}">
         <div class="fc-code">${codeA}</div>
         <div class="fc-flag-sm">${m.teamAFlag || ''}</div>
-        <div class="fc-name">${m.teamAName || 'Por definir'}</div>
+        <div class="fc-name">${m.teamAName ? (isTbd(m.teamAName) ? tbdLabel(m.teamAName) : m.teamAName) : 'Por definir'}</div>
       </div>
       <div class="fc-vs-block">
         ${hasResult && isLive ? `<div style="font-size:.85rem;font-weight:700;color:var(--red);text-align:center">🔴 ${m.resultA} - ${m.resultB}</div>`
@@ -274,7 +274,7 @@ function renderCard(m) {
       <div class="fc-team-away${hasResult ? matchSideClass(m.resultA, m.resultB, 'B', m.penaltyA, m.penaltyB) : ''}">
         <div class="fc-code">${codeB}</div>
         <div class="fc-flag-sm">${m.teamBFlag || ''}</div>
-        <div class="fc-name">${m.teamBName || 'Por definir'}</div>
+        <div class="fc-name">${m.teamBName ? (isTbd(m.teamBName) ? tbdLabel(m.teamBName) : m.teamBName) : 'Por definir'}</div>
       </div>
     </div>
 
@@ -428,6 +428,32 @@ function scheduleRefresh() {
 window.addEventListener('beforeunload', () => clearTimeout(_refreshTimer));
 
 
+const MATCH_LABEL = {};
+for (let i = 1; i <= 16; i++) MATCH_LABEL[`R32-M${i}`]  = `P${i} Dieciseisavos`;
+for (let i = 1; i <= 8;  i++) MATCH_LABEL[`R16-M${i}`]  = `P${i} Octavos`;
+for (let i = 1; i <= 4;  i++) MATCH_LABEL[`QF-M${i}`]   = `P${i} Cuartos`;
+for (let i = 1; i <= 2;  i++) MATCH_LABEL[`SF-M${i}`]   = `P${i} Semis`;
+
+function isTbd(name) {
+  return !name || name.startsWith('Clasificado') || name.startsWith('Ganador') || name.startsWith('Perdedor') || name.startsWith('G P');
+}
+
+function tbdLabel(name) {
+  if (!name) return 'Por definir';
+  if (name.startsWith('Ganador ')) {
+    const id = name.replace('Ganador ', '');
+    return 'Gan. ' + (MATCH_LABEL[id] || id);
+  }
+  if (name.startsWith('G P')) {
+    const id = name.replace('G P', '');
+    return 'Gan. P' + id;
+  }
+  if (name.startsWith('Perdedor ')) {
+    const id = name.replace('Perdedor ', '');
+    return 'Perd. ' + (MATCH_LABEL[id] || id);
+  }
+  return 'Por definir';
+}
 </script>
 </body>
 </html>

@@ -3,8 +3,28 @@ const { R32_BRACKET, computeGroupStandings } = require('../services/AdvancementS
 
 async function standingsRoutes(fastify) {
 
-  // GET /api/standings/bracket — bracket proyectado del R32 con nivel de confianza por slot
-  fastify.get('/bracket', async () => {
+  // GET /api/standings/bracket — bracket proyectado con nivel de confianza por slot
+  fastify.get('/bracket', async (request) => {
+    const { phase = 'DIECISEISAVOS' } = request.query;
+    const { R32_BRACKET, KNOCKOUT_FEEDS } = require('../services/AdvancementService');
+
+    let targetBracket = [];
+    if (phase === 'DIECISEISAVOS') {
+      targetBracket = R32_BRACKET;
+    } else {
+      for (const [id, feeds] of Object.entries(KNOCKOUT_FEEDS)) {
+        let p;
+        if (id.startsWith('R16')) p = 'OCTAVOS';
+        else if (id.startsWith('QF')) p = 'CUARTOS';
+        else if (id.startsWith('SF')) p = 'SEMIFINAL';
+        else if (id.startsWith('FINAL') || id.startsWith('TP')) p = 'FINAL';
+        
+        if (p === phase) {
+          targetBracket.push({ id, sideA: feeds.sideA, sideB: feeds.sideB });
+        }
+      }
+    }
+
     const groupStandings = await computeGroupStandings(fastify.db);
 
     const allGroupMatches = await fastify.db.match.findMany({
@@ -25,70 +45,72 @@ async function standingsRoutes(fastify) {
       return c && c.total > 0 && c.total === c.finished;
     };
 
-    // Obtener partidos R32 reales de la DB para usar sus equipos/resultados en los ya jugados
-    const r32Matches = await fastify.db.match.findMany({
-      where: { phase: 'DIECISEISAVOS' },
+    // Obtener partidos reales de la fase solicitada
+    const dbMatches = await fastify.db.match.findMany({
+      where: { phase },
       select: { id: true, status: true, teamAName: true, teamAFlag: true, teamBName: true, teamBFlag: true, resultA: true, resultB: true, penaltyA: true, penaltyB: true },
     });
-    const r32ByIdMap = Object.fromEntries(r32Matches.map(m => [m.id, m]));
+    const matchByIdMap = Object.fromEntries(dbMatches.map(m => [m.id, m]));
 
-    // Cada slot de tercero tiene grupo fijo (3D vs 1E, 3F vs 1I, etc.)
     const resolveTeam = (slot) => {
-      const g = groupStandings[slot.group] || [];
-      const idx = slot.type === 'winner' ? 0 : slot.type === 'runner' ? 1 : 2;
-      return g[idx] || null;
+      if (slot.group) {
+        const g = groupStandings[slot.group] || [];
+        const idx = slot.type === 'winner' ? 0 : slot.type === 'runner' ? 1 : 2;
+        return g[idx] || null;
+      }
+      return null; // For knockouts, teams are resolved from the DB matching actual progression
     };
 
     const getConfidence = (slot) => {
-      const c = groupCounts[slot.group];
-      if (!c || c.finished === 0) return 'PENDING';
-      return isGroupComplete(slot.group) ? 'CONFIRMED' : 'TENTATIVE';
+      if (slot.group) {
+        const c = groupCounts[slot.group];
+        if (!c || c.finished === 0) return 'PENDING';
+        return isGroupComplete(slot.group) ? 'CONFIRMED' : 'TENTATIVE';
+      }
+      return 'CONFIRMED';
     };
 
+    const MATCH_LABEL = {};
+    for (let i = 1; i <= 16; i++) MATCH_LABEL[`R32-M${i}`]  = `P${i} Dieciseisavos`;
+    for (let i = 1; i <= 8;  i++) MATCH_LABEL[`R16-M${i}`]  = `P${i} Octavos`;
+    for (let i = 1; i <= 4;  i++) MATCH_LABEL[`QF-M${i}`]   = `P${i} Cuartos`;
+    for (let i = 1; i <= 2;  i++) MATCH_LABEL[`SF-M${i}`]   = `P${i} Semis`;
+
     const slotLabel = (slot) => {
-      if (slot.type === 'winner') return `1° Grupo ${slot.group}`;
-      if (slot.type === 'runner') return `2° Grupo ${slot.group}`;
-      if (slot.type === 'third')  return `3° Grupo ${slot.group}`;
+      if (slot.group) {
+        if (slot.type === 'winner') return `1° Grupo ${slot.group}`;
+        if (slot.type === 'runner') return `2° Grupo ${slot.group}`;
+        if (slot.type === 'third')  return `3° Grupo ${slot.group}`;
+      }
+      if (slot.winner) {
+        return `Ganador ${MATCH_LABEL[slot.winner] || slot.winner}`;
+      }
+      if (slot.loser) {
+        return `Perdedor ${MATCH_LABEL[slot.loser] || slot.loser}`;
+      }
       return 'Por definir';
     };
 
-    return R32_BRACKET.map(bracket => {
-      const r32Match = r32ByIdMap[bracket.id];
-
-      // Si el partido ya se jugó, usar los equipos reales de la DB
-      // (no recalcular desde grupos — podría diferir del resultado real)
-      if (r32Match && r32Match.status === 'FINISHED') {
-        return {
-          id:              bracket.id,
-          slotLabelA:      slotLabel(bracket.sideA),
-          slotLabelB:      slotLabel(bracket.sideB),
-          teamAName:       r32Match.teamAName  || null,
-          teamAFlag:       r32Match.teamAFlag  || null,
-          teamBName:       r32Match.teamBName  || null,
-          teamBFlag:       r32Match.teamBFlag  || null,
-          teamAConfidence: 'CONFIRMED',
-          teamBConfidence: 'CONFIRMED',
-          resultA:         r32Match.resultA,
-          resultB:         r32Match.resultB,
-          penaltyA:        r32Match.penaltyA,
-          penaltyB:        r32Match.penaltyB,
-          status:          r32Match.status,
-        };
-      }
-
+    return targetBracket.map(bracket => {
+      const dbMatch = matchByIdMap[bracket.id];
       const teamA = resolveTeam(bracket.sideA);
       const teamB = resolveTeam(bracket.sideB);
+
       return {
         id:              bracket.id,
         slotLabelA:      slotLabel(bracket.sideA),
         slotLabelB:      slotLabel(bracket.sideB),
-        teamAName:       teamA?.name  || null,
-        teamAFlag:       teamA?.flag  || null,
-        teamBName:       teamB?.name  || null,
-        teamBFlag:       teamB?.flag  || null,
+        teamAName:       dbMatch?.teamAName || teamA?.name  || null,
+        teamAFlag:       dbMatch?.teamAFlag || teamA?.flag  || null,
+        teamBName:       dbMatch?.teamBName || teamB?.name  || null,
+        teamBFlag:       dbMatch?.teamBFlag || teamB?.flag  || null,
         teamAConfidence: getConfidence(bracket.sideA),
         teamBConfidence: getConfidence(bracket.sideB),
-        status:          r32Match?.status || 'UPCOMING',
+        resultA:         dbMatch?.resultA,
+        resultB:         dbMatch?.resultB,
+        penaltyA:        dbMatch?.penaltyA,
+        penaltyB:        dbMatch?.penaltyB,
+        status:          dbMatch?.status || 'UPCOMING',
       };
     });
   });
