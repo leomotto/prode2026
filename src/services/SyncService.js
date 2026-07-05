@@ -107,12 +107,24 @@ function getMatchesToSync(dbMatches) {
 // Orquestador principal de la sincronización
 async function runSync(db, apiKey, log = null) {
   // Traer todos los partidos que necesitan actualizarse
+  const now = new Date();
   const syncMatches = await db.match.findMany({
     where: {
       OR: [
         { status: 'LIVE' },
         { status: 'FINISHED', resultA: null },
-        { status: 'UPCOMING', date: { lte: new Date() } },
+        { status: 'UPCOMING', date: { lte: now } },
+        // Partidos knockout con equipos reales asignados pero sin resultado, dentro de ventana ±3 días.
+        // Cubre el caso donde la fecha en DB tiene hasta 2 días de desfase respecto a la real.
+        {
+          phase: { not: 'GRUPOS' },
+          teamAName: { not: null },
+          resultA: null,
+          date: {
+            gte: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000),
+            lte: new Date(now.getTime() + 24 * 60 * 60 * 1000),
+          },
+        },
       ]
     }
   });
@@ -150,27 +162,19 @@ async function runSync(db, apiKey, log = null) {
     }
   }
 
-  // Fallback 2: también buscar el día anterior en UTC por si la fecha en DB tiene desfase.
-  // Ejemplo: DB tiene 2026-07-06T01:00Z (dateStr ART = "2026-07-05") pero el partido en API
-  // está en "2026-07-04". Agregar la fecha UTC-1 de los partidos LIVE sin resultado.
-  if (hasLive) {
-    const extraDates = new Set();
-    for (const m of syncMatches) {
-      if (m.status === 'LIVE' && m.resultA === null) {
-        const d = new Date(m.date);
-        d.setUTCDate(d.getUTCDate() - 1);
-        const prev = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-        if (!dateGroups.has(prev)) extraDates.add(prev);
-      }
-    }
-    for (const dateStr of extraDates) {
-      try {
-        const fixtures = await fetchFixturesByDate(dateStr, apiKey);
-        allFixtures.push(...fixtures);
-      } catch (e) {
-        if (log) log.warn('Error fetching extra date ' + dateStr + ': ' + e.message);
-      }
-    }
+  // Fallback 2: para cada fecha ART ya calculada, también buscar el día anterior en ART.
+  // La fecha en DB puede estar 1-2 días adelantada respecto a la real (ej: seed puso Jul 6
+  // para un partido que la API tiene el Jul 4). Costo: 1 req extra por fecha única.
+  const extraDates = new Set();
+  for (const dateStr of dateGroups.keys()) {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const prev = new Date(Date.UTC(y, m - 1, d - 1));
+    const prevStr = prev.getUTCFullYear() + '-' + String(prev.getUTCMonth() + 1).padStart(2, '0') + '-' + String(prev.getUTCDate()).padStart(2, '0');
+    if (!dateGroups.has(prevStr)) extraDates.add(prevStr);
+  }
+  for (const dateStr of extraDates) {
+    const fixtures = await fetchFixturesByDate(dateStr, apiKey);
+    allFixtures.push(...fixtures);
   }
 
   const MatchService = require('./MatchService');
