@@ -391,36 +391,45 @@ async function adminRoutes(fastify) {
     return { success: true, updated: results };
   });
 
-  // POST /api/admin/fix-r16-dates — corrige fechas R16 para que el sync pueda encontrar los partidos en la API
+  // POST /api/admin/fix-r16-dates — corrige fechas, venues y status de todos los octavos
+  // Fuente: FIFA / Al Jazeera / api-football (verificado jul-2026)
   fastify.post('/fix-r16-dates', { preHandler: fastify.adminOnly }, async () => {
     const db = fastify.db;
-    // Fechas reales confirmadas desde FIFA / Al Jazeera (UTC)
-    const r16Dates = {
-      'R16-M1': new Date('2026-07-04T17:00:00Z'), // Canada vs Morocco FT
-      'R16-M2': new Date('2026-07-04T21:00:00Z'), // Paraguay vs France FT
-      'R16-M3': new Date('2026-07-06T19:00:00Z'), // Portugal vs Spain
-      'R16-M4': new Date('2026-07-07T00:00:00Z'), // USA vs Belgium (Lumen, Seattle)
-      'R16-M5': new Date('2026-07-05T20:00:00Z'), // Brazil vs Norway
-      'R16-M6': new Date('2026-07-06T00:00:00Z'), // Mexico vs England
-      'R16-M7': new Date('2026-07-07T20:00:00Z'), // Switzerland vs Colombia (BC Place, Vancouver)
-      'R16-M8': new Date('2026-07-07T16:00:00Z'), // Argentina vs Egypt (MB Atlanta)
-    };
+    const { runFullAdvancement } = require('../services/AdvancementService');
+
+    const r16Data = [
+      { id: 'R16-M1', date: '2026-07-04T17:00:00Z', venue: 'NRG Stadium, Houston',              city: 'Houston'      }, // Canada vs Morocco
+      { id: 'R16-M2', date: '2026-07-04T21:00:00Z', venue: 'Lincoln Financial Field, Filadelfia', city: 'Filadelfia'  }, // Paraguay vs France
+      { id: 'R16-M5', date: '2026-07-05T20:00:00Z', venue: 'MetLife Stadium, East Rutherford',   city: 'Nueva York'   }, // Brazil vs Norway
+      { id: 'R16-M6', date: '2026-07-06T00:00:00Z', venue: 'Estadio Banorte, Ciudad de México',  city: 'Ciudad de México' }, // Mexico vs England
+      { id: 'R16-M3', date: '2026-07-06T19:00:00Z', venue: 'AT&T Stadium, Arlington',            city: 'Dallas'       }, // Portugal vs Spain
+      { id: 'R16-M4', date: '2026-07-07T00:00:00Z', venue: 'Lumen Field, Seattle',               city: 'Seattle'      }, // USA vs Belgium
+      { id: 'R16-M8', date: '2026-07-07T16:00:00Z', venue: 'Mercedes-Benz Stadium, Atlanta',     city: 'Atlanta'      }, // Argentina vs Egypt
+      { id: 'R16-M7', date: '2026-07-07T20:00:00Z', venue: 'BC Place, Vancouver',                city: 'Vancouver'    }, // Switzerland vs Colombia
+    ];
+
     const now = new Date();
-    const results = [];
-    for (const [id, date] of Object.entries(r16Dates)) {
-      const data = { date };
-      if (date < now) {
-        // Partido pasado sin resultado → LIVE para que sync lo encuentre
+    for (const { id, date: dateStr, venue, city } of r16Data) {
+      const date = new Date(dateStr);
+      const isPast = date < now;
+      // Actualizar fecha y venue siempre (sin restricción de status)
+      await db.$executeRawUnsafe(
+        `UPDATE matches SET date = $1, venue = $2, city = $3 WHERE id = $4`,
+        date, venue, city, id
+      );
+      // Solo pasar a LIVE si es pasado y sigue en UPCOMING (para que sync lo detecte)
+      if (isPast) {
         await db.$executeRawUnsafe(
-          `UPDATE matches SET date = $1, status = 'LIVE'::"MatchStatus" WHERE id = $2 AND status = 'UPCOMING'::"MatchStatus"`,
-          date, id
+          `UPDATE matches SET status = 'LIVE'::"MatchStatus" WHERE id = $1 AND status = 'UPCOMING'::"MatchStatus"`,
+          id
         );
-      } else {
-        await db.match.update({ where: { id }, data });
       }
-      results.push(id);
     }
-    return { success: true, updated: results };
+
+    // Propagar ganadores R32→R16→QF con bracket corregido
+    const advancement = await runFullAdvancement(db);
+
+    return { success: true, updated: r16Data.map(m => m.id), advancement };
   });
 
   // POST /api/admin/fix-knockout-slots — limpia slots R16/QF/SF/Final no FINISHED y re-propaga desde cero
