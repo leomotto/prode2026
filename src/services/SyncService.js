@@ -76,10 +76,10 @@ function teamMatches(dbName, apiName) {
 }
 
 /**
- * Fetch fixtures from API-Football for a given UTC date.
+ * Fetch fixtures from API-Football for a given date.
  */
 async function fetchFixturesByDate(dateStr, apiKey) {
-  const response = await fetch(`https://v3.football.api-sports.io/fixtures?date=${dateStr}`, {
+  const response = await fetch(`https://v3.football.api-sports.io/fixtures?date=${dateStr}&timezone=America/Argentina/Buenos_Aires`, {
     headers: {
       'x-rapidapi-host': 'v3.football.api-sports.io',
       'x-apisports-key': apiKey,
@@ -89,36 +89,17 @@ async function fetchFixturesByDate(dateStr, apiKey) {
   if (!data.response || (data.errors && Object.keys(data.errors).length)) {
     throw new Error('api-football error: ' + JSON.stringify(data.errors));
   }
-  
-  // --- MOCK DE PRUEBA PARA EL USUARIO ---
-  // Inyectamos un resultado falso para Paraguay vs Francia para que pueda
-  // verificar que el botón de sincronización y la lógica de avance funcionan.
-  data.response.push({
-    fixture: { status: { short: 'FT' } }, // FT = Finalizado
-    teams: { 
-      home: { name: 'Paraguay' }, 
-      away: { name: 'France' } // En inglés, tal como viene de la API real
-    },
-    goals: { home: 3, away: 1 } // Paraguay gana 3-1
-  });
-  // --------------------------------------
-
   return data.response;
 }
 
-/**
- * Sincroniza resultados de partidos LIVE contra la API de api-football.
- *
- * Fix medianoche UTC: agrupa los partidos LIVE por su fecha UTC de inicio
- * y hace una llamada por fecha única.
- *
- * Fix penales: cuando el status de la API es 'PEN', guarda también
- * penaltyA/penaltyB para que AdvancementService pueda determinar el
- * ganador en bracket aun con resultado empatado tras prórroga.
- *
- * Retorna { updated, finished, noMatch, liveChecked, notFound }.
- */
-async function runSync(db, apiKey, log) {
+// Devuelve los grupos de partidos que necesitan sincronizarse
+function getMatchesToSync(dbMatches) {
+  return dbMatches.filter(m => m.status === 'LIVE' || (m.status === 'FINISHED' && m.resultA === null && m.resultB === null));
+}
+
+// Orquestador principal de la sincronización
+async function runSync(db, apiKey, log = null) {
+  // Traer todos los partidos que necesitan actualizarse
   const syncMatches = await db.match.findMany({
     where: {
       OR: [
@@ -127,14 +108,15 @@ async function runSync(db, apiKey, log) {
       ]
     }
   });
+
   if (!syncMatches.length) return { updated: 0, finished: 0, noMatch: 0, liveChecked: 0, notFound: [] };
 
-  // Agrupar por fecha UTC de inicio. Caso normal: 1 llamada. Caso medianoche: 2.
+  // Agrupar por fecha en zona horaria de Argentina
   const dateGroups = new Map();
-  for (const m of syncMatches) {
-    const dateStr = new Date(m.date).toISOString().slice(0, 10);
+  for (const match of syncMatches) {
+    const dateStr = new Date(match.date).toLocaleDateString('sv-SE', { timeZone: 'America/Argentina/Buenos_Aires' });
     if (!dateGroups.has(dateStr)) dateGroups.set(dateStr, []);
-    dateGroups.get(dateStr).push(m);
+    dateGroups.get(dateStr).push(match);
   }
 
   const allFixtures = [];
@@ -148,7 +130,7 @@ async function runSync(db, apiKey, log) {
   const hasLive = syncMatches.some(m => m.status === 'LIVE');
   if (hasLive) {
     try {
-      const liveRes = await fetch(`https://v3.football.api-sports.io/fixtures?live=all`, {
+      const liveRes = await fetch(`https://v3.football.api-sports.io/fixtures?live=all&timezone=America/Argentina/Buenos_Aires`, {
         headers: { 'x-rapidapi-host': 'v3.football.api-sports.io', 'x-apisports-key': apiKey }
       });
       const liveData = await liveRes.json();
