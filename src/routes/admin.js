@@ -391,6 +391,36 @@ async function adminRoutes(fastify) {
     return { success: true, updated: results };
   });
 
+  // POST /api/admin/fix-r16-dates — corrige fechas R16 para que el sync pueda encontrar los partidos en la API
+  fastify.post('/fix-r16-dates', { preHandler: fastify.adminOnly }, async () => {
+    const db = fastify.db;
+    // Fechas reales confirmadas desde API api-football (UTC)
+    const r16Dates = {
+      'R16-M1': new Date('2026-07-04T17:00:00Z'), // Canada vs Morocco FT
+      'R16-M2': new Date('2026-07-04T21:00:00Z'), // Paraguay vs France FT
+      'R16-M3': new Date('2026-07-06T19:00:00Z'), // Portugal vs Spain
+      'R16-M5': new Date('2026-07-05T20:00:00Z'), // Brazil vs Norway
+      'R16-M6': new Date('2026-07-06T00:00:00Z'), // Mexico vs England
+      // R16-M4, M7, M8 — aún sin dato real, se actualizan cuando la API los publique
+    };
+    const now = new Date();
+    const results = [];
+    for (const [id, date] of Object.entries(r16Dates)) {
+      const data = { date };
+      if (date < now) {
+        // Partido pasado sin resultado → LIVE para que sync lo encuentre
+        await db.$executeRawUnsafe(
+          `UPDATE matches SET date = $1, status = 'LIVE'::"MatchStatus" WHERE id = $2 AND status = 'UPCOMING'::"MatchStatus"`,
+          date, id
+        );
+      } else {
+        await db.match.update({ where: { id }, data });
+      }
+      results.push(id);
+    }
+    return { success: true, updated: results };
+  });
+
   // POST /api/admin/fix-knockout-slots — limpia slots R16/QF/SF/Final no FINISHED y re-propaga desde cero
   // Usar cuando hay datos corruptos en el bracket knockout por propagaciones anteriores incorrectas
   fastify.post('/fix-knockout-slots', { preHandler: fastify.adminOnly }, async () => {

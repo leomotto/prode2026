@@ -149,21 +149,26 @@ async function runSync(db, apiKey, log = null) {
     }
   }
 
-  // Fallback 2: fixtures del Mundial ya finalizados (FT/AET/PEN).
-  // Cubre el caso donde ?date=X falla por restricción de plan (ej: post Jul-1).
-  // Liga 1 = FIFA World Cup en api-football. Se llama sólo si hay partidos sin resultado.
-  const needsResult = syncMatches.some(m => m.resultA === null);
-  if (needsResult) {
-    try {
-      const wcRes = await fetch(
-        `https://v3.football.api-sports.io/fixtures?league=1&season=2026&status=FT-AET-PEN&timezone=America/Argentina/Buenos_Aires`,
-        { headers: { 'x-rapidapi-host': 'v3.football.api-sports.io', 'x-apisports-key': apiKey } }
-      );
-      const wcData = await wcRes.json();
-      if (wcData.response && !wcData.errors?.plan) allFixtures.push(...wcData.response);
-      else if (wcData.errors?.plan && log) log.warn('[SyncService] WC finished endpoint bloqueado por plan');
-    } catch (e) {
-      if (log) log.warn('Error fetching WC finished fixtures: ' + e.message);
+  // Fallback 2: también buscar el día anterior en UTC por si la fecha en DB tiene desfase.
+  // Ejemplo: DB tiene 2026-07-06T01:00Z (dateStr ART = "2026-07-05") pero el partido en API
+  // está en "2026-07-04". Agregar la fecha UTC-1 de los partidos LIVE sin resultado.
+  if (hasLive) {
+    const extraDates = new Set();
+    for (const m of syncMatches) {
+      if (m.status === 'LIVE' && m.resultA === null) {
+        const d = new Date(m.date);
+        d.setUTCDate(d.getUTCDate() - 1);
+        const prev = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        if (!dateGroups.has(prev)) extraDates.add(prev);
+      }
+    }
+    for (const dateStr of extraDates) {
+      try {
+        const fixtures = await fetchFixturesByDate(dateStr, apiKey);
+        allFixtures.push(...fixtures);
+      } catch (e) {
+        if (log) log.warn('Error fetching extra date ' + dateStr + ': ' + e.message);
+      }
     }
   }
 
