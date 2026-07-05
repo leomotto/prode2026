@@ -111,7 +111,8 @@ async function runSync(db, apiKey, log = null) {
     where: {
       OR: [
         { status: 'LIVE' },
-        { status: 'FINISHED', resultA: null }
+        { status: 'FINISHED', resultA: null },
+        { status: 'UPCOMING', date: { lte: new Date() } },
       ]
     }
   });
