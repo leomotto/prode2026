@@ -128,6 +128,23 @@ async function runSync(db, apiKey, log) {
     const fixtures = await fetchFixturesByDate(dateStr, apiKey);
     allFixtures.push(...fixtures);
   }
+  
+  // Si hay algún partido marcado como LIVE, buscar también en el endpoint live=all
+  // por si la fecha en la DB no coincide exactamente con la de la API por zona horaria.
+  const hasLive = syncMatches.some(m => m.status === 'LIVE');
+  if (hasLive) {
+    try {
+      const liveRes = await fetch(`https://v3.football.api-sports.io/fixtures?live=all`, {
+        headers: { 'x-rapidapi-host': 'v3.football.api-sports.io', 'x-apisports-key': apiKey }
+      });
+      const liveData = await liveRes.json();
+      if (liveData.response) {
+        allFixtures.push(...liveData.response);
+      }
+    } catch (e) {
+      if (log) log.warn('Error fetching live=all: ' + e.message);
+    }
+  }
 
   const MatchService = require('./MatchService');
   const { advanceGroupsToR32, advanceKnockoutMatch } = require('./AdvancementService');
@@ -138,6 +155,7 @@ async function runSync(db, apiKey, log) {
   for (const localMatch of syncMatches) {
     let apiFixture = null;
     let reversed   = false;
+    const searchDate = new Date(localMatch.date).toISOString().slice(0, 10);
 
     for (const f of allFixtures) {
       const home = f.teams.home.name;
@@ -159,9 +177,11 @@ async function runSync(db, apiKey, log) {
                  teamMatches(localMatch.teamBName, h) || teamMatches(localMatch.teamBName, a);
         })
         .map(f => `${f.teams.home.name} vs ${f.teams.away.name}`);
+      
       notFound.push({
         db: `${localMatch.teamAName} vs ${localMatch.teamBName}`,
-        date: new Date(localMatch.date).toISOString().slice(0, 10),
+        date: searchDate,
+        searched: `Fecha DB: ${searchDate}`,
         candidates: candidates.length ? candidates : ['(sin candidatos en la API)'],
       });
       if (log) log.warn(`⚠️ Sync sin match: ${localMatch.teamAName} vs ${localMatch.teamBName}. Candidatos: ${candidates.join(' | ') || 'ninguno'}`);
