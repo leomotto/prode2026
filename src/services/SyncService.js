@@ -135,8 +135,7 @@ async function runSync(db, apiKey, log = null) {
     allFixtures.push(...fixtures);
   }
   
-  // Si hay algún partido marcado como LIVE, buscar también en el endpoint live=all
-  // por si la fecha en la DB no coincide exactamente con la de la API por zona horaria.
+  // Fallback 1: live=all para partidos actualmente en curso.
   const hasLive = syncMatches.some(m => m.status === 'LIVE');
   if (hasLive) {
     try {
@@ -144,11 +143,27 @@ async function runSync(db, apiKey, log = null) {
         headers: { 'x-rapidapi-host': 'v3.football.api-sports.io', 'x-apisports-key': apiKey }
       });
       const liveData = await liveRes.json();
-      if (liveData.response) {
-        allFixtures.push(...liveData.response);
-      }
+      if (liveData.response) allFixtures.push(...liveData.response);
     } catch (e) {
       if (log) log.warn('Error fetching live=all: ' + e.message);
+    }
+  }
+
+  // Fallback 2: fixtures del Mundial ya finalizados (FT/AET/PEN).
+  // Cubre el caso donde ?date=X falla por restricción de plan (ej: post Jul-1).
+  // Liga 1 = FIFA World Cup en api-football. Se llama sólo si hay partidos sin resultado.
+  const needsResult = syncMatches.some(m => m.resultA === null);
+  if (needsResult) {
+    try {
+      const wcRes = await fetch(
+        `https://v3.football.api-sports.io/fixtures?league=1&season=2026&status=FT-AET-PEN&timezone=America/Argentina/Buenos_Aires`,
+        { headers: { 'x-rapidapi-host': 'v3.football.api-sports.io', 'x-apisports-key': apiKey } }
+      );
+      const wcData = await wcRes.json();
+      if (wcData.response && !wcData.errors?.plan) allFixtures.push(...wcData.response);
+      else if (wcData.errors?.plan && log) log.warn('[SyncService] WC finished endpoint bloqueado por plan');
+    } catch (e) {
+      if (log) log.warn('Error fetching WC finished fixtures: ' + e.message);
     }
   }
 
