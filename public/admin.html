@@ -94,6 +94,7 @@
         <button class="tab-btn" onclick="filterAdminPhase(this,'OCTAVOS')">Octavos</button>
         <button class="tab-btn" onclick="filterAdminPhase(this,'CUARTOS')">Cuartos</button>
         <button class="tab-btn" onclick="filterAdminPhase(this,'SEMIFINAL')">Semis</button>
+        <button class="tab-btn" onclick="filterAdminPhase(this,'TERCER_PUESTO')">3er Puesto</button>
         <button class="tab-btn" onclick="filterAdminPhase(this,'FINAL')">Final</button>
       </div>
       <div id="admin-matches"><div class="spinner"></div></div>
@@ -344,20 +345,20 @@ function renderAdminMatches(customMatches = null) {
       <div class="fc-body">
         <div class="fc-team-home${m.status==='FINISHED'&&m.resultA!==null ? matchSideClass(m.resultA,m.resultB,'A',m.penaltyA,m.penaltyB) : ''}">
           <div class="fc-code">${teamCode(m.teamAFlag)}</div>
-          <div class="fc-flag-sm">${m.teamAFlag}</div>
-          <div class="fc-name">${m.teamAName}</div>
+          <div class="fc-flag-sm">${m.teamAFlag || '🏳️'}</div>
+          <div class="fc-name">${m.teamAName || 'Por definir'}</div>
         </div>
         <div class="fc-vs-block">
           ${m.status==='FINISHED' && m.resultA!==null
             ? scoreDisp(m.resultA,m.resultB,m.penaltyA,m.penaltyB)
             : m.status==='LIVE'
-              ? `<div style="font-size:.75rem;font-weight:700;color:var(--red)">🔴 ${m.resultA !== null ? m.resultA + ' - ' + m.resultB : 'EN VIVO'}</div>`
-              : `<div class="fc-vs">vs</div>`}
+              ? `<div style="font-size:.75rem;font-weight:700;color:var(--red)">🔴 VIVO</div>`
+              : `<div style="font-size:.85rem;font-weight:700;color:var(--text-dim)">VS</div>`}
         </div>
         <div class="fc-team-away${m.status==='FINISHED'&&m.resultA!==null ? matchSideClass(m.resultA,m.resultB,'B',m.penaltyA,m.penaltyB) : ''}">
+          <div class="fc-name" style="text-align:right">${m.teamBName || 'Por definir'}</div>
+          <div class="fc-flag-sm">${m.teamBFlag || '🏳️'}</div>
           <div class="fc-code">${teamCode(m.teamBFlag)}</div>
-          <div class="fc-flag-sm">${m.teamBFlag}</div>
-          <div class="fc-name">${m.teamBName}</div>
         </div>
       </div>
       <div class="fc-foot" style="display:flex;flex-direction:column;gap:.5rem;border-top:1px dashed var(--border);padding-top:.75rem;margin-top:.75rem">
@@ -592,14 +593,14 @@ function openResult(matchId) {
   const m = allAdminMatches.find(x => x.id === matchId);
   if (!m) return;
   document.getElementById('result-match-id').value = matchId;
-  document.getElementById('result-match-title').textContent = `${m.teamAName} vs ${m.teamBName}`;
+  document.getElementById('result-match-title').textContent = `${m.teamAName || 'Por definir'} vs ${m.teamBName || 'Por definir'}`;
   document.getElementById('result-match-subtitle').textContent = Fmt.datetime(m.date);
   document.getElementById('res-code-a').textContent = teamCode(m.teamAFlag);
   document.getElementById('res-code-b').textContent = teamCode(m.teamBFlag);
   if(document.getElementById('res-flag-a')) { document.getElementById('res-flag-a').textContent = m.teamAFlag; renderEmojis(document.getElementById('res-flag-a')); }
   if(document.getElementById('res-flag-b')) { document.getElementById('res-flag-b').textContent = m.teamBFlag; renderEmojis(document.getElementById('res-flag-b')); }
-  document.getElementById('res-name-a').textContent = m.teamAName;
-  document.getElementById('res-name-b').textContent = m.teamBName;
+  document.getElementById('res-name-a').textContent = m.teamAName || 'Por definir';
+  document.getElementById('res-name-b').textContent = m.teamBName || 'Por definir';
   
   resultScoreA = m.resultA ?? 0;
   resultScoreB = m.resultB ?? 0;
@@ -730,7 +731,7 @@ async function viewUserPredictions(userId) {
       el.innerHTML = predictions.map(p => `
         <div style="display:flex;justify-content:space-between;padding:.75rem 0;border-bottom:1px solid var(--border);align-items:center">
           <div style="font-size:.85rem">
-            <div style="font-weight:600;color:var(--text)">${p.match.teamAName} vs ${p.match.teamBName}</div>
+            <div style="font-weight:600;color:var(--text)">${p.match.teamAName || 'Por definir'} vs ${p.match.teamBName || 'Por definir'}</div>
             <div style="color:var(--text-dim);font-size:.75rem;margin-top:.15rem">Pronosticó: <strong style="color:var(--text)">${p.scoreA} - ${p.scoreB}</strong></div>
           </div>
           <div style="font-size:.7rem;text-align:right">
