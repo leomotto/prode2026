@@ -1,9 +1,8 @@
 # Contexto de transición — Prode 2026
 
-**Fecha:** 5 de julio de 2026
+**Fecha:** 8 de julio de 2026
 **Repo:** `github.com/leomotto/prode2026`
 **Branch activo:** `main`
-**Último commit:** `5e33f4f`
 
 ---
 
@@ -13,104 +12,57 @@
 - **DB:** PostgreSQL (producción en alwaysdata)
 - **Frontend:** HTML/JS vanilla (public/)
 - **API externa:** `v3.football.api-sports.io` — plan free, 100 req/día, key: `71fc2bb3d6a8f0409f2eb5377a98ffc5`
-- **Deploy:** alwaysdata, restart automático al push a main
+- **Deploy:** alwaysdata, restart automático al push a main a través de GitHub Actions y `deploy.sh`.
 
 ### Archivos clave
 | Archivo | Rol |
 |---|---|
-| `src/services/AdvancementService.js` | R32_BRACKET + KNOCKOUT_FEEDS + lógica de clasificación |
-| `src/services/SyncService.js` | Sync de resultados con API externa |
-| `src/routes/admin.js` | Rutas admin: fix-r32-data, fix-r16-dates, fix-knockout-slots, sync, advance |
-| `src/server.js` | Jobs: auto-LIVE (60s) + auto-sync (15min) |
+| `src/services/AdvancementService.js` | Definición oficial de cruces y avance dinámico en fase eliminatoria (bracket). |
+| `src/services/SyncService.js` | Sincronización automática de resultados en vivo/finales con API-Football. |
+| `src/routes/admin.js` | Rutas de administración. Recientemente se limpiaron endpoints temporales de fix. |
+| `src/server.js` | Jobs en background: auto-LIVE (60s) + auto-sync (15min). |
 
 ---
 
-## Estado del torneo (05-jul-2026)
+## Modificaciones Recientes (8-jul-2026)
 
-**Fase activa:** OCTAVOS DE FINAL (R16)
+### 1. Corrección del Bracket Eliminatorio (Cuartos de final)
+- **Causa original:** Los IDs de los partidos de Cuartos de Final (QF-M1, QF-M2, QF-M3, QF-M4) tenían cruces incorrectos mapeados contra el bracket real de la FIFA y el orden de los equipos (local/visitante) estaba invertido.
+- **Solución implementada:** 
+  - Se modificó `AdvancementService.js` para mapear de manera estricta los ganadores de Octavos a Cuartos de acuerdo a los datos oficiales:
+    - `QF-M1`: Francia (local) vs Marruecos (visitante)
+    - `QF-M2`: España (local) vs Bélgica (visitante)
+    - `QF-M3`: Noruega (local) vs Inglaterra (visitante)
+    - `QF-M4`: Argentina (local) vs Suiza (visitante)
+  - Se actualizó `prisma/seed.js` para emparejar estos mismos índices.
 
-### R16 jugados
-| Match | Partido | Resultado |
-|---|---|:---:|
-| R16-M1 | Canadá vs Marruecos | 0-3 |
-| R16-M2 | Paraguay vs Francia | 0-1 |
+### 2. Pestaña "Tercer Puesto" y Estados Pendientes
+- Se agregó oficialmente la fase `TERCER_PUESTO` (Tercer y Cuarto lugar) en las pestañas de `public/admin.html` y `public/matches.html` que antes faltaba.
+- Se implementaron fallbacks visuales de "Por definir" (o la bandera 🏳️) cuando un partido de Semis, Tercer Puesto o Final aún no tiene equipos asignados. De esta forma, evitamos mostrar el texto "null" y la UI no se rompe.
+- Se reparó el bug visual donde los nombres, iniciales y banderas del equipo "visitante" (Away) estaban desordenados verticalmente en flexbox. Se volvió a su stack original de arriba hacia abajo: Código (VIS) -> Bandera -> Nombre.
 
-### R16 próximos (horario Argentina)
-| Match | Partido | ART | UTC |
-|---|---|---|---|
-| R16-M5 | Brasil vs Noruega | Dom 5/7 17:00 | 2026-07-05T20:00Z |
-| R16-M6 | México vs Inglaterra | Dom 5/7 21:00 | 2026-07-06T00:00Z |
-| R16-M3 | Portugal vs España | Lun 6/7 16:00 | 2026-07-06T19:00Z |
-| R16-M4 | EE.UU. vs Bélgica | Lun 6/7 21:00 | 2026-07-07T00:00Z |
-| R16-M8 | **Argentina** vs Egipto | **Mar 7/7 13:00** | 2026-07-07T16:00Z |
-| R16-M7 | Suiza vs Colombia | Mar 7/7 17:00 | 2026-07-07T20:00Z |
-
-### Bracket R16 → QF
-```
-R16-M1 (Canadá vs Marruecos) ─┐
-                                ├─ QF-M1
-R16-M2 (Paraguay vs Francia) ──┘
-
-R16-M3 (Portugal vs España) ───┐
-                                ├─ QF-M2
-R16-M4 (EE.UU. vs Bélgica) ───┘
-
-R16-M5 (Brasil vs Noruega) ────┐
-                                ├─ QF-M3
-R16-M6 (México vs Inglaterra) ─┘
-
-R16-M7 (Suiza vs Colombia) ────┐
-                                ├─ QF-M4
-R16-M8 (Argentina vs Egipto) ──┘
-```
-
----
-
-## Bugs resueltos hoy
-
-### Problema 1: Sync no traía Paraguay vs Francia
-- Causa: fecha en DB = `2026-07-06T01:00Z` (seed con CDT offset incorrecto). Real = `2026-07-04T21:00Z`. Sync calculaba dateStr ART "2026-07-05" pero API lo tiene en "2026-07-04".
-- Fix `SyncService.js`:
-  - Query incluye knockout matches con equipos + null result dentro de ±3 días (independiente del status)
-  - Fallback: para cada dateStr ART también busca el día anterior ART
-
-### Problema 2: KNOCKOUT_FEEDS R16-M7/M8 incorrectos
-- Causa: referenciaban R32-M13/14/15/16 duplicados. R32-M5/6/7/12 no estaban asignados a ningún R16.
-- Fix `AdvancementService.js` (verificado contra FIFA / Al Jazeera):
-  - `R16-M7`: winner(R32-M7=Suiza) vs winner(R32-M5=Colombia)
-  - `R16-M8`: winner(R32-M6=Argentina) vs winner(R32-M12=Egipto)
-
-### Problema 3: Fechas y venues incorrectos en DB
-- Causa: seed usó `T20:00:00-05:00` para todos → todos adelantados 6-26hs.
-- Fix: endpoint `POST /api/admin/fix-r16-dates` (botón "📍 Fix fechas R16"):
-  - Actualiza fecha + venue sin restricción de status (antes: WHERE status='UPCOMING' → saltaba FINISHED)
-  - Llama `runFullAdvancement` al final → popula R16-M7/M8 automáticamente
+### 3. Auditoría y Limpieza (Ponytail Audit)
+- Se ejecutó el skill `ponytail-audit`.
+- **Código y Scripts Temporales:** Se eliminaron 19 scripts (como `test-*.js`, `fix-*.js`, `get_fifa*.js`) que estaban acumulados en el root.
+- **Librerías Innecesarias:** Se desinstalaron `puppeteer`, `jsdom`, y `node-fetch`, que ocupaban peso extra en el despliegue del CI/CD de producción pero nunca eran llamados por la app real.
+- **Funciones Muertas:** Se eliminó la función vacía `calcularBonus` en `scoring.js` y los endpoints/botones de fix (fechas R32, R16, QF) de la interfaz de administración, ya que las correcciones en DB son ahora permanentes.
+- **Deploy:** Se borró la referencia residual a `fix-octavos.js` en `deploy.sh`.
 
 ---
 
 ## Cosas importantes
 
-### API free plan
-- `?date=YYYY-MM-DD` funciona para cualquier fecha ✓
-- `?live=all` funciona ✓
-- `?league=1&season=2026` bloqueado ("Free plans do not have access to this season")
+### Sync de Partidos
+- Sigue utilizando la versión free de la API de Football (100 req/día).
+- Los algoritmos de `SyncService.js` usan `word-set` para emparejar equipos en inglés/español ignorando puntuaciones.
 
-### Columnas penaltyA/penaltyB
-- Existen solo en producción, NO en DB local → usar `$executeRawUnsafe` con `$1, $2...` para SQL directo
-
-### Seed dates issue
-- El seed usó `T20:00:00-05:00` (CDT) para R16+. Todos los horarios son incorrectos.
-- Solución: botón "📍 Fix fechas R16" en admin panel.
-- Para partidos futuros de QF en adelante: crear endpoint similar o usar `match.update` directamente.
-
-### Verificar siempre contra FIFA
-URL: `https://www.fifa.com/es/tournaments/mens/worldcup/canadamexicousa2026/scores-fixtures?country=AR`
-Alternativa: aljazeera.com/sports, eltiempo.com
+### Botón de Sincronización Manual
+- Tras las mejoras y limpieza del administrador de rutas (`admin.html`), el botón principal para la sincronización es "**Sincronizar ahora**". El resto del mantenimiento del bracket knockout se asume automatizado vía `runFullAdvancement()` en `AdvancementService.js`.
 
 ---
 
 ## Próximos pasos
-
-1. **Argentina vs Egipto (Mar 7/7 13:00 ART)**: el auto-sync cada 15min debería traer el resultado. Si falla, usar "Sincronizar ahora".
-2. **Cuartos de final**: fechas del seed también serán incorrectas → ejecutar "📍 Fix fechas R16" style para QF cuando se sepa el schedule (crear endpoint fix-qf-dates o usar match.update manual desde admin).
-3. **Monitorear** que el sync automático funcione para el resto de los R16.
+1. **Fase Actual (Cuartos de Final y Semifinales):**
+   - Asegurarse de monitorear que la propagación hacia semifinales funcione exitosamente cuando finalice un partido de cuartos.
+2. **Handoff a Futuros Modelos:**
+   - Para corregir resultados anómalos o reingresar fallos, recaer siempre sobre `SyncService.js` o edición manual directamente sobre la base de datos PostgreSQL, ya que los scripts rápidos de `fix` locales han sido saneados del repositorio de producción.
