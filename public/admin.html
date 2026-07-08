@@ -680,13 +680,13 @@ async function fixR32Data() {
 async function fixQFDates() {
   const btn = document.getElementById('btn-fix-qf');
   const og = btn.innerHTML;
-  btn.innerHTML = 'Fijando...'; btn.disabled = true;
+  btn.innerHTML = '⏳ Fijando...'; btn.disabled = true;
   try {
     const res = await api.post('/admin/fix-qf-dates', {});
-    alert('Fechas de Cuartos de final actualizadas. ' + res.updated.length + ' partidos.');
-    loadMatches();
+    Toast.success('Fechas de 4tos actualizadas', `${res.updated.length} partidos corregidos. Ahora puedes sincronizar.`);
+    loadAdminData();
   } catch (e) {
-    alert(e.message);
+    Toast.error('Error', e.message);
   } finally {
     btn.innerHTML = og; btn.disabled = false;
   }
