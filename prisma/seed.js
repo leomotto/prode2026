@@ -246,10 +246,10 @@ async function main() {
     'Arrowhead Stadium, Kansas City',
   ];
   const qfPairings = [
-    { a: 6, b: 1 }, // QF-M1: Winner R16-M6 vs Winner R16-M1
-    { a: 4, b: 7 }, // QF-M2: Winner R16-M4 vs Winner R16-M7
-    { a: 5, b: 3 }, // QF-M3: Winner R16-M5 vs Winner R16-M3
-    { a: 8, b: 2 }  // QF-M4: Winner R16-M8 vs Winner R16-M2
+    { a: 2, b: 1 }, // QF-M1: Winner R16-M2 vs Winner R16-M1 (Francia vs Marruecos)
+    { a: 3, b: 4 }, // QF-M2: Winner R16-M3 vs Winner R16-M4 (España vs Bélgica)
+    { a: 5, b: 6 }, // QF-M3: Winner R16-M5 vs Winner R16-M6 (Noruega vs Inglaterra)
+    { a: 8, b: 7 }  // QF-M4: Winner R16-M8 vs Winner R16-M7 (Argentina vs Suiza)
   ];
   for (let i = 0; i < 4; i++) {
     const pair = qfPairings[i];

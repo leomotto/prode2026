@@ -32,10 +32,10 @@ const KNOCKOUT_FEEDS = {
   'R16-M6':   { sideA: { winner: 'R32-M15' }, sideB: { winner: 'R32-M10' } },
   'R16-M7':   { sideA: { winner: 'R32-M7'  }, sideB: { winner: 'R32-M5'  } }, // Suiza vs Colombia (BC Place Vancouver, Jul 7 20:00 UTC)
   'R16-M8':   { sideA: { winner: 'R32-M6'  }, sideB: { winner: 'R32-M12' } }, // Argentina vs Egipto (MB Atlanta, Jul 7 16:00 UTC)
-  'QF-M1':    { sideA: { winner: 'R16-M6'  }, sideB: { winner: 'R16-M1'  } },
-  'QF-M2':    { sideA: { winner: 'R16-M4'  }, sideB: { winner: 'R16-M7'  } },
-  'QF-M3':    { sideA: { winner: 'R16-M5'  }, sideB: { winner: 'R16-M3'  } },
-  'QF-M4':    { sideA: { winner: 'R16-M8'  }, sideB: { winner: 'R16-M2'  } },
+  'QF-M1':    { sideA: { winner: 'R16-M2'  }, sideB: { winner: 'R16-M1'  } },
+  'QF-M2':    { sideA: { winner: 'R16-M3'  }, sideB: { winner: 'R16-M4'  } },
+  'QF-M3':    { sideA: { winner: 'R16-M5'  }, sideB: { winner: 'R16-M6'  } },
+  'QF-M4':    { sideA: { winner: 'R16-M8'  }, sideB: { winner: 'R16-M7'  } },
   'SF-M1':    { sideA: { winner: 'QF-M1'   }, sideB: { winner: 'QF-M2'   } },
   'SF-M2':    { sideA: { winner: 'QF-M3'   }, sideB: { winner: 'QF-M4'   } },
   'TP-M1':    { sideA: { loser:  'SF-M1'   }, sideB: { loser:  'SF-M2'   } },
