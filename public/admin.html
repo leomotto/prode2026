@@ -79,10 +79,6 @@
         </div>
         <div style="display:flex;gap:.5rem;flex-wrap:wrap">
           <button class="btn btn-sm btn-primary" id="btn-sync" onclick="forceSyncNow()">🔄 Sincronizar ahora</button>
-          <button class="btn btn-sm" style="background:rgba(234,179,8,.15);color:#b45309" id="btn-fix-r32" onclick="fixR32Data()">📍 Fix venues/fechas R32</button>
-          <button class="btn btn-sm" style="background:rgba(234,179,8,.15);color:#b45309" id="btn-fix-r16" onclick="fixR16Dates()">📍 Fix fechas R16</button>
-         <button class="btn btn-sm" style="background:rgba(234,179,8,.15);color:#b45309" id="btn-fix-qf" onclick="fixQFDates()">📍 Fix fechas 4tos</button>
-
           <button class="btn btn-sm" style="background:rgba(239,68,68,.1);color:var(--red)" onclick="resetAllMatches()">⚠️ Resetear Todos</button>
           <input type="text" class="form-input" id="admin-search" placeholder="Buscar equipo..." style="width:180px" oninput="filterBySearch(this.value)">
         </div>
@@ -662,51 +658,6 @@ async function forceSyncNow() {
     btn.disabled = false; btn.textContent = '🔄 Sincronizar ahora';
   }
 }
-
-
-async function fixR32Data() {
-  const btn = document.getElementById('btn-fix-r32');
-  btn.disabled = true; btn.textContent = '⏳ Actualizando...';
-  try {
-    const res = await api.post('/admin/fix-r32-data', {});
-    Toast.success('R32 actualizado', `${res.updated.length} partidos actualizados con venues y fechas correctas`);
-    loadAdminData();
-  } catch(e) {
-    Toast.error('Error', e.message);
-  } finally {
-    btn.disabled = false; btn.textContent = '📍 Fix venues/fechas R32';
-  }
-}
-
-async function fixQFDates() {
-  const btn = document.getElementById('btn-fix-qf');
-  const og = btn.innerHTML;
-  btn.innerHTML = '⏳ Fijando...'; btn.disabled = true;
-  try {
-    const res = await api.post('/admin/fix-qf-dates', {});
-    Toast.success('Fechas de 4tos actualizadas', `${res.updated.length} partidos corregidos. Ahora puedes sincronizar.`);
-    loadAdminData();
-  } catch (e) {
-    Toast.error('Error', e.message);
-  } finally {
-    btn.innerHTML = og; btn.disabled = false;
-  }
-}
-
-async function fixR16Dates() {
-  const btn = document.getElementById('btn-fix-r16');
-  btn.disabled = true; btn.textContent = '⏳ Actualizando...';
-  try {
-    const res = await api.post('/admin/fix-r16-dates', {});
-    Toast.success('R16 fechas actualizadas', `${res.updated.length} partidos con fechas reales. Ahora sincronizá.`);
-    loadAdminData();
-  } catch(e) {
-    Toast.error('Error', e.message);
-  } finally {
-    btn.disabled = false; btn.textContent = '📍 Fix fechas R16';
-  }
-}
-
 async function resetAllMatches() {
   if (!confirm('⚠️ ¿Estás COMPLETAMENTE seguro de que querés resetear TODOS los partidos?\nEsto borrará todos los resultados reales (0-0) y pondrá los partidos en estado PRÓXIMO.\n\nLos pronósticos de los usuarios se mantendrán, pero sus puntos se limpiarán para que puedan recalcularse luego.')) return;
   
