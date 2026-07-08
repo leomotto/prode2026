@@ -356,9 +356,9 @@ function renderAdminMatches(customMatches = null) {
               : `<div style="font-size:.85rem;font-weight:700;color:var(--text-dim)">VS</div>`}
         </div>
         <div class="fc-team-away${m.status==='FINISHED'&&m.resultA!==null ? matchSideClass(m.resultA,m.resultB,'B',m.penaltyA,m.penaltyB) : ''}">
-          <div class="fc-name" style="text-align:right">${m.teamBName || 'Por definir'}</div>
-          <div class="fc-flag-sm">${m.teamBFlag || '🏳️'}</div>
           <div class="fc-code">${teamCode(m.teamBFlag)}</div>
+          <div class="fc-flag-sm">${m.teamBFlag || '🏳️'}</div>
+          <div class="fc-name" style="text-align:right">${m.teamBName || 'Por definir'}</div>
         </div>
       </div>
       <div class="fc-foot" style="display:flex;flex-direction:column;gap:.5rem;border-top:1px dashed var(--border);padding-top:.75rem;margin-top:.75rem">
