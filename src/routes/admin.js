@@ -391,6 +391,28 @@ async function adminRoutes(fastify) {
     return { success: true, updated: results };
   });
 
+
+  // POST /api/admin/fix-qf-dates — corrige fechas y venues de cuartos de final
+  fastify.post('/fix-qf-dates', { preHandler: fastify.adminOnly }, async () => {
+    const db = fastify.db;
+    const updates = [
+      { id: 'QF-M1', date: new Date('2026-07-09T16:00:00-04:00'), venue: 'Gillette Stadium, Boston', city: 'Boston' },
+      { id: 'QF-M2', date: new Date('2026-07-10T12:00:00-07:00'), venue: 'SoFi Stadium, Los Ángeles', city: 'Los Ángeles' },
+      { id: 'QF-M3', date: new Date('2026-07-11T17:00:00-04:00'), venue: 'Hard Rock Stadium, Miami', city: 'Miami' },
+      { id: 'QF-M4', date: new Date('2026-07-11T20:00:00-05:00'), venue: 'Arrowhead Stadium, Kansas City', city: 'Kansas City' }
+    ];
+    
+    const results = [];
+    for (const { id, date, venue, city } of updates) {
+      await db.$executeRawUnsafe(
+        'UPDATE matches SET date=$1, venue=$2, city=$3 WHERE id=$4',
+        date, venue, city, id
+      );
+      results.push({ id, status: 'updated' });
+    }
+    return { success: true, updated: results };
+  });
+
   // POST /api/admin/fix-r16-dates — corrige fechas, venues y status de todos los octavos
   // Fuente: FIFA / Al Jazeera / api-football (verificado jul-2026)
   fastify.post('/fix-r16-dates', { preHandler: fastify.adminOnly }, async () => {

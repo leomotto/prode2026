@@ -81,6 +81,7 @@
           <button class="btn btn-sm btn-primary" id="btn-sync" onclick="forceSyncNow()">🔄 Sincronizar ahora</button>
           <button class="btn btn-sm" style="background:rgba(234,179,8,.15);color:#b45309" id="btn-fix-r32" onclick="fixR32Data()">📍 Fix venues/fechas R32</button>
           <button class="btn btn-sm" style="background:rgba(234,179,8,.15);color:#b45309" id="btn-fix-r16" onclick="fixR16Dates()">📍 Fix fechas R16</button>
+         <button class="btn btn-sm" style="background:rgba(234,179,8,.15);color:#b45309" id="btn-fix-qf" onclick="fixQFDates()">📍 Fix fechas 4tos</button>
 
           <button class="btn btn-sm" style="background:rgba(239,68,68,.1);color:var(--red)" onclick="resetAllMatches()">⚠️ Resetear Todos</button>
           <input type="text" class="form-input" id="admin-search" placeholder="Buscar equipo..." style="width:180px" oninput="filterBySearch(this.value)">
@@ -673,6 +674,21 @@ async function fixR32Data() {
     Toast.error('Error', e.message);
   } finally {
     btn.disabled = false; btn.textContent = '📍 Fix venues/fechas R32';
+  }
+}
+
+async function fixQFDates() {
+  const btn = document.getElementById('btn-fix-qf');
+  const og = btn.innerHTML;
+  btn.innerHTML = 'Fijando...'; btn.disabled = true;
+  try {
+    const res = await api.post('/admin/fix-qf-dates', {});
+    alert('Fechas de Cuartos de final actualizadas. ' + res.updated.length + ' partidos.');
+    loadMatches();
+  } catch (e) {
+    alert(e.message);
+  } finally {
+    btn.innerHTML = og; btn.disabled = false;
   }
 }
 
