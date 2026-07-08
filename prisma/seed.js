@@ -234,10 +234,10 @@ async function main() {
 
   // ─── CUARTOS (4 partidos) ──────────────────────────────────────
   const qfDates = [
-    '2026-07-09T20:00:00-04:00', // Boston (EDT)
-    '2026-07-10T19:00:00-07:00', // LA (PDT)
-    '2026-07-11T20:00:00-04:00', // Miami (EDT)
-    '2026-07-11T20:00:00-05:00'  // Kansas City (CDT)
+    '2026-07-09T16:00:00-04:00', // Boston (EDT) - 4:00 PM Local
+    '2026-07-10T12:00:00-07:00', // LA (PDT) - 12:00 PM Local
+    '2026-07-11T17:00:00-04:00', // Miami (EDT) - 5:00 PM Local
+    '2026-07-11T20:00:00-05:00'  // Kansas City (CDT) - 8:00 PM Local
   ];
   const qfVenues = [
     'Gillette Stadium, Boston', 
