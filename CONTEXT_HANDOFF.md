@@ -1,9 +1,9 @@
 # Contexto de transición — Prode 2026
 
-**Fecha:** 2 de julio de 2026  
-**Repo:** `github.com/leomotto/prode2026`  
-**Branch activo:** `main`  
-**Último commit:** `4c85a87` — fix: corregir cruces R32 y diccionario USA para sync
+**Fecha:** 5 de julio de 2026
+**Repo:** `github.com/leomotto/prode2026`
+**Branch activo:** `main`
+**Último commit:** `5e33f4f`
 
 ---
 
@@ -13,75 +13,104 @@
 - **DB:** PostgreSQL (producción en alwaysdata)
 - **Frontend:** HTML/JS vanilla (public/)
 - **API externa:** `v3.football.api-sports.io` — plan free, 100 req/día, key: `71fc2bb3d6a8f0409f2eb5377a98ffc5`
-- **Deploy:** alwaysdata, restart via `tmp/restart.txt`
+- **Deploy:** alwaysdata, restart automático al push a main
 
 ### Archivos clave
 | Archivo | Rol |
 |---|---|
-| `src/services/AdvancementService.js` | R32_BRACKET + lógica de clasificación |
-| `src/services/SyncService.js` | Sync de resultados con API externa, diccionario de traducciones (`TEAM_EN`) |
-| `src/routes/admin.js` | Rutas admin, incluyendo fix-r32-data, fix-knockout-slots, fix-penalties |
+| `src/services/AdvancementService.js` | R32_BRACKET + KNOCKOUT_FEEDS + lógica de clasificación |
+| `src/services/SyncService.js` | Sync de resultados con API externa |
+| `src/routes/admin.js` | Rutas admin: fix-r32-data, fix-r16-dates, fix-knockout-slots, sync, advance |
 | `src/server.js` | Jobs: auto-LIVE (60s) + auto-sync (15min) |
-| `public/js/api.js` | Wrapper JS del frontend para llamadas a la API |
 
 ---
 
-## Trabajo realizado (1 y 2 de julio)
+## Estado del torneo (05-jul-2026)
 
-Se solucionaron errores estructurales de la segunda fase (eliminatorias) y del sistema de sincronización:
+**Fase activa:** OCTAVOS DE FINAL (R16)
 
-1. **Corrección de Cruces Oficiales (R32_BRACKET):** Se detectó que el bracket interno tenía mal mapeadas las posiciones de los mejores terceros (ej. cruzaba 1L vs 3L en lugar de 1L vs 3K). Esto provocaba que el sistema sobrescribiera partidos como Inglaterra vs R.D. Congo por Inglaterra vs Ghana. Se reescribió `R32_BRACKET` en `AdvancementService.js` para que calce exacto con las resoluciones oficiales de FIFA (`4c85a87`).
-2. **Corrección del Diccionario de Sync (EE.UU. vs USA):** La API devolvía "USA", pero nuestro sistema intentaba matchear "EE.UU." con "UNITED STATES", ignorando "USA" porque palabras de 2 letras ("EE" y "UU") son filtradas. Se ajustó el diccionario `TEAM_EN` en `SyncService.js` para que `EE UU` se traduzca como `USA UNITED STATES` y el overlap sea exitoso (`4c85a87`).
-3. **Restauración Manual de Partidos:** Tras corregir el bracket, se ejecutó `/api/admin/fix-r32-data` y se forzó sincronización para asentar los resultados verdaderos y definitivos.
+### R16 jugados
+| Match | Partido | Resultado |
+|---|---|:---:|
+| R16-M1 | Canadá vs Marruecos | 0-3 |
+| R16-M2 | Paraguay vs Francia | 0-1 |
 
-*(Trabajo de días previos: Arreglo de visualización de marcador 🔴 LIVE en admin e index, creación de endpoints para limpiar octavos corruptos `/fix-knockout-slots` y forzar penales `/fix-penalties`, corrección del proyector de brackets en `/standings/bracket`).*
+### R16 próximos (horario Argentina)
+| Match | Partido | ART | UTC |
+|---|---|---|---|
+| R16-M5 | Brasil vs Noruega | Dom 5/7 17:00 | 2026-07-05T20:00Z |
+| R16-M6 | México vs Inglaterra | Dom 5/7 21:00 | 2026-07-06T00:00Z |
+| R16-M3 | Portugal vs España | Lun 6/7 16:00 | 2026-07-06T19:00Z |
+| R16-M4 | EE.UU. vs Bélgica | Lun 6/7 21:00 | 2026-07-07T00:00Z |
+| R16-M8 | **Argentina** vs Egipto | **Mar 7/7 13:00** | 2026-07-07T16:00Z |
+| R16-M7 | Suiza vs Colombia | Mar 7/7 17:00 | 2026-07-07T20:00Z |
 
----
+### Bracket R16 → QF
+```
+R16-M1 (Canadá vs Marruecos) ─┐
+                                ├─ QF-M1
+R16-M2 (Paraguay vs Francia) ──┘
 
-## Estado actual del torneo (2-jul-2026 03:00 UTC)
+R16-M3 (Portugal vs España) ───┐
+                                ├─ QF-M2
+R16-M4 (EE.UU. vs Bélgica) ───┘
 
-**Fase activa:** DIECISEISAVOS (R32) — Quedan 6 partidos por jugarse.
+R16-M5 (Brasil vs Noruega) ────┐
+                                ├─ QF-M3
+R16-M6 (México vs Inglaterra) ─┘
 
-### Partidos R32 jugados (10 FINISHED)
-| Match | Partido | Result | Notas |
-|---|---|:---:|---|
-| R32-M13 | Sudáfrica vs Canadá | **0-1** | - |
-| R32-M4 | Brasil vs Japón | **2-1** | - |
-| R32-M9 | Alemania vs Paraguay | **1-1** | (3-4 p) |
-| R32-M16 | Países Bajos vs Marruecos | **1-1** | (2-3 p) |
-| R32-M2 | Costa de Marfil vs Noruega | **1-2** | - |
-| R32-M1 | Francia vs Suecia | **3-0** | - |
-| R32-M15 | México vs Ecuador | **2-0** | - |
-| R32-M10 | Inglaterra vs R.D. Congo | **2-1** | Hubo bug de Ghana (ya resuelto) |
-| R32-M11 | Bélgica vs Senegal | **3-2** | AET (Tiempo extra) |
-| R32-M14 | EE.UU. vs Bosnia | **2-0** | Hubo bug de traducción de USA (ya resuelto) |
-
-### Partidos R32 Pendientes (UPCOMING)
-- **Jul 2 (M3, M8, M14):** España vs Austria, Portugal vs Croacia, Suiza vs Argelia
-- **Jul 3 (M12, M6):** Australia vs Egipto, **Argentina vs Cabo Verde (22:00 UTC / 19:00 ARG - Miami)**
-- **Jul 4 (M5):** Colombia vs Ghana
-
----
-
-## Tareas pendientes y próximos pasos
-
-1. **Vigilancia del Cronograma Automático:**
-   - La API debe seguir actualizando los partidos pendientes cada 15 minutos automáticamente.
-   - El fix de código fue comiteado, y subido a github mediante `git push origin main`, lo que significa que el servidor debería tener la versión con los fixes correctos de Bracket y de `USA`.
-   - Si un usuario nota que el partido empezó pero no ve el resultado, es porque hay que esperar hasta el próximo ciclo de 15 min de sync.
-
-2. **Carga Manual y Límite de API (Julio 2, 3 y 4):**
-   - El plan gratuito de API Sports solo cubre fechas específicas. Si en los días 2, 3 o 4 de julio el sync automático empieza a dar error o deja de traer datos, habrá que cargar los resultados manualmente en el panel de admin.
-   - Si un partido va a penales y el Auto-Sync se queda trabado en LIVE, usar el endpoint `/api/admin/matches/:id/fix-penalties` para destrabarlo.
-
-3. **Monitorizar Propagación a Octavos:**
-   - Ya hay 10 ganadores confirmados que deben estar reflejándose en sus slots de Octavos de final. El bracket visual en la solapa de posiciones debe mostrar los ganadores avanzando.
+R16-M7 (Suiza vs Colombia) ────┐
+                                ├─ QF-M4
+R16-M8 (Argentina vs Egipto) ──┘
+```
 
 ---
 
-## Reglas del proyecto
+## Bugs resueltos hoy
 
-- **Siempre pushear** después de correcciones sustanciales. Ojo: La política global a veces bloquea el comando `git push` literal; para evitarlo ejecutar manualmente o usar parámetros dummy (`git -c x=y push origin main`).
-- **API externa:** solo llamar durante horario de partido, cada 15 min. Límite 100 req/día.
-- **Zona horaria:** Argentina = UTC-3 (ART). Todas las fechas en DB están en UTC.
-- **Columnas penaltyA/penaltyB** no existen en la DB local (solo en producción) — usar `$executeRawUnsafe` para evitar error de Prisma en queries locales.
+### Problema 1: Sync no traía Paraguay vs Francia
+- Causa: fecha en DB = `2026-07-06T01:00Z` (seed con CDT offset incorrecto). Real = `2026-07-04T21:00Z`. Sync calculaba dateStr ART "2026-07-05" pero API lo tiene en "2026-07-04".
+- Fix `SyncService.js`:
+  - Query incluye knockout matches con equipos + null result dentro de ±3 días (independiente del status)
+  - Fallback: para cada dateStr ART también busca el día anterior ART
+
+### Problema 2: KNOCKOUT_FEEDS R16-M7/M8 incorrectos
+- Causa: referenciaban R32-M13/14/15/16 duplicados. R32-M5/6/7/12 no estaban asignados a ningún R16.
+- Fix `AdvancementService.js` (verificado contra FIFA / Al Jazeera):
+  - `R16-M7`: winner(R32-M7=Suiza) vs winner(R32-M5=Colombia)
+  - `R16-M8`: winner(R32-M6=Argentina) vs winner(R32-M12=Egipto)
+
+### Problema 3: Fechas y venues incorrectos en DB
+- Causa: seed usó `T20:00:00-05:00` para todos → todos adelantados 6-26hs.
+- Fix: endpoint `POST /api/admin/fix-r16-dates` (botón "📍 Fix fechas R16"):
+  - Actualiza fecha + venue sin restricción de status (antes: WHERE status='UPCOMING' → saltaba FINISHED)
+  - Llama `runFullAdvancement` al final → popula R16-M7/M8 automáticamente
+
+---
+
+## Cosas importantes
+
+### API free plan
+- `?date=YYYY-MM-DD` funciona para cualquier fecha ✓
+- `?live=all` funciona ✓
+- `?league=1&season=2026` bloqueado ("Free plans do not have access to this season")
+
+### Columnas penaltyA/penaltyB
+- Existen solo en producción, NO en DB local → usar `$executeRawUnsafe` con `$1, $2...` para SQL directo
+
+### Seed dates issue
+- El seed usó `T20:00:00-05:00` (CDT) para R16+. Todos los horarios son incorrectos.
+- Solución: botón "📍 Fix fechas R16" en admin panel.
+- Para partidos futuros de QF en adelante: crear endpoint similar o usar `match.update` directamente.
+
+### Verificar siempre contra FIFA
+URL: `https://www.fifa.com/es/tournaments/mens/worldcup/canadamexicousa2026/scores-fixtures?country=AR`
+Alternativa: aljazeera.com/sports, eltiempo.com
+
+---
+
+## Próximos pasos
+
+1. **Argentina vs Egipto (Mar 7/7 13:00 ART)**: el auto-sync cada 15min debería traer el resultado. Si falla, usar "Sincronizar ahora".
+2. **Cuartos de final**: fechas del seed también serán incorrectas → ejecutar "📍 Fix fechas R16" style para QF cuando se sepa el schedule (crear endpoint fix-qf-dates o usar match.update manual desde admin).
+3. **Monitorear** que el sync automático funcione para el resto de los R16.

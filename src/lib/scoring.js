@@ -30,14 +30,4 @@ function calcularPuntos(real, prono) {
   return { base, bonus: 0, total: base };
 }
 
-/**
- * Valida bonus especiales contra los valores reales del partido.
- * Nota: El reglamento del sitio no contempla puntos extra por bonus.
- * @returns {number} 0 puntos bonus
- */
-function calcularBonus(prono, extras = {}) {
-  return 0;
-}
-
-module.exports = { calcularPuntos, calcularBonus };
-
+module.exports = { calcularPuntos };
