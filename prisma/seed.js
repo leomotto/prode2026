@@ -233,10 +233,17 @@ async function main() {
   }
 
   // ─── CUARTOS (4 partidos) ──────────────────────────────────────
-  const qfDates = ['2026-07-09', '2026-07-10', '2026-07-10', '2026-07-11'];
+  const qfDates = [
+    '2026-07-09T20:00:00-04:00', // Boston (EDT)
+    '2026-07-10T19:00:00-07:00', // LA (PDT)
+    '2026-07-11T20:00:00-04:00', // Miami (EDT)
+    '2026-07-11T20:00:00-05:00'  // Kansas City (CDT)
+  ];
   const qfVenues = [
-    'MetLife Stadium, Nueva York', 'AT&T Stadium, Dallas',
-    'SoFi Stadium, Los Ángeles', 'Hard Rock Stadium, Miami',
+    'Gillette Stadium, Boston', 
+    'SoFi Stadium, Los Ángeles',
+    'Hard Rock Stadium, Miami', 
+    'Arrowhead Stadium, Kansas City',
   ];
   for (let i = 0; i < 4; i++) {
     matches.push({
@@ -245,7 +252,7 @@ async function main() {
       groupName: null,
       teamAName: `Ganador R16-M${i * 2 + 1}`, teamAFlag: '🏳️', teamACode: `QFA${i + 1}`,
       teamBName: `Ganador R16-M${i * 2 + 2}`, teamBFlag: '🏳️', teamBCode: `QFB${i + 1}`,
-      date: new Date(`${qfDates[i]}T20:00:00-05:00`),
+      date: new Date(qfDates[i]),
       venue: qfVenues[i],
       city: getCity(qfVenues[i]),
       status: 'UPCOMING',
