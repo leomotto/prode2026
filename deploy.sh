@@ -22,7 +22,7 @@ npx prisma generate
 
 echo "🗄️ Actualizando Base de Datos..."
 npx prisma db push --accept-data-loss
-node fix-octavos.js
+
 
 echo "🏷️ Actualizando versión en footer..."
 GIT_HASH=$(git rev-parse --short HEAD)
