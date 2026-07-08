@@ -410,7 +410,17 @@ async function adminRoutes(fastify) {
       );
       results.push({ id, status: 'updated' });
     }
-    return { success: true, updated: results };
+    
+    // Limpiar equipos de Cuartos y re-propagar usando el bracket actualizado
+    await db.$executeRawUnsafe(`
+      UPDATE matches
+      SET "teamAName" = NULL, "teamAFlag" = NULL, "teamBName" = NULL, "teamBFlag" = NULL
+      WHERE phase = 'CUARTOS' AND status != 'FINISHED'::"MatchStatus"
+    `);
+    const { runFullAdvancement } = require('../services/AdvancementService');
+    const advancement = await runFullAdvancement(db);
+
+    return { success: true, updated: results, advancement };
   });
 
   // POST /api/admin/fix-r16-dates — corrige fechas, venues y status de todos los octavos

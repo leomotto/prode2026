@@ -245,13 +245,20 @@ async function main() {
     'Hard Rock Stadium, Miami', 
     'Arrowhead Stadium, Kansas City',
   ];
+  const qfPairings = [
+    { a: 6, b: 1 }, // QF-M1: Winner R16-M6 vs Winner R16-M1
+    { a: 4, b: 7 }, // QF-M2: Winner R16-M4 vs Winner R16-M7
+    { a: 5, b: 3 }, // QF-M3: Winner R16-M5 vs Winner R16-M3
+    { a: 8, b: 2 }  // QF-M4: Winner R16-M8 vs Winner R16-M2
+  ];
   for (let i = 0; i < 4; i++) {
+    const pair = qfPairings[i];
     matches.push({
       id: `QF-M${i + 1}`,
       phase: 'CUARTOS',
       groupName: null,
-      teamAName: `Ganador R16-M${i * 2 + 1}`, teamAFlag: '🏳️', teamACode: `QFA${i + 1}`,
-      teamBName: `Ganador R16-M${i * 2 + 2}`, teamBFlag: '🏳️', teamBCode: `QFB${i + 1}`,
+      teamAName: `Ganador R16-M${pair.a}`, teamAFlag: '🏳️', teamACode: `QFA${i + 1}`,
+      teamBName: `Ganador R16-M${pair.b}`, teamBFlag: '🏳️', teamBCode: `QFB${i + 1}`,
       date: new Date(qfDates[i]),
       venue: qfVenues[i],
       city: getCity(qfVenues[i]),
