@@ -1,6 +1,6 @@
 # Contexto de transición — Prode 2026
 
-**Fecha:** 8 de julio de 2026
+**Fecha:** 10 de julio de 2026
 **Repo:** `github.com/leomotto/prode2026`
 **Branch activo:** `main`
 
@@ -24,7 +24,17 @@
 
 ---
 
-## Modificaciones Recientes (8-jul-2026)
+## Modificaciones Recientes (10-jul-2026)
+
+### 1. Fix en el Cálculo de Puntos y Propagación del Bracket
+- **Causa original:** En la sesión del 8 de julio, una auditoría borró la función `calcularBonus` por considerarla código muerto. Sin embargo, `MatchService.js` la seguía importando y llamando al momento de asignar puntos. Cuando un partido finalizaba (como Francia 2-0 Marruecos), el servidor arrojaba un `TypeError`, abortando la sincronización: el partido se guardaba con su resultado, pero los puntos nunca se entregaban a los usuarios y los ganadores no avanzaban a la siguiente ronda.
+- **Solución implementada:** 
+  - Se eliminó completamente cualquier llamada e importación a `calcularBonus` en `MatchService.js` y `admin.js`.
+  - Se ejecutó un script temporal `fix-points.js` durante un despliegue para recalcular retroactivamente todos los partidos finalizados y asegurar la propagación hacia las Semifinales llamando a `runFullAdvancement()`. El script fue luego eliminado.
+
+---
+
+## Historial Anterior (8-jul-2026)
 
 ### 1. Corrección del Bracket Eliminatorio (Cuartos de final)
 - **Causa original:** Los IDs de los partidos de Cuartos de Final (QF-M1, QF-M2, QF-M3, QF-M4) tenían cruces incorrectos mapeados contra el bracket real de la FIFA y el orden de los equipos (local/visitante) estaba invertido.
