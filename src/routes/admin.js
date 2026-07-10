@@ -1,5 +1,5 @@
 'use strict';
-const { calcularPuntos, calcularBonus } = require('../lib/scoring');
+const { calcularPuntos } = require('../lib/scoring');
 const { sendResultBulk } = require('../lib/email');
 
 

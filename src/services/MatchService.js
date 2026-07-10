@@ -1,4 +1,4 @@
-const { calcularPuntos, calcularBonus } = require('../lib/scoring');
+const { calcularPuntos } = require('../lib/scoring');
 
 /**
  * Recalcula y asigna los puntos de todas las predicciones para un partido dado.
@@ -21,24 +21,13 @@ async function calculatePointsForMatch(db, matchId, realStats = {}) {
   for (const pred of predictions) {
     const base = calcularPuntos({ resultA: match.resultA, resultB: match.resultB }, pred).base;
     
-    // Fallback de bonus a los guardados en el partido si no se pasan en realStats
-    const bonusData = {
-      resultA: match.resultA,
-      resultB: match.resultB,
-      realFirstScorer: realStats.realFirstScorer || null,
-      realCardsCount: realStats.realCardsCount || null,
-      realCornersCount: realStats.realCornersCount || null,
-      realMvp: realStats.realMvp || null,
-    };
-    
-    const bonus = calcularBonus(pred, bonusData);
     
     await db.prediction.update({
       where: { id: pred.id },
       data: {
         pointsBase: base,
-        pointsBonus: bonus,
-        pointsTotal: base + bonus,
+        pointsBonus: 0,
+        pointsTotal: base,
         calculatedAt: new Date(),
         locked: true,
       },
