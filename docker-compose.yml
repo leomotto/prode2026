@@ -10,7 +10,9 @@ services:
       POSTGRES_USER: leo_developer
       POSTGRES_PASSWORD: dev_password_secure
     ports:
-      - "5432:5432"
+      # solo loopback: la app se conecta por localhost. Con "5432:5432"
+      # quedaba expuesto a toda la LAN (auditoria 2026-08-13).
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_prode_storage:/var/lib/postgresql/data
     networks:
