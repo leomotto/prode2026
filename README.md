@@ -1,3 +1,5 @@
+> **Estado (2026-10-13): archivado.** Se relanza para el próximo Mundial. Sigue desplegado y respondiendo en AlwaysData (`prode.muchacholoco.com.ar`, Node + Postgres `muchacholoco_prode2026`). La v2 se trabaja en `~/proyectos/prode2026-v2`.
+
 <div align="center">
   <img src="https://raw.githubusercontent.com/twitter/twemoji/master/assets/svg/1f3c6.svg" alt="Prode Mundial 2026 Logo" width="100" height="100">
   <h1>Prode Mundial 2026 🏆</h1>
