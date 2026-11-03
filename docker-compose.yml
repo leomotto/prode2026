@@ -1,27 +1,11 @@
-version: '3.8'
-
+# Producción en el homelab (deploy-site.sh, modo compose). La base vive en
+# abreviar-core-db (red abreviar-net); credenciales en .env del server.
+# Desarrollo local con Postgres propia: docker-compose.dev.yml
 services:
-  db_local:
-    image: postgres:16-alpine
-    container_name: prode2026_postgres
-    restart: always
-    environment:
-      POSTGRES_DB: prode2026_local
-      POSTGRES_USER: leo_developer
-      POSTGRES_PASSWORD: dev_password_secure
+  app:
+    build: .
+    env_file: .env
     ports:
-      # solo loopback: la app se conecta por localhost. Con "5432:5432"
-      # quedaba expuesto a toda la LAN (auditoria 2026-08-13).
-      - "127.0.0.1:5432:5432"
-    volumes:
-      - postgres_prode_storage:/var/lib/postgresql/data
-    networks:
-      - prode_net
-
-volumes:
-  postgres_prode_storage:
-    driver: local
-
-networks:
-  prode_net:
-    driver: bridge
+      - "3000"
+    restart: unless-stopped
+    mem_limit: 256m
