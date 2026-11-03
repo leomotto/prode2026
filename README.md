@@ -1,4 +1,4 @@
-> **Estado (2026-10-13): archivado.** Se relanza para el próximo Mundial. Sigue desplegado y respondiendo en AlwaysData (`prode.muchacholoco.com.ar`, Node + Postgres `muchacholoco_prode2026`). La v2 se trabaja en `~/proyectos/prode2026-v2`.
+> **Estado (2026-10-13): archivado.** Se relanza para el próximo Mundial. Sigue desplegado y respondiendo en el homelab (`prode.muchacholoco.com.ar`, Node + Postgres `prode`). La v2 se trabaja en `~/proyectos/prode2026-v2`.
 
 <div align="center">
   <img src="https://raw.githubusercontent.com/twitter/twemoji/master/assets/svg/1f3c6.svg" alt="Prode Mundial 2026 Logo" width="100" height="100">
@@ -39,19 +39,12 @@ La arquitectura fue construida apostando por la máxima velocidad y seguridad:
 
 ---
 
-## 🚀 Despliegue Automatizado (CI/CD)
+## 🚀 Despliegue
 
-El proyecto cuenta con un flujo CI/CD configurado a través de **GitHub Actions**. Al pushear a la rama `main`, la plataforma de AlwaysData se actualizará, ejecutará Prisma y reiniciará el nodo, todo de manera automatizada:
-
-1. Modifica tus variables de entorno en GitHub Repository **Settings > Secrets and variables > Actions**.
-2. Asegúrate de configurar los secretos (`ALWAYSDATA_SSH_HOST`, `ALWAYSDATA_SSH_USER`, `ALWAYSDATA_SSH_KEY`, y `GH_PAT`).
-3. Haz push a `main`:
-   ```bash
-   git add .
-   git commit -m "feat: new feature"
-   git push origin main
-   ```
-4. El Action iniciará sesión por SSH y ejecutará `./deploy.sh` descargando la versión más reciente en AlwaysData sin tiempos de inactividad (Zero Downtime con Passenger restart).
+Corre en el homelab desde 2026-11-03 (antes AlwaysData): container `site-prode`, base `prode` en la
+Postgres `abreviar-core-db`. **Push a `main` = deploy**: el webhook del homelab rebuildea la imagen
+(`Dockerfile` + `docker-compose.yml`). El `.env` de producción vive en el server
+(`/opt/apps/prode/.env`). Desarrollo local con Postgres propia: `docker compose -f docker-compose.dev.yml up -d`.
 
 ---
 
