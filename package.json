@@ -35,5 +35,8 @@
   },
   "prisma": {
     "seed": "node prisma/seed.js"
+  },
+  "overrides": {
+    "fast-jwt": "^6.3.7"
   }
 }
